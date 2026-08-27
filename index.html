@@ -16,7 +16,16 @@
       font-family: Arial;
       text-align: center;
     }
-
+#cube {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 100px;
+  color: cyan;
+  display: none;
+  z-index: 20;
+}
     #camera {
       width: 100%;
       max-width: 900px;
@@ -44,6 +53,7 @@
 <body>
 
 <div id="status">Loading hand tracking...</div>
+<div id="cube">◆</div>
 
 <video id="camera" autoplay playsinline></video>
 <canvas id="output"></canvas>
@@ -53,7 +63,8 @@ const video = document.getElementById("camera");
 const canvas = document.getElementById("output");
 const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
-
+const cube = document.getElementById("cube");
+  
 const hands = new Hands({
   locateFile: (file) => {
     return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
@@ -76,6 +87,25 @@ hands.onResults((results) => {
 
   if (results.multiHandLandmarks) {
 
+   const hand = results.multiHandLandmarks[0];
+
+if (hand) {
+  const thumb = hand[4];
+  const index = hand[8];
+
+  const distance = Math.hypot(
+    thumb.x - index.x,
+    thumb.y - index.y
+  );
+
+  if (distance < 0.06) {
+    status.textContent = "PINCH DETECTED 🤏";
+    cube.style.display = "block";
+  } else {
+    status.textContent = "HAND TRACKING ACTIVE ✓";
+    cube.style.display = "none";
+  }
+}
     status.textContent = "HAND TRACKING ACTIVE ✓";
 
     for (const landmarks of results.multiHandLandmarks) {
