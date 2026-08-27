@@ -7,7 +7,7 @@
   <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
 
-  <!-- MediaPipe -->
+  <!-- MediaPipe Hands -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
@@ -40,24 +40,24 @@
       z-index: 2;
     }
 
-    #hud {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      color: white;
-      background: rgba(0,0,0,.65);
-      padding: 12px;
-      border-radius: 10px;
-      z-index: 10;
-    }
-
-    #threeCanvas {
+    #three {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
       z-index: 4;
+    }
+
+    #hud {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      color: white;
+      background: rgba(0,0,0,.7);
+      padding: 12px;
+      border-radius: 10px;
+      z-index: 10;
     }
   </style>
 </head>
@@ -70,10 +70,14 @@
 
 <div id="hud">
   <b>JARVIS AR</b>
-  <div id="status">Starting...</div>
+  <div id="status">Starting camera...</div>
 </div>
 
 <script>
+
+/* =====================================================
+   BASIC ELEMENTS
+===================================================== */
 
 const video = document.getElementById("camera");
 const canvas = document.getElementById("output");
@@ -81,227 +85,165 @@ const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
 
 
-/* =========================
-   THREE.JS AR SCENE
-========================= */
+/* =====================================================
+   THREE.JS
+===================================================== */
 
 const scene = new THREE.Scene();
 
-const threeCamera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.01,
-  100
+const threeCamera = new THREE.OrthographicCamera(
+  -1,
+   1,
+   1,
+  -1,
+   0.1,
+   10
 );
 
-threeCamera.position.z = 1;
+threeCamera.position.z = 5;
 
 const renderer = new THREE.WebGLRenderer({
   alpha: true,
   antialias: true
 });
 
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
+
 renderer.setSize(
   window.innerWidth,
   window.innerHeight
 );
 
-renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
+renderer.domElement.id = "three";
+
+document.body.appendChild(renderer.domElement);
+
+
+/* =====================================================
+   REAL 3D CUBE
+===================================================== */
+
+const geometry = new THREE.BoxGeometry(
+  0.18,
+  0.18,
+  0.18
 );
 
-renderer.domElement.id = "threeCanvas";
+const material = new THREE.MeshNormalMaterial();
 
-document.body.appendChild(
-  renderer.domElement
+const cube = new THREE.Mesh(
+  geometry,
+  material
 );
-
-
-/* REAL 3D CUBE */
-
-const geometry =
-  new THREE.BoxGeometry(
-    0.18,
-    0.18,
-    0.18
-  );
-
-const material =
-  new THREE.MeshNormalMaterial();
-
-const cube =
-  new THREE.Mesh(
-    geometry,
-    material
-  );
 
 cube.visible = false;
 
 scene.add(cube);
 
 
-/* LIGHT */
-
-const light =
-  new THREE.AmbientLight(
-    0xffffff,
-    1
-  );
-
-scene.add(light);
-
-
-/* ANIMATION */
-
-function animate() {
-
-  requestAnimationFrame(animate);
-
-  cube.rotation.x += 0.015;
-  cube.rotation.y += 0.02;
-
-  renderer.render(
-    scene,
-    threeCamera
-  );
-}
-
-animate();
-
-
-/* =========================
+/* =====================================================
    RESIZE
-========================= */
+===================================================== */
 
-function resizeCanvas() {
+function resize() {
 
-  canvas.width =
-    window.innerWidth;
-
-  canvas.height =
-    window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
   renderer.setSize(
     window.innerWidth,
     window.innerHeight
   );
-
-  threeCamera.aspect =
-    window.innerWidth /
-    window.innerHeight;
-
-  threeCamera.updateProjectionMatrix();
 }
 
-resizeCanvas();
+resize();
 
 window.addEventListener(
   "resize",
-  resizeCanvas
+  resize
 );
 
 
-/* =========================
-   CAMERA COORDINATES
-========================= */
+/* =====================================================
+   CAMERA → SCREEN POSITION
+===================================================== */
 
-function getCameraCoordinates(point) {
+function screenPosition(point) {
 
-  const videoWidth =
-    video.videoWidth;
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
 
-  const videoHeight =
-    video.videoHeight;
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
 
-  const screenWidth =
-    window.innerWidth;
+  if (!vw || !vh) {
+    return {
+      x: sw / 2,
+      y: sh / 2
+    };
+  }
 
-  const screenHeight =
-    window.innerHeight;
+  const videoRatio = vw / vh;
+  const screenRatio = sw / sh;
 
-  const videoRatio =
-    videoWidth / videoHeight;
-
-  const screenRatio =
-    screenWidth / screenHeight;
-
-  let displayedWidth;
-  let displayedHeight;
-
+  let displayWidth;
+  let displayHeight;
   let offsetX = 0;
   let offsetY = 0;
 
+  /*
+    object-fit: cover
+  */
 
   if (screenRatio > videoRatio) {
 
-    displayedWidth =
-      screenWidth;
-
-    displayedHeight =
-      screenWidth /
-      videoRatio;
+    displayWidth = sw;
+    displayHeight = sw / videoRatio;
 
     offsetY =
-      (screenHeight -
-       displayedHeight) / 2;
+      (sh - displayHeight) / 2;
 
   } else {
 
-    displayedHeight =
-      screenHeight;
-
-    displayedWidth =
-      screenHeight *
-      videoRatio;
+    displayHeight = sh;
+    displayWidth = sh * videoRatio;
 
     offsetX =
-      (screenWidth -
-       displayedWidth) / 2;
+      (sw - displayWidth) / 2;
   }
 
-
   let x =
-    point.x *
-    displayedWidth +
-    offsetX;
+    point.x * displayWidth + offsetX;
 
   let y =
-    point.y *
-    displayedHeight +
-    offsetY;
-
+    point.y * displayHeight + offsetY;
 
   /*
-    Camera is mirrored,
-    so mirror X coordinate.
+    Front camera is mirrored.
   */
 
-  x =
-    screenWidth - x;
-
+  x = sw - x;
 
   return {
-    x: x,
-    y: y
+    x,
+    y
   };
 }
 
 
-/* =========================
-   MEDIAPIPE HAND TRACKING
-========================= */
+/* =====================================================
+   MEDIAPIPE
+===================================================== */
 
-const hands =
-  new Hands({
+const hands = new Hands({
 
-    locateFile: (file) => {
+  locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  }
 
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-
-    }
-
-  });
-
+});
 
 hands.setOptions({
 
@@ -316,220 +258,297 @@ hands.setOptions({
 });
 
 
-/* =========================
+/* =====================================================
+   SMOOTHING
+===================================================== */
+
+let smoothX = 0;
+let smoothY = 0;
+
+const smoothing = 0.35;
+
+
+/* =====================================================
    HAND RESULTS
-========================= */
-
-hands.onResults(
-  (results) => {
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-
-    if (
-      !results.multiHandLandmarks ||
-      results.multiHandLandmarks.length === 0
-    ) {
-
-      status.textContent =
-        "Show your hand";
-
-      cube.visible = false;
-
-      return;
-    }
-
-
-    status.textContent =
-      "HAND TRACKING ACTIVE ✓";
-
-
-    const hand =
-      results.multiHandLandmarks[0];
-
-
-    /*
-      DRAW HAND
-    */
-
-    const converted =
-      hand.map(
-        getCameraCoordinates
-      );
-
-
-    ctx.strokeStyle =
-      "#00ffff";
-
-    ctx.lineWidth = 3;
-
-
-    for (
-      const connection
-      of HAND_CONNECTIONS
-    ) {
-
-      const start =
-        converted[
-          connection[0]
-        ];
-
-      const end =
-        converted[
-          connection[1]
-        ];
-
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        start.x,
-        start.y
-      );
-
-      ctx.lineTo(
-        end.x,
-        end.y
-      );
-
-      ctx.stroke();
-    }
-
-
-    /*
-      DRAW DOTS
-    */
-
-    ctx.fillStyle =
-      "#00ffff";
-
-
-    for (
-      const point
-      of converted
-    ) {
-
-      ctx.beginPath();
-
-      ctx.arc(
-        point.x,
-        point.y,
-        6,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-    }
-
-
-    /* =========================
-       PINCH DETECTION
-    ========================= */
-
-    const thumb =
-      hand[4];
-
-    const index =
-      hand[8];
-
-
-    const distance =
-      Math.hypot(
-        thumb.x - index.x,
-        thumb.y - index.y
-      );
-
-
-    if (distance < 0.06) {
-
-      status.textContent =
-        "PINCH — CUBE ACTIVE 🤏";
-
-
-      /*
-        Get fingertip position
-      */
-
-      const position =
-        getCameraCoordinates(
-          index
-        );
-
-
-      /*
-        Convert screen position
-        to Three.js position
-      */
-
-      const x =
-        (position.x /
-         window.innerWidth) * 2 - 1;
-
-
-      const y =
-        -(position.y /
-          window.innerHeight) * 2 + 1;
-
-
-      /*
-        Put cube in front
-        of the camera
-      */
-
-      cube.position.x =
-        x * 0.55;
-
-      cube.position.y =
-        y * 0.55;
-
-      cube.position.z =
-        0;
-
-
-      cube.visible = true;
-
-    } else {
-
-      cube.visible = false;
-
-    }
-
-  }
-);
-
-
-/* =========================
-   CAMERA
-========================= */
-
-const camera =
-  new Camera(
-    video,
-    {
-
-      onFrame: async () => {
-
-        await hands.send({
-          image: video
-        });
-
-      },
-
-      width: 1280,
-
-      height: 720
-
-    }
+===================================================== */
+
+hands.onResults((results) => {
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
   );
 
 
-camera.start();
+  if (
+    !results.multiHandLandmarks ||
+    results.multiHandLandmarks.length === 0
+  ) {
+
+    status.textContent =
+      "Show your hand";
+
+    cube.visible = false;
+
+    return;
+  }
+
+
+  const hand =
+    results.multiHandLandmarks[0];
+
+
+  status.textContent =
+    "HAND TRACKING ACTIVE ✓";
+
+
+  /* =================================================
+     DRAW HAND
+  ================================================= */
+
+  const points =
+    hand.map(screenPosition);
+
+
+  ctx.strokeStyle = "#00ffff";
+  ctx.lineWidth = 3;
+
+
+  for (
+    const connection of HAND_CONNECTIONS
+  ) {
+
+    const start =
+      points[connection[0]];
+
+    const end =
+      points[connection[1]];
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      start.x,
+      start.y
+    );
+
+    ctx.lineTo(
+      end.x,
+      end.y
+    );
+
+    ctx.stroke();
+  }
+
+
+  /* =================================================
+     DRAW DOTS
+  ================================================= */
+
+  ctx.fillStyle = "#00ffff";
+
+  for (
+    const point of points
+  ) {
+
+    ctx.beginPath();
+
+    ctx.arc(
+      point.x,
+      point.y,
+      5,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+  }
+
+
+  /* =================================================
+     PINCH
+  ================================================= */
+
+  const thumb =
+    hand[4];
+
+  const index =
+    hand[8];
+
+
+  const distance =
+    Math.hypot(
+      thumb.x - index.x,
+      thumb.y - index.y
+    );
+
+
+  if (distance < 0.065) {
+
+    status.textContent =
+      "PINCH DETECTED 🤏";
+
+
+    /*
+      Get index fingertip position.
+    */
+
+    const target =
+      screenPosition(index);
+
+
+    /*
+      Smooth the movement.
+    */
+
+    smoothX +=
+      (target.x - smoothX) *
+      smoothing;
+
+    smoothY +=
+      (target.y - smoothY) *
+      smoothing;
+
+
+    /*
+      Convert screen coordinates
+      to Three.js coordinates.
+    */
+
+    const x =
+      (smoothX /
+       window.innerWidth) * 2 - 1;
+
+
+    const y =
+      -(smoothY /
+        window.innerHeight) * 2 + 1;
+
+
+    cube.position.x =
+      x;
+
+    cube.position.y =
+      y;
+
+    cube.position.z =
+      0;
+
+
+    cube.visible = true;
+
+  } else {
+
+    cube.visible = false;
+  }
+
+});
+
+
+/* =====================================================
+   THREE.JS ANIMATION
+===================================================== */
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  if (cube.visible) {
+
+    cube.rotation.x += 0.025;
+    cube.rotation.y += 0.035;
+
+  }
+
+  renderer.render(
+    scene,
+    threeCamera
+  );
+}
+
+animate();
+
+
+/* =====================================================
+   START CAMERA
+===================================================== */
+
+async function startCamera() {
+
+  try {
+
+    status.textContent =
+      "Requesting camera...";
+
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+
+        video: {
+          facingMode: "user",
+          width: {
+            ideal: 1280
+          },
+          height: {
+            ideal: 720
+          }
+        },
+
+        audio: false
+
+      });
+
+
+    video.srcObject = stream;
+
+    await video.play();
+
+
+    status.textContent =
+      "Starting hand tracking...";
+
+
+    /*
+      Start MediaPipe camera processing.
+    */
+
+    const camera =
+      new Camera(
+        video,
+        {
+
+          onFrame: async () => {
+
+            await hands.send({
+              image: video
+            });
+
+          },
+
+          width: 1280,
+          height: 720
+
+        }
+      );
+
+
+    camera.start();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.textContent =
+      "Camera error: " +
+      error.message;
+
+  }
+
+}
+
+
+startCamera();
 
 </script>
 
