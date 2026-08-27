@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS AR</title>
+</head>
+
+<body>
+  <h1>JARVIS AR</h1>
+
+  <video id="camera" autoplay playsinline></video>
+
+  <p id="status">Starting camera...</p>
+
+  <script>
+    const video = document.getElementById("camera");
+    const status = document.getElementById("status");
+
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+
+        video.srcObject = stream;
+        status.textContent = "Camera working ✓";
+      } catch (error) {
+        status.textContent = "Camera error: " + error.message;
+      }
+    }
+
+    startCamera();
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: Arial;
+    }
+
+    #camera {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
+  </style>
+</body>
+</html>
