@@ -4,11 +4,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JARVIS AR</title>
 
+  <!-- MediaPipe -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
   <style>
+
     html, body {
       margin: 0;
       width: 100%;
@@ -18,42 +20,84 @@
       font-family: Arial, sans-serif;
     }
 
+    /* =========================
+       CAMERA
+    ========================= */
+
     #camera {
       position: fixed;
       inset: 0;
+
       width: 100%;
       height: 100%;
+
       object-fit: cover;
+
       transform: scaleX(-1);
+
+      z-index: 1;
     }
+
+
+    /* =========================
+       HAND DRAWING
+    ========================= */
 
     #output {
       position: fixed;
       inset: 0;
+
       width: 100%;
       height: 100%;
+
       pointer-events: none;
+
       z-index: 2;
     }
 
+
+    /* =========================
+       JARVIS HUD
+    ========================= */
+
     #hud {
       position: fixed;
+
       top: 15px;
       left: 15px;
+
       color: white;
-      background: rgba(0,0,0,.7);
-      padding: 12px;
+
+      background: rgba(0,0,0,0.72);
+
+      padding: 12px 15px;
+
       border-radius: 10px;
-      z-index: 20;
+
+      z-index: 30;
+
+      font-size: 16px;
+
+      line-height: 1.5;
     }
 
-    /* 3D CUBE */
+
+    /* =========================
+       CUBE CONTAINER
+       The container has NO size.
+       Its exact center is the
+       fingertip position.
+    ========================= */
 
     #cube-container {
+
       position: fixed;
 
-      width: 90px;
-      height: 90px;
+      left: 0;
+      top: 0;
+
+      width: 0;
+      height: 0;
 
       display: none;
 
@@ -61,26 +105,35 @@
 
       pointer-events: none;
 
-      transform:
-        translate(-50%, -50%);
+      perspective: 700px;
 
-      perspective: 600px;
       transform-style: preserve-3d;
     }
 
+
+    /* =========================
+       3D CUBE
+    ========================= */
+
     #cube {
-      width: 90px;
-      height: 90px;
 
       position: absolute;
+
+      left: -45px;
+      top: -45px;
+
+      width: 90px;
+      height: 90px;
 
       transform-style: preserve-3d;
 
       animation:
-        rotateCube 2s linear infinite;
+        rotateCube 2.5s linear infinite;
     }
 
+
     .face {
+
       position: absolute;
 
       width: 90px;
@@ -88,20 +141,22 @@
 
       box-sizing: border-box;
 
-      border: 2px solid cyan;
+      border: 3px solid cyan;
 
       background:
-        rgba(0,220,255,.22);
+        rgba(0,220,255,0.20);
 
       box-shadow:
-        inset 0 0 20px cyan,
+        inset 0 0 18px cyan,
         0 0 15px cyan;
     }
+
 
     .front {
       transform:
         translateZ(45px);
     }
+
 
     .back {
       transform:
@@ -109,11 +164,13 @@
         translateZ(45px);
     }
 
+
     .right {
       transform:
         rotateY(90deg)
         translateZ(45px);
     }
+
 
     .left {
       transform:
@@ -121,11 +178,13 @@
         translateZ(45px);
     }
 
+
     .top {
       transform:
         rotateX(90deg)
         translateZ(45px);
     }
+
 
     .bottom {
       transform:
@@ -133,46 +192,77 @@
         translateZ(45px);
     }
 
+
     @keyframes rotateCube {
 
-      from {
+      0% {
         transform:
           rotateX(0deg)
           rotateY(0deg);
       }
 
-      to {
+      100% {
         transform:
           rotateX(360deg)
           rotateY(360deg);
       }
 
     }
+
   </style>
 </head>
 
+
 <body>
 
-<video id="camera" autoplay playsinline></video>
+
+<!-- CAMERA -->
+
+<video
+  id="camera"
+  autoplay
+  playsinline>
+</video>
+
+
+<!-- HAND LANDMARKS -->
 
 <canvas id="output"></canvas>
 
+
+<!-- HUD -->
+
 <div id="hud">
+
   <b>JARVIS AR</b>
-  <div id="status">Starting camera...</div>
-  <div id="hands">Hands: 0</div>
+
+  <div id="status">
+    Starting camera...
+  </div>
+
+  <div id="hands">
+    Hands: 0
+  </div>
+
 </div>
 
+
+<!-- 3D CUBE -->
 
 <div id="cube-container">
 
   <div id="cube">
 
     <div class="face front"></div>
+
     <div class="face back"></div>
+
     <div class="face right"></div>
+
     <div class="face left"></div>
+
     <div class="face top"></div>
+
     <div class="face bottom"></div>
 
   </div>
@@ -181,6 +271,10 @@
 
 
 <script>
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
 
 const video =
   document.getElementById("camera");
@@ -201,9 +295,9 @@ const cubeContainer =
   document.getElementById("cube-container");
 
 
-/* =================================
-   CANVAS
-================================= */
+/* =====================================================
+   CANVAS SIZE
+===================================================== */
 
 function resizeCanvas() {
 
@@ -215,7 +309,9 @@ function resizeCanvas() {
 
 }
 
+
 resizeCanvas();
+
 
 window.addEventListener(
   "resize",
@@ -223,9 +319,9 @@ window.addEventListener(
 );
 
 
-/* =================================
-   CAMERA → SCREEN
-================================= */
+/* =====================================================
+   CAMERA COORDINATES
+===================================================== */
 
 function screenPosition(point) {
 
@@ -266,10 +362,12 @@ function screenPosition(point) {
   let offsetY = 0;
 
 
-  if (
-    screenRatio >
-    videoRatio
-  ) {
+  /*
+    This matches:
+    object-fit: cover
+  */
+
+  if (screenRatio > videoRatio) {
 
     displayWidth =
       sw;
@@ -278,8 +376,7 @@ function screenPosition(point) {
       sw / videoRatio;
 
     offsetY =
-      (sh -
-       displayHeight) / 2;
+      (sh - displayHeight) / 2;
 
   }
 
@@ -292,8 +389,7 @@ function screenPosition(point) {
       sh * videoRatio;
 
     offsetX =
-      (sw -
-       displayWidth) / 2;
+      (sw - displayWidth) / 2;
 
   }
 
@@ -311,7 +407,9 @@ function screenPosition(point) {
 
 
   /*
-    Mirror the front camera.
+    The camera image is mirrored.
+    Mirror the landmark horizontally
+    to match it.
   */
 
   x =
@@ -319,46 +417,61 @@ function screenPosition(point) {
 
 
   return {
-    x,
-    y
+    x: x,
+    y: y
   };
 
 }
 
 
-/* =================================
-   MEDIAPIPE
-================================= */
+/* =====================================================
+   MEDIAPIPE HANDS
+===================================================== */
 
 const hands =
   new Hands({
 
-    locateFile:
-      (file) => {
+    locateFile: (file) => {
 
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 
-      }
+    }
 
   });
 
 
 hands.setOptions({
 
+  /*
+    Detect BOTH hands.
+  */
+
   maxNumHands: 2,
 
-  modelComplexity: 1,
 
-  minDetectionConfidence: 0.65,
+  /*
+    0 is faster and better
+    for a Chromebook.
+  */
 
-  minTrackingConfidence: 0.65
+  modelComplexity: 0,
+
+
+  /*
+    Lower threshold makes
+    second-hand detection easier.
+  */
+
+  minDetectionConfidence: 0.50,
+
+  minTrackingConfidence: 0.50
 
 });
 
 
-/* =================================
+/* =====================================================
    CUBE SMOOTHING
-================================= */
+===================================================== */
 
 let cubeX =
   window.innerWidth / 2;
@@ -366,245 +479,312 @@ let cubeX =
 let cubeY =
   window.innerHeight / 2;
 
-const smoothing =
-  0.45;
+
+/*
+  Higher = follows faster.
+*/
+
+const smoothing = 0.65;
 
 
-/* =================================
+/* =====================================================
    HAND RESULTS
-================================= */
+===================================================== */
 
-hands.onResults(
-  (results) => {
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+hands.onResults((results) => {
 
 
-    const detectedHands =
-      results.multiHandLandmarks || [];
+  /* CLEAR OLD DRAWING */
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
 
-    handsDisplay.textContent =
-      "Hands: " +
-      detectedHands.length;
+  /*
+    Get every detected hand.
+  */
+
+  const detectedHands =
+    results.multiHandLandmarks || [];
 
 
-    if (
-      detectedHands.length === 0
-    ) {
+  /*
+    Show number of hands.
+  */
 
-      status.textContent =
-        "Show your hands";
+  handsDisplay.textContent =
+    "Hands: " +
+    detectedHands.length;
 
-      cubeContainer.style.display =
-        "none";
 
-      return;
+  /* =================================================
+     NO HANDS
+  ================================================= */
 
-    }
-
+  if (
+    detectedHands.length === 0
+  ) {
 
     status.textContent =
-      "HAND TRACKING ACTIVE ✓";
+      "Show your hands";
+
+    cubeContainer.style.display =
+      "none";
+
+    return;
+
+  }
 
 
-    let pinchingHand =
-      null;
+  /* =================================================
+     TRACKING
+  ================================================= */
+
+  status.textContent =
+    "HAND TRACKING ACTIVE ✓";
+
+
+  /*
+    This will contain whichever
+    hand is currently pinching.
+  */
+
+  let pinchingHand =
+    null;
+
+
+  /* =================================================
+     PROCESS EVERY HAND
+  ================================================= */
+
+  for (
+    let handIndex = 0;
+    handIndex < detectedHands.length;
+    handIndex++
+  ) {
+
+
+    const hand =
+      detectedHands[handIndex];
 
 
     /*
-      DRAW BOTH HANDS
+      Convert every landmark
+      to screen coordinates.
     */
 
+    const points =
+      hand.map(
+        screenPosition
+      );
+
+
+    /* ===============================================
+       DRAW CONNECTIONS
+    =============================================== */
+
+    ctx.strokeStyle =
+      "cyan";
+
+    ctx.lineWidth = 3;
+
+
     for (
-      const hand of detectedHands
+      const connection
+      of HAND_CONNECTIONS
     ) {
 
-      const points =
-        hand.map(
-          screenPosition
-        );
+      const start =
+        points[
+          connection[0]
+        ];
 
 
-      /*
-        Connections
-      */
-
-      ctx.strokeStyle =
-        "cyan";
-
-      ctx.lineWidth = 3;
+      const end =
+        points[
+          connection[1]
+        ];
 
 
-      for (
-        const connection
-        of HAND_CONNECTIONS
-      ) {
+      ctx.beginPath();
 
-        const start =
-          points[
-            connection[0]
-          ];
+      ctx.moveTo(
+        start.x,
+        start.y
+      );
 
-        const end =
-          points[
-            connection[1]
-          ];
+      ctx.lineTo(
+        end.x,
+        end.y
+      );
 
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-          start.x,
-          start.y
-        );
-
-        ctx.lineTo(
-          end.x,
-          end.y
-        );
-
-        ctx.stroke();
-
-      }
-
-
-      /*
-        Finger dots
-      */
-
-      ctx.fillStyle =
-        "cyan";
-
-
-      for (
-        const point
-        of points
-      ) {
-
-        ctx.beginPath();
-
-        ctx.arc(
-          point.x,
-          point.y,
-          5,
-          0,
-          Math.PI * 2
-        );
-
-        ctx.fill();
-
-      }
-
-
-      /*
-        Check this hand
-        for a pinch.
-      */
-
-      const thumb =
-        hand[4];
-
-      const index =
-        hand[8];
-
-
-      const distance =
-        Math.hypot(
-          thumb.x - index.x,
-          thumb.y - index.y
-        );
-
-
-      if (
-        distance < 0.065
-      ) {
-
-        pinchingHand =
-          hand;
-
-      }
+      ctx.stroke();
 
     }
 
 
-    /* =================================
-       PINCHING HAND CONTROLS CUBE
-    ================================= */
+    /* ===============================================
+       DRAW FINGER DOTS
+    =============================================== */
 
-    if (pinchingHand) {
-
-      status.textContent =
-        "PINCH — CUBE GRABBED 🤏";
+    ctx.fillStyle =
+      "cyan";
 
 
-      const index =
-        pinchingHand[8];
+    for (
+      const point
+      of points
+    ) {
 
+      ctx.beginPath();
 
-      const target =
-        screenPosition(
-          index
-        );
+      ctx.arc(
+        point.x,
+        point.y,
+        5,
+        0,
+        Math.PI * 2
+      );
 
-
-      /*
-        Smooth movement
-      */
-
-      cubeX +=
-        (target.x - cubeX) *
-        smoothing;
-
-      cubeY +=
-        (target.y - cubeY) *
-        smoothing;
-
-
-      /*
-        Center cube exactly
-        on fingertip.
-      */
-
-      cubeContainer.style.left =
-        cubeX + "px";
-
-      cubeContainer.style.top =
-        cubeY + "px";
-
-
-      cubeContainer.style.display =
-        "block";
+      ctx.fill();
 
     }
 
-    else {
 
-      cubeContainer.style.display =
-        "none";
+    /* ===============================================
+       PINCH DETECTION
+    =============================================== */
+
+    const thumb =
+      hand[4];
+
+
+    const index =
+      hand[8];
+
+
+    /*
+      Distance between thumb
+      and index fingertip.
+    */
+
+    const distance =
+      Math.hypot(
+        thumb.x - index.x,
+        thumb.y - index.y
+      );
+
+
+    /*
+      If this hand is pinching,
+      make it the cube controller.
+    */
+
+    if (
+      distance < 0.065
+    ) {
+
+      pinchingHand =
+        hand;
 
     }
 
   }
-);
 
 
-/* =================================
+  /* =================================================
+     CUBE CONTROL
+  ================================================= */
+
+  if (pinchingHand) {
+
+
+    status.textContent =
+      "PINCH — CUBE GRABBED 🤏";
+
+
+    /*
+      Index fingertip.
+    */
+
+    const index =
+      pinchingHand[8];
+
+
+    /*
+      Convert fingertip
+      to exact screen position.
+    */
+
+    const target =
+      screenPosition(
+        index
+      );
+
+
+    /*
+      Smooth movement.
+    */
+
+    cubeX +=
+      (target.x - cubeX) *
+      smoothing;
+
+
+    cubeY +=
+      (target.y - cubeY) *
+      smoothing;
+
+
+    /*
+      Put the ZERO-SIZE container
+      directly at the fingertip.
+    */
+
+    cubeContainer.style.left =
+      cubeX + "px";
+
+
+    cubeContainer.style.top =
+      cubeY + "px";
+
+
+    cubeContainer.style.display =
+      "block";
+
+
+  }
+
+  else {
+
+    cubeContainer.style.display =
+      "none";
+
+  }
+
+});
+
+
+/* =====================================================
    START CAMERA
-================================= */
+===================================================== */
 
 async function startCamera() {
 
   try {
 
+
     status.textContent =
       "Requesting camera...";
 
+
+    /*
+      Start camera.
+    */
 
     const stream =
       await navigator.mediaDevices
@@ -614,12 +794,23 @@ async function startCamera() {
 
           facingMode: "user",
 
+          /*
+            720p is enough for
+            hand tracking and
+            easier on Chromebook.
+          */
+
           width: {
             ideal: 1280
           },
 
           height: {
             ideal: 720
+          },
+
+          frameRate: {
+            ideal: 30,
+            max: 30
           }
 
         },
@@ -640,6 +831,10 @@ async function startCamera() {
       "Starting hand tracking...";
 
 
+    /*
+      MediaPipe camera loop.
+    */
+
     const camera =
       new Camera(
         video,
@@ -653,6 +848,7 @@ async function startCamera() {
               });
 
             },
+
 
           width: 1280,
 
@@ -669,7 +865,9 @@ async function startCamera() {
 
   catch (error) {
 
+
     console.error(error);
+
 
     status.textContent =
       "Camera error: " +
@@ -679,6 +877,10 @@ async function startCamera() {
 
 }
 
+
+/* =====================================================
+   START EVERYTHING
+===================================================== */
 
 startCamera();
 
