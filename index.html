@@ -4,6 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JARVIS AR</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
@@ -107,6 +108,66 @@ const ctx = canvas.getContext("2d");
 
 const status = document.getElementById("status");
 const cube = document.getElementById("cube");
+  const scene = new THREE.Scene();
+
+const threeCamera = new THREE.PerspectiveCamera(
+  70,
+  window.innerWidth / window.innerHeight,
+  0.01,
+  100
+);
+
+const renderer = new THREE.WebGLRenderer({
+  alpha: true,
+  antialias: true
+});
+
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+
+renderer.domElement.style.position = "fixed";
+renderer.domElement.style.left = "0";
+renderer.domElement.style.top = "0";
+renderer.domElement.style.zIndex = "4";
+renderer.domElement.style.pointerEvents = "none";
+
+document.body.appendChild(renderer.domElement);
+
+
+const geometry =
+  new THREE.BoxGeometry(0.12, 0.12, 0.12);
+
+const material =
+  new THREE.MeshNormalMaterial();
+
+const cube3D =
+  new THREE.Mesh(
+    geometry,
+    material
+  );
+
+cube3D.visible = false;
+
+scene.add(cube3D);
+
+
+function animate3D() {
+
+  requestAnimationFrame(animate3D);
+
+  cube3D.rotation.x += 0.01;
+  cube3D.rotation.y += 0.015;
+
+  renderer.render(
+    scene,
+    threeCamera
+  );
+
+}
+
+animate3D();
 
 const hands = new Hands({
   locateFile: (file) => {
