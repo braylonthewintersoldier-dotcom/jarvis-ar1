@@ -74,7 +74,6 @@ html,body{
   transform:
     rotateX(-20deg)
     rotateY(30deg);
-  transition:none;
 }
 
 .face{
@@ -386,19 +385,11 @@ let startRotation =
 
 
 /*
-  NEW:
-  Starting vertical difference
-  between the two fingertips.
+   NEW STABLE TILT CONTROL
 */
 
-let startVerticalDifference =
+let startAverageY =
   0;
-
-
-/*
-  NEW:
-  Starting X rotation.
-*/
 
 let startRotX =
   0;
@@ -503,8 +494,10 @@ hands.onResults((results)=>{
     canvas.height
   );
 
+
   const detected =
     results.multiHandLandmarks || [];
+
 
   handsText.textContent =
     "Hands: "+
@@ -524,10 +517,12 @@ hands.onResults((results)=>{
         screenPosition
       );
 
+
     ctx.strokeStyle =
       "#00eaff";
 
     ctx.lineWidth=3;
+
 
     for(
       const connection
@@ -543,6 +538,7 @@ hands.onResults((results)=>{
         points[
           connection[1]
         ];
+
 
       ctx.beginPath();
 
@@ -560,8 +556,10 @@ hands.onResults((results)=>{
 
     }
 
+
     ctx.fillStyle =
       "#00eaff";
+
 
     for(
       const p of points
@@ -590,6 +588,7 @@ hands.onResults((results)=>{
 
   let pinching=[];
 
+
   for(
     let i=0;
     i<detected.length;
@@ -610,7 +609,7 @@ hands.onResults((results)=>{
 
 
   /* ===============================================
-     TWO-HAND CONTROL
+     TWO HAND CONTROL
   =============================================== */
 
   if(
@@ -624,6 +623,7 @@ hands.onResults((results)=>{
           pinching[0]
         ][8]
       );
+
 
     const p2 =
       screenPosition(
@@ -648,15 +648,19 @@ hands.onResults((results)=>{
 
 
     /*
-      Vertical distance between hands.
+      Average vertical position
+      of both hands.
     */
 
-    const verticalDifference =
-      p2.y-p1.y;
+    const averageY =
+      (
+        p1.y+
+        p2.y
+      )/2;
 
 
     /* =============================================
-       START TWO-HAND MODE
+       START TWO HAND MODE
     ============================================= */
 
     if(!twoHandMode){
@@ -676,17 +680,8 @@ hands.onResults((results)=>{
         rotZ;
 
 
-      /*
-        Save starting vertical position.
-      */
-
-      startVerticalDifference =
-        verticalDifference;
-
-
-      /*
-        Save current X rotation.
-      */
+      startAverageY =
+        averageY;
 
       startRotX =
         rotX;
@@ -722,7 +717,7 @@ hands.onResults((results)=>{
 
 
     /* =============================================
-       ROTATE LEFT / RIGHT
+       LEFT / RIGHT ROTATION
     ============================================= */
 
     rotZ =
@@ -734,45 +729,44 @@ hands.onResults((results)=>{
 
 
     /* =============================================
-       ROTATE FORWARD / BACKWARD
+       FORWARD / BACKWARD TILT
     ============================================= */
 
     const verticalMovement =
-      verticalDifference-
-      startVerticalDifference;
+      averageY-
+      startAverageY;
 
 
     /*
-      Convert hand movement
-      into X rotation.
+      Move both hands UP
+      = cube tilts one direction.
 
-      Move hands vertically
-      relative to each other
-      to tilt the cube.
+      Move both hands DOWN
+      = cube tilts the other direction.
     */
 
     rotX =
       startRotX+
       verticalMovement*
-      220;
+      100;
 
 
     /*
-      Prevent extreme rotation.
+      Keep the rotation controlled.
     */
 
     rotX =
       Math.max(
-        -90,
+        -75,
         Math.min(
-          90,
+          75,
           rotX
         )
       );
 
 
     /* =============================================
-       MOVE
+       MOVE CUBE
     ============================================= */
 
     cubeX =
@@ -789,7 +783,7 @@ hands.onResults((results)=>{
       "Mode: TWO HAND";
 
     status.textContent =
-      "MOVE • ROTATE • RESIZE";
+      "MOVE • TILT • ROTATE • RESIZE";
 
 
     updateCube();
@@ -807,7 +801,7 @@ hands.onResults((results)=>{
 
 
   /* ===============================================
-     CURRENT GRAB
+     CURRENT ONE-HAND GRAB
   =============================================== */
 
   if(
