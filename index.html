@@ -89,6 +89,8 @@ html,body{
   font-weight:bold;
 
   font-size:14px;
+
+  cursor:pointer;
 }
 
 #cameraButton:disabled{
@@ -260,13 +262,13 @@ html,body{
   </div>
 
   <div id="cameraMode">
-    Camera: BACK
+    Camera: FRONT
   </div>
 
 </div>
 
 <button id="cameraButton">
-  SWITCH TO FRONT
+  SWITCH TO BACK
 </button>
 
 <div id="grabRing"></div>
@@ -335,7 +337,11 @@ const grabRing =
    CAMERA STATE
 ===================================================== */
 
-let usingFrontCamera = false;
+/*
+  FRONT CAMERA IS THE PRIORITY.
+*/
+
+let usingFrontCamera = true;
 
 let currentStream = null;
 
@@ -396,60 +402,62 @@ function screenPosition(point){
 
 
   const videoRatio =
-    vw / vh;
+    vw/vh;
 
   const screenRatio =
-    sw / sh;
+    sw/sh;
 
 
   let width;
   let height;
 
-  let offsetX = 0;
-  let offsetY = 0;
+  let offsetX=0;
+  let offsetY=0;
 
 
-  if(screenRatio > videoRatio){
+  if(screenRatio>videoRatio){
 
-    width = sw;
+    width=sw;
 
-    height =
-      sw / videoRatio;
+    height=
+      sw/videoRatio;
 
-    offsetY =
+    offsetY=
       (sh-height)/2;
 
   }
 
   else{
 
-    height = sh;
+    height=sh;
 
-    width =
-      sh * videoRatio;
+    width=
+      sh*videoRatio;
 
-    offsetX =
+    offsetX=
       (sw-width)/2;
 
   }
 
 
   let x =
-    point.x * width +
+    point.x*width+
     offsetX;
 
   let y =
-    point.y * height +
+    point.y*height+
     offsetY;
 
 
   /*
-    Only mirror the front camera.
+    MediaPipe is not affected by CSS.
+
+    Mirror only the front camera.
   */
 
   if(usingFrontCamera){
 
-    x =
+    x=
       sw-x;
 
   }
@@ -496,71 +504,71 @@ hands.setOptions({
    CUBE STATE
 ===================================================== */
 
-let cubeExists = false;
+let cubeExists=false;
 
-let cubeX =
+let cubeX=
   window.innerWidth/2;
 
-let cubeY =
+let cubeY=
   window.innerHeight/2;
 
-let cubeScale = 1;
+let cubeScale=1;
 
-let rotX = -20;
+let rotX=-20;
 
-let rotY = 30;
+let rotY=30;
 
-let rotZ = 0;
+let rotZ=0;
 
 
 /* =====================================================
    GRAB STATE
 ===================================================== */
 
-let grabbed = false;
+let grabbed=false;
 
-let grabX = 0;
+let grabX=0;
 
-let grabY = 0;
+let grabY=0;
 
-let grabOffsetX = 0;
+let grabOffsetX=0;
 
-let grabOffsetY = 0;
+let grabOffsetY=0;
 
 
 /* =====================================================
    TWO HAND STATE
 ===================================================== */
 
-let twoHandMode = false;
+let twoHandMode=false;
 
-let twoStartDistance = 1;
+let twoStartDistance=1;
 
-let twoStartScale = 1;
+let twoStartScale=1;
 
-let twoStartAngle = 0;
+let twoStartAngle=0;
 
-let twoStartRotZ = 0;
+let twoStartRotZ=0;
 
-let twoStartCenterY = 0;
+let twoStartCenterY=0;
 
-let twoStartRotX = 0;
+let twoStartRotX=0;
 
 
 /* =====================================================
-   PINCH
+   PINCH DETECTION
 ===================================================== */
 
 function isPinching(hand){
 
-  const thumb =
+  const thumb=
     hand[4];
 
-  const index =
+  const index=
     hand[8];
 
 
-  const distance =
+  const distance=
     Math.hypot(
 
       thumb.x-index.x,
@@ -570,7 +578,7 @@ function isPinching(hand){
     );
 
 
-  return distance < .055;
+  return distance<.055;
 
 }
 
@@ -581,14 +589,14 @@ function isPinching(hand){
 
 function updateCube(){
 
-  cubeContainer.style.left =
+  cubeContainer.style.left=
     cubeX+"px";
 
-  cubeContainer.style.top =
+  cubeContainer.style.top=
     cubeY+"px";
 
 
-  cube.style.transform =
+  cube.style.transform=
   `
     scale(${cubeScale})
     rotateX(${rotX}deg)
@@ -597,17 +605,17 @@ function updateCube(){
   `;
 
 
-  cubeContainer.style.display =
+  cubeContainer.style.display=
     "block";
 
 
-  centerDot.style.display =
+  centerDot.style.display=
     "block";
 
-  centerDot.style.left =
+  centerDot.style.left=
     cubeX+"px";
 
-  centerDot.style.top =
+  centerDot.style.top=
     cubeY+"px";
 
 }
@@ -619,13 +627,13 @@ function updateCube(){
 
 function showRing(x,y){
 
-  grabRing.style.display =
+  grabRing.style.display=
     "block";
 
-  grabRing.style.left =
+  grabRing.style.left=
     x+"px";
 
-  grabRing.style.top =
+  grabRing.style.top=
     y+"px";
 
 }
@@ -633,21 +641,21 @@ function showRing(x,y){
 
 function hideRing(){
 
-  grabRing.style.display =
+  grabRing.style.display=
     "none";
 
 }
 
 
 /* =====================================================
-   FIND PINCHING HANDS
+   PINCHING HANDS
 ===================================================== */
 
 function getPinchingHands(
   detected
 ){
 
-  const list = [];
+  const list=[];
 
 
   for(
@@ -696,11 +704,11 @@ hands.onResults(
   );
 
 
-  const detected =
+  const detected=
     results.multiHandLandmarks || [];
 
 
-  handsText.textContent =
+  handsText.textContent=
     "Hands: "+
     detected.length;
 
@@ -713,16 +721,16 @@ hands.onResults(
     const hand of detected
   ){
 
-    const points =
+    const points=
       hand.map(
         screenPosition
       );
 
 
-    ctx.strokeStyle =
+    ctx.strokeStyle=
       "#00eaff";
 
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth=2.5;
 
 
     for(
@@ -730,12 +738,12 @@ hands.onResults(
       of HAND_CONNECTIONS
     ){
 
-      const a =
+      const a=
         points[
           connection[0]
         ];
 
-      const b =
+      const b=
         points[
           connection[1]
         ];
@@ -758,7 +766,7 @@ hands.onResults(
     }
 
 
-    ctx.fillStyle =
+    ctx.fillStyle=
       "#00eaff";
 
 
@@ -783,22 +791,22 @@ hands.onResults(
   }
 
 
-  const pinching =
+  const pinching=
     getPinchingHands(
       detected
     );
 
 
   /* =================================================
-     TWO-HAND CONTROL
+     TWO HAND CONTROL
   ================================================= */
 
   if(
     cubeExists &&
-    pinching.length === 2
+    pinching.length===2
   ){
 
-    const p1 =
+    const p1=
       screenPosition(
         detected[
           pinching[0]
@@ -806,7 +814,7 @@ hands.onResults(
       );
 
 
-    const p2 =
+    const p2=
       screenPosition(
         detected[
           pinching[1]
@@ -814,31 +822,31 @@ hands.onResults(
       );
 
 
-    const dx =
+    const dx=
       p2.x-p1.x;
 
-    const dy =
+    const dy=
       p2.y-p1.y;
 
 
-    const distance =
+    const distance=
       Math.hypot(
         dx,
         dy
       );
 
 
-    const angle =
+    const angle=
       Math.atan2(
         dy,
         dx
       );
 
 
-    const centerX =
+    const centerX=
       (p1.x+p2.x)/2;
 
-    const centerY =
+    const centerY=
       (p1.y+p2.y)/2;
 
 
@@ -848,25 +856,31 @@ hands.onResults(
 
       grabbed=true;
 
-      twoStartDistance =
+
+      twoStartDistance=
         Math.max(
           distance,
           10
         );
 
-      twoStartScale =
+
+      twoStartScale=
         cubeScale;
 
-      twoStartAngle =
+
+      twoStartAngle=
         angle;
 
-      twoStartRotZ =
+
+      twoStartRotZ=
         rotZ;
 
-      twoStartCenterY =
+
+      twoStartCenterY=
         centerY;
 
-      twoStartRotX =
+
+      twoStartRotX=
         rotX;
 
     }
@@ -874,15 +888,15 @@ hands.onResults(
 
     /* SCALE */
 
-    let targetScale =
-      twoStartScale *
+    let targetScale=
+      twoStartScale*
       (
         distance/
         twoStartDistance
       );
 
 
-    targetScale =
+    targetScale=
       Math.max(
         .4,
         Math.min(
@@ -892,20 +906,20 @@ hands.onResults(
       );
 
 
-    cubeScale +=
+    cubeScale+=
       (
         targetScale-
         cubeScale
       )*.25;
 
 
-    /* ROTATE */
+    /* ROTATE Z */
 
-    let angleChange =
+    let angleChange=
       (
         angle-
         twoStartAngle
-      ) *
+      )*
       180/Math.PI;
 
 
@@ -927,12 +941,12 @@ hands.onResults(
     }
 
 
-    const targetRotZ =
+    const targetRotZ=
       twoStartRotZ+
       angleChange;
 
 
-    rotZ +=
+    rotZ+=
       (
         targetRotZ-
         rotZ
@@ -941,17 +955,17 @@ hands.onResults(
 
     /* TILT FORWARD / BACK */
 
-    const vertical =
+    const vertical=
       centerY-
       twoStartCenterY;
 
 
-    let targetRotX =
+    let targetRotX=
       twoStartRotX+
       vertical*.8;
 
 
-    targetRotX =
+    targetRotX=
       Math.max(
         -80,
         Math.min(
@@ -961,7 +975,7 @@ hands.onResults(
       );
 
 
-    rotX +=
+    rotX+=
       (
         targetRotX-
         rotX
@@ -970,17 +984,17 @@ hands.onResults(
 
     /* MOVE */
 
-    cubeX =
+    cubeX=
       centerX;
 
-    cubeY =
+    cubeY=
       centerY;
 
 
-    modeText.textContent =
+    modeText.textContent=
       "Mode: TWO HAND";
 
-    status.textContent =
+    status.textContent=
       "MOVE • TWIST • TILT • RESIZE";
 
 
@@ -1004,9 +1018,9 @@ hands.onResults(
 
   if(grabbed){
 
-    let best = -1;
+    let best=-1;
 
-    let bestDistance =
+    let bestDistance=
       Infinity;
 
 
@@ -1027,13 +1041,13 @@ hands.onResults(
       }
 
 
-      const fingertip =
+      const fingertip=
         screenPosition(
           detected[i][8]
         );
 
 
-      const d =
+      const d=
         Math.hypot(
 
           fingertip.x-grabX,
@@ -1061,26 +1075,26 @@ hands.onResults(
       bestDistance<180
     ){
 
-      const fingertip =
+      const fingertip=
         screenPosition(
           detected[best][8]
         );
 
 
-      cubeX =
+      cubeX=
         fingertip.x+
         grabOffsetX;
 
 
-      cubeY =
+      cubeY=
         fingertip.y+
         grabOffsetY;
 
 
-      grabX =
+      grabX=
         fingertip.x;
 
-      grabY =
+      grabY=
         fingertip.y;
 
 
@@ -1090,10 +1104,10 @@ hands.onResults(
       );
 
 
-      modeText.textContent =
+      modeText.textContent=
         "Mode: GRABBED";
 
-      status.textContent =
+      status.textContent=
         "CUBE IN HAND 🤏";
 
 
@@ -1111,10 +1125,10 @@ hands.onResults(
     hideRing();
 
 
-    modeText.textContent =
+    modeText.textContent=
       "Mode: PLACED";
 
-    status.textContent =
+    status.textContent=
       "CUBE RELEASED";
 
 
@@ -1132,9 +1146,9 @@ hands.onResults(
     pinching.length>0
   ){
 
-    let closest = -1;
+    let closest=-1;
 
-    let closestDistance =
+    let closestDistance=
       Infinity;
 
 
@@ -1142,13 +1156,13 @@ hands.onResults(
       const i of pinching
     ){
 
-      const fingertip =
+      const fingertip=
         screenPosition(
           detected[i][8]
         );
 
 
-      const d =
+      const d=
         Math.hypot(
 
           fingertip.x-cubeX,
@@ -1177,7 +1191,7 @@ hands.onResults(
       110*cubeScale
     ){
 
-      const fingertip =
+      const fingertip=
         screenPosition(
           detected[closest][8]
         );
@@ -1186,18 +1200,18 @@ hands.onResults(
       grabbed=true;
 
 
-      grabX =
+      grabX=
         fingertip.x;
 
-      grabY =
+      grabY=
         fingertip.y;
 
 
-      grabOffsetX =
+      grabOffsetX=
         cubeX-
         fingertip.x;
 
-      grabOffsetY =
+      grabOffsetY=
         cubeY-
         fingertip.y;
 
@@ -1208,10 +1222,10 @@ hands.onResults(
       );
 
 
-      modeText.textContent =
+      modeText.textContent=
         "Mode: GRABBED";
 
-      status.textContent =
+      status.textContent=
         "CUBE GRABBED 🤏";
 
 
@@ -1225,7 +1239,7 @@ hands.onResults(
 
 
   /* =================================================
-     CREATE FIRST CUBE
+     CREATE CUBE
   ================================================= */
 
   if(
@@ -1233,7 +1247,7 @@ hands.onResults(
     pinching.length>0
   ){
 
-    const fingertip =
+    const fingertip=
       screenPosition(
         detected[
           pinching[0]
@@ -1241,10 +1255,10 @@ hands.onResults(
       );
 
 
-    cubeX =
+    cubeX=
       fingertip.x;
 
-    cubeY =
+    cubeY=
       fingertip.y;
 
 
@@ -1262,10 +1276,10 @@ hands.onResults(
     grabbed=true;
 
 
-    grabX =
+    grabX=
       fingertip.x;
 
-    grabY =
+    grabY=
       fingertip.y;
 
 
@@ -1280,10 +1294,10 @@ hands.onResults(
     );
 
 
-    modeText.textContent =
+    modeText.textContent=
       "Mode: GRABBED";
 
-    status.textContent =
+    status.textContent=
       "CUBE CREATED 🤏";
 
 
@@ -1302,17 +1316,17 @@ hands.onResults(
 
     updateCube();
 
-    modeText.textContent =
+    modeText.textContent=
       "Mode: PLACED";
 
-    status.textContent =
+    status.textContent=
       "PINCH THE CUBE TO GRAB";
 
   }
 
   else{
 
-    status.textContent =
+    status.textContent=
       detected.length
       ?
       "PINCH TO CREATE CUBE"
@@ -1365,32 +1379,26 @@ async function startCamera(){
 
   try{
 
-    status.textContent =
+    status.textContent=
       usingFrontCamera
       ?
-      "Starting front camera..."
+      "Starting FRONT camera..."
       :
-      "Starting back camera...";
+      "Starting BACK camera...";
 
-
-    /*
-      First try the requested camera.
-
-      Phones:
-      environment = rear
-      user = front
-
-      Computers:
-      browser may simply use the
-      available webcam.
-    */
 
     let stream;
 
 
+    /*
+      FIRST ATTEMPT
+
+      Ask for the camera we actually want.
+    */
+
     try{
 
-      stream =
+      stream=
         await navigator
         .mediaDevices
         .getUserMedia({
@@ -1426,19 +1434,24 @@ async function startCamera(){
     catch(firstError){
 
       console.log(
-        "Requested camera unavailable. Using fallback.",
+        "Requested camera unavailable.",
         firstError
       );
 
 
       /*
-        COMPUTER / FALLBACK
+        SAFE FALLBACK
 
-        Use whatever video camera
-        the browser can provide.
+        If the requested camera doesn't
+        exist, use any available webcam.
+
+        This prevents the computer from
+        failing just because it doesn't
+        have a front/rear camera matching
+        the request.
       */
 
-      stream =
+      stream=
         await navigator
         .mediaDevices
         .getUserMedia({
@@ -1452,16 +1465,16 @@ async function startCamera(){
     }
 
 
-    currentStream =
+    currentStream=
       stream;
 
 
-    video.srcObject =
+    video.srcObject=
       stream;
 
 
     /*
-      Set mirroring BEFORE playback.
+      Mirror only the front camera.
     */
 
     video.classList.remove(
@@ -1494,10 +1507,11 @@ async function startCamera(){
 
 
     /*
-      Get actual camera information.
+      Show actual camera information
+      in the browser console.
     */
 
-    const track =
+    const track=
       stream
       .getVideoTracks()[0];
 
@@ -1508,7 +1522,7 @@ async function startCamera(){
     );
 
 
-    cameraModeText.textContent =
+    cameraModeText.textContent=
       usingFrontCamera
       ?
       "Camera: FRONT"
@@ -1516,7 +1530,7 @@ async function startCamera(){
       "Camera: BACK";
 
 
-    cameraButton.textContent =
+    cameraButton.textContent=
       usingFrontCamera
       ?
       "SWITCH TO BACK"
@@ -1524,13 +1538,9 @@ async function startCamera(){
       "SWITCH TO FRONT";
 
 
-    status.textContent =
+    status.textContent=
       "Hand tracking active";
 
-
-    /*
-      Start frame processing.
-    */
 
     requestAnimationFrame(
       processFrame
@@ -1541,6 +1551,7 @@ async function startCamera(){
   catch(error){
 
     console.error(
+      "CAMERA ERROR:",
       error
     );
 
@@ -1548,7 +1559,7 @@ async function startCamera(){
     cameraReady=false;
 
 
-    status.textContent =
+    status.textContent=
       "Camera error: "+
       error.message;
 
@@ -1626,7 +1637,7 @@ cameraButton.addEventListener(
     cameraButton.disabled=true;
 
 
-    usingFrontCamera =
+    usingFrontCamera=
       !usingFrontCamera;
 
 
@@ -1644,14 +1655,14 @@ cameraButton.addEventListener(
 ===================================================== */
 
 /*
-  Always begin with the BACK camera.
+  FRONT CAMERA IS THE DEFAULT.
 
-  If the device doesn't have a rear camera,
-  the fallback automatically uses its
-  available webcam.
+  If the device doesn't support it,
+  the fallback automatically uses
+  an available camera.
 */
 
-usingFrontCamera=false;
+usingFrontCamera=true;
 
 startCamera();
 
