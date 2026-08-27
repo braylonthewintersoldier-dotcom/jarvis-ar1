@@ -9,143 +9,202 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
   <style>
-    body {
+    html, body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: black;
-      color: white;
-      font-family: Arial;
-      text-align: center;
+      font-family: Arial, sans-serif;
     }
-#cube {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 100px;
-  color: cyan;
-  display: none;
-  z-index: 20;
-}
+
     #camera {
       width: 100%;
-      max-width: 900px;
+      height: 100%;
+      object-fit: cover;
+      position: fixed;
+      inset: 0;
     }
 
     #output {
-      position: absolute;
-      left: 0;
-      top: 0;
+      position: fixed;
+      inset: 0;
       width: 100%;
+      height: 100%;
       pointer-events: none;
     }
 
-    #status {
+    #hud {
       position: fixed;
       top: 15px;
       left: 15px;
-      background: rgba(0,0,0,.7);
-      padding: 10px;
+      color: white;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 12px;
+      border-radius: 10px;
       z-index: 10;
+      font-size: 16px;
+    }
+
+    #cube {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 100px;
+      color: cyan;
+      display: none;
+      z-index: 20;
+      pointer-events: none;
+      text-shadow:
+        0 0 10px cyan,
+        0 0 25px cyan;
     }
   </style>
 </head>
 
 <body>
 
-<div id="status">Loading hand tracking...</div>
-<div id="cube">◆</div>
+  <video id="camera" autoplay playsinline></video>
 
-<video id="camera" autoplay playsinline></video>
-<canvas id="output"></canvas>
+  <canvas id="output"></canvas>
 
-<script>
-const video = document.getElementById("camera");
-const canvas = document.getElementById("output");
-const ctx = canvas.getContext("2d");
-const status = document.getElementById("status");
-const cube = document.getElementById("cube");
-  
-const hands = new Hands({
-  locateFile: (file) => {
-    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  }
-});
+  <div id="hud">
+    <div><b>JARVIS AR</b></div>
+    <div id="status">Loading hand tracking...</div>
+  </div>
 
-hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.5,
-  minTrackingConfidence: 0.5
-});
+  <div id="cube">◆</div>
 
-hands.onResults((results) => {
+  <script>
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("output");
+    const ctx = canvas.getContext("2d");
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const status = document.getElementById("status");
+    const cube = document.getElementById("cube");
 
-  if (results.multiHandLandmarks) {
+    const hands = new Hands({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+      }
+    });
 
-   const hand = results.multiHandLandmarks[0];
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
 
-if (hand) {
-  const thumb = hand[4];
-  const index = hand[8];
+    hands.onResults((results) => {
 
-  const distance = Math.hypot(
-    thumb.x - index.x,
-    thumb.y - index.y
-  );
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-  if (distance < 0.06) {
-    status.textContent = "PINCH DETECTED 🤏";
-    cube.style.display = "block";
-  } else {
-    status.textContent = "HAND TRACKING ACTIVE ✓";
-    cube.style.display = "none";
-  }
-}
-    status.textContent = "HAND TRACKING ACTIVE ✓";
-
-    for (const landmarks of results.multiHandLandmarks) {
-
-      drawConnectors(
-        ctx,
-        landmarks,
-        HAND_CONNECTIONS,
-        {
-          color: "#00ffff",
-          lineWidth: 3
-        }
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
       );
 
-      drawLandmarks(
-        ctx,
-        landmarks,
-        {
-          color: "#00ffff",
-          lineWidth: 2,
-          radius: 5
-        }
+      if (!results.multiHandLandmarks ||
+          results.multiHandLandmarks.length === 0) {
+
+        status.textContent = "Show your hand";
+        cube.style.display = "none";
+
+        return;
+      }
+
+      status.textContent = "HAND TRACKING ACTIVE ✓";
+
+      const hand = results.multiHandLandmarks[0];
+
+      /*
+        PINCH DETECTION
+        Landmark 4 = thumb tip
+        Landmark 8 = index fingertip
+      */
+
+      const thumb = hand[4];
+      const index = hand[8];
+
+      const distance = Math.hypot(
+        thumb.x - index.x,
+        thumb.y - index.y
       );
-    }
 
-  } else {
-    status.textContent = "Show your hand";
-  }
-});
+      if (distance < 0.06) {
 
-const camera = new Camera(video, {
-  onFrame: async () => {
-    await hands.send({image: video});
-  },
-  width: 1280,
-  height: 720
-});
+        status.textContent = "PINCH DETECTED 🤏";
 
-camera.start();
-</script>
+        cube.style.display = "block";
+
+        cube.style.left =
+          `${index.x * 100}%`;
+
+        cube.style.top =
+          `${index.y * 100}%`;
+
+      } else {
+
+        cube.style.display = "none";
+
+      }
+
+      /*
+        DRAW HAND
+      */
+
+      for (const landmarks of results.multiHandLandmarks) {
+
+        drawConnectors(
+          ctx,
+          landmarks,
+          HAND_CONNECTIONS,
+          {
+            color: "#00ffff",
+            lineWidth: 3
+          }
+        );
+
+        drawLandmarks(
+          ctx,
+          landmarks,
+          {
+            color: "#00ffff",
+            lineWidth: 2,
+            radius: 5
+          }
+        );
+
+      }
+
+    });
+
+    /*
+      CAMERA
+    */
+
+    const camera = new Camera(video, {
+
+      onFrame: async () => {
+        await hands.send({
+          image: video
+        });
+      },
+
+      width: 1280,
+      height: 720
+
+    });
+
+    camera.start();
+
+  </script>
 
 </body>
 </html>
