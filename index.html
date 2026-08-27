@@ -10,7 +10,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
 <style>
-
 html,body{
   margin:0;
   width:100%;
@@ -45,238 +44,138 @@ html,body{
   left:15px;
   z-index:50;
   color:#00eaff;
-  background:rgba(0,10,20,.75);
-  border:1px solid rgba(0,220,255,.6);
+  background:rgba(0,0,0,.75);
+  border:1px solid #00eaff;
   border-radius:10px;
-  padding:14px 18px;
-  box-shadow:
-    0 0 15px rgba(0,220,255,.3),
-    inset 0 0 15px rgba(0,220,255,.1);
-  font-size:15px;
-  line-height:1.6;
+  padding:12px 16px;
+  line-height:1.5;
 }
 
-#title{
-  font-size:20px;
-  font-weight:bold;
-  letter-spacing:2px;
-}
+/* =========================
+   CUBE POSITION
+========================= */
 
-#status{
-  color:white;
-}
-
-#hands{
-  color:#00eaff;
-}
-
-
-/* =====================================
-   HOLOGRAM STAGE
-===================================== */
-
-#holo{
+#cube-container{
   position:fixed;
-  left:0;
-  top:0;
+  left:50%;
+  top:50%;
 
   width:0;
   height:0;
 
   display:none;
 
-  z-index:20;
+  z-index:10;
 
-  perspective:900px;
+  perspective:800px;
   transform-style:preserve-3d;
 
   pointer-events:none;
 }
 
+/* =========================
+   CUBE
+========================= */
 
-/* =====================================
-   HOLOGRAM OBJECT
-===================================== */
-
-#object{
+#cube{
   position:absolute;
 
-  left:-55px;
-  top:-55px;
+  width:100px;
+  height:100px;
 
-  width:110px;
-  height:110px;
+  left:-50px;
+  top:-50px;
 
   transform-style:preserve-3d;
 
-  animation:
-    hologramFloat 2.5s ease-in-out infinite;
+  transform:
+    rotateX(-20deg)
+    rotateY(30deg);
 
-  filter:
-    drop-shadow(0 0 12px cyan);
+  transition:none;
 }
 
-
-/* =====================================
-   CUBE
-===================================== */
+/* =========================
+   FACES
+========================= */
 
 .face{
   position:absolute;
 
-  width:110px;
-  height:110px;
+  width:100px;
+  height:100px;
 
   box-sizing:border-box;
 
-  border:2px solid #00eaff;
+  border:3px solid #00eaff;
 
-  background:
-    rgba(0,220,255,.12);
+  background:rgba(0,220,255,.18);
 
   box-shadow:
-    inset 0 0 25px rgba(0,230,255,.7),
-    0 0 18px rgba(0,230,255,.8);
+    inset 0 0 20px #00eaff,
+    0 0 15px #00eaff;
 
   backface-visibility:visible;
 }
 
 .front{
-  transform:translateZ(55px);
+  transform:
+    translateZ(50px);
 }
 
 .back{
   transform:
     rotateY(180deg)
-    translateZ(55px);
+    translateZ(50px);
 }
 
 .right{
   transform:
     rotateY(90deg)
-    translateZ(55px);
+    translateZ(50px);
 }
 
 .left{
   transform:
     rotateY(-90deg)
-    translateZ(55px);
+    translateZ(50px);
 }
 
 .top{
   transform:
     rotateX(90deg)
-    translateZ(55px);
+    translateZ(50px);
 }
 
 .bottom{
   transform:
     rotateX(-90deg)
-    translateZ(55px);
+    translateZ(50px);
 }
 
+/* =========================
+   CENTER DOT
+========================= */
 
-/* =====================================
-   HOLOGRAM RINGS
-===================================== */
-
-.ring{
-  position:absolute;
-
-  left:50%;
-  top:50%;
-
-  width:180px;
-  height:180px;
-
-  margin-left:-90px;
-  margin-top:-90px;
-
-  border:
-    2px solid rgba(0,230,255,.65);
-
-  border-radius:50%;
-
-  box-shadow:
-    0 0 12px rgba(0,230,255,.7);
-
-  transform-style:preserve-3d;
-}
-
-.ring1{
-  transform:
-    rotateX(75deg);
-}
-
-.ring2{
-  transform:
-    rotateY(75deg);
-}
-
-.ring3{
-  width:230px;
-  height:230px;
-
-  margin-left:-115px;
-  margin-top:-115px;
-
-  transform:
-    rotateX(90deg);
-}
-
-
-/* =====================================
-   FLOATING ANIMATION
-===================================== */
-
-@keyframes hologramFloat{
-
-  0%{
-    transform:
-      translateY(0px);
-  }
-
-  50%{
-    transform:
-      translateY(-7px);
-  }
-
-  100%{
-    transform:
-      translateY(0px);
-  }
-
-}
-
-
-/* =====================================
-   TARGET MARKER
-===================================== */
-
-#target{
+#centerDot{
   position:fixed;
 
-  width:22px;
-  height:22px;
+  width:8px;
+  height:8px;
 
-  margin-left:-11px;
-  margin-top:-11px;
+  margin-left:-4px;
+  margin-top:-4px;
 
-  border:
-    2px solid cyan;
+  background:#00eaff;
 
   border-radius:50%;
+
+  box-shadow:0 0 12px #00eaff;
 
   display:none;
 
-  z-index:25;
-
-  pointer-events:none;
-
-  box-shadow:
-    0 0 12px cyan;
+  z-index:15;
 }
-
 </style>
 </head>
 
@@ -286,38 +185,18 @@ html,body{
 
 <canvas id="output"></canvas>
 
-
 <div id="hud">
-
-  <div id="title">
-    JARVIS AR
-  </div>
-
-  <div id="status">
-    Starting camera...
-  </div>
-
-  <div id="hands">
-    Hands: 0
-  </div>
-
-  <div id="mode">
-    Mode: STANDBY
-  </div>
-
+  <b>JARVIS AR</b>
+  <div id="status">Starting camera...</div>
+  <div id="hands">Hands: 0</div>
+  <div id="mode">Mode: STANDBY</div>
 </div>
 
+<div id="centerDot"></div>
 
-<div id="target"></div>
+<div id="cube-container">
 
-
-<!-- =====================================
-     HOLOGRAM
-===================================== -->
-
-<div id="holo">
-
-  <div id="object">
+  <div id="cube">
 
     <div class="face front"></div>
     <div class="face back"></div>
@@ -326,20 +205,15 @@ html,body{
     <div class="face top"></div>
     <div class="face bottom"></div>
 
-    <div class="ring ring1"></div>
-    <div class="ring ring2"></div>
-    <div class="ring ring3"></div>
-
   </div>
 
 </div>
 
-
 <script>
 
-/* =====================================
+/* =================================================
    ELEMENTS
-===================================== */
+================================================= */
 
 const video =
   document.getElementById("camera");
@@ -353,25 +227,25 @@ const ctx =
 const status =
   document.getElementById("status");
 
-const handsDisplay =
+const handsText =
   document.getElementById("hands");
 
-const modeDisplay =
+const modeText =
   document.getElementById("mode");
 
-const holo =
-  document.getElementById("holo");
+const cubeContainer =
+  document.getElementById("cube-container");
 
-const object =
-  document.getElementById("object");
+const cube =
+  document.getElementById("cube");
 
-const target =
-  document.getElementById("target");
+const centerDot =
+  document.getElementById("centerDot");
 
 
-/* =====================================
+/* =================================================
    CANVAS
-===================================== */
+================================================= */
 
 function resizeCanvas(){
 
@@ -391,9 +265,9 @@ window.addEventListener(
 );
 
 
-/* =====================================
-   CAMERA → SCREEN
-===================================== */
+/* =================================================
+   SCREEN POSITION
+================================================= */
 
 function screenPosition(point){
 
@@ -427,8 +301,8 @@ function screenPosition(point){
     sw/sh;
 
 
-  let displayWidth;
-  let displayHeight;
+  let width;
+  let height;
 
   let offsetX=0;
   let offsetY=0;
@@ -436,39 +310,40 @@ function screenPosition(point){
 
   if(screenRatio > videoRatio){
 
-    displayWidth =
-      sw;
+    width=sw;
 
-    displayHeight =
+    height=
       sw/videoRatio;
 
-    offsetY =
-      (sh-displayHeight)/2;
+    offsetY=
+      (sh-height)/2;
 
   }else{
 
-    displayHeight =
-      sh;
+    height=sh;
 
-    displayWidth =
+    width=
       sh*videoRatio;
 
-    offsetX =
-      (sw-displayWidth)/2;
+    offsetX=
+      (sw-width)/2;
 
   }
 
 
   let x =
-    point.x *
-    displayWidth +
+    point.x*width+
     offsetX;
 
   let y =
-    point.y *
-    displayHeight +
+    point.y*height+
     offsetY;
 
+
+  /*
+    Mirror because
+    the video is mirrored.
+  */
 
   x =
     sw-x;
@@ -482,9 +357,9 @@ function screenPosition(point){
 }
 
 
-/* =====================================
+/* =================================================
    MEDIAPIPE
-===================================== */
+================================================= */
 
 const hands =
   new Hands({
@@ -504,98 +379,134 @@ hands.setOptions({
 
   modelComplexity:0,
 
-  minDetectionConfidence:.5,
+  minDetectionConfidence:.55,
 
-  minTrackingConfidence:.5
+  minTrackingConfidence:.55
 
 });
 
 
-/* =====================================
-   OBJECT STATE
-===================================== */
+/* =================================================
+   CUBE STATE
+================================================= */
 
-let objectX =
+let cubeX =
   window.innerWidth/2;
 
-let objectY =
+let cubeY =
   window.innerHeight/2;
 
-let objectScale =
+let cubeScale =
   1;
 
-let objectRotationX =
+let rotX =
+  -20;
+
+let rotY =
+  30;
+
+let rotZ =
   0;
 
-let objectRotationY =
-  0;
 
-let objectRotationZ =
-  0;
-
-
-let placed =
+let cubeExists =
   false;
 
 let grabbed =
   false;
 
-let grabHand =
+let grabbingHand =
   -1;
 
-let previousPinch =
+
+/* =================================================
+   TWO HAND STATE
+================================================= */
+
+let twoHandMode =
   false;
 
-
-/* =====================================
-   TWO-HAND STATE
-===================================== */
-
-let twoHandActive =
-  false;
-
-let startingDistance =
+let startDistance =
   0;
 
-let startingScale =
+let startScale =
   1;
 
-let startingAngle =
+let startAngle =
   0;
 
-let startingRotationZ =
+let startRotation =
   0;
 
 
-/* =====================================
-   APPLY OBJECT TRANSFORM
-===================================== */
+/* =================================================
+   UPDATE CUBE
+================================================= */
 
-function updateObject(){
+function updateCube(){
 
-  holo.style.left =
-    objectX+"px";
+  cubeContainer.style.left =
+    cubeX+"px";
 
-  holo.style.top =
-    objectY+"px";
+  cubeContainer.style.top =
+    cubeY+"px";
 
 
-  object.style.transform =
+  cube.style.transform =
     `
-    scale(${objectScale})
-    rotateX(${objectRotationX}deg)
-    rotateY(${objectRotationY}deg)
-    rotateZ(${objectRotationZ}deg)
+      scale(${cubeScale})
+      rotateX(${rotX}deg)
+      rotateY(${rotY}deg)
+      rotateZ(${rotZ}deg)
     `;
+
+
+  cubeContainer.style.display =
+    "block";
+
+
+  centerDot.style.display =
+    "block";
+
+  centerDot.style.left =
+    cubeX+"px";
+
+  centerDot.style.top =
+    cubeY+"px";
 
 }
 
 
-/* =====================================
-   DISTANCE
-===================================== */
+/* =================================================
+   PINCH
+================================================= */
 
-function distance(a,b){
+function isPinching(hand){
+
+  const thumb =
+    hand[4];
+
+  const index =
+    hand[8];
+
+
+  const d =
+    Math.hypot(
+      thumb.x-index.x,
+      thumb.y-index.y
+    );
+
+
+  return d<.065;
+
+}
+
+
+/* =================================================
+   DISTANCE
+================================================= */
+
+function getDistance(a,b){
 
   return Math.hypot(
     a.x-b.x,
@@ -605,11 +516,11 @@ function distance(a,b){
 }
 
 
-/* =====================================
+/* =================================================
    ANGLE
-===================================== */
+================================================= */
 
-function angle(a,b){
+function getAngle(a,b){
 
   return Math.atan2(
     b.y-a.y,
@@ -619,12 +530,11 @@ function angle(a,b){
 }
 
 
-/* =====================================
-   HAND RESULTS
-===================================== */
+/* =================================================
+   RESULTS
+================================================= */
 
 hands.onResults((results)=>{
-
 
   ctx.clearRect(
     0,
@@ -634,32 +544,33 @@ hands.onResults((results)=>{
   );
 
 
-  const detectedHands =
+  const detected =
     results.multiHandLandmarks || [];
 
 
-  handsDisplay.textContent =
+  handsText.textContent =
     "Hands: "+
-    detectedHands.length;
+    detected.length;
 
 
-  /* ===================================
+  /* ===============================================
      DRAW HANDS
-  =================================== */
+  =============================================== */
 
   for(
-    const hand of detectedHands
+    const hand of detected
   ){
 
     const points =
-      hand.map(screenPosition);
+      hand.map(
+        screenPosition
+      );
 
 
     ctx.strokeStyle =
-      "cyan";
+      "#00eaff";
 
-    ctx.lineWidth =
-      3;
+    ctx.lineWidth=3;
 
 
     for(
@@ -696,19 +607,18 @@ hands.onResults((results)=>{
 
 
     ctx.fillStyle =
-      "cyan";
+      "#00eaff";
 
 
     for(
-      const point
-      of points
+      const p of points
     ){
 
       ctx.beginPath();
 
       ctx.arc(
-        point.x,
-        point.y,
+        p.x,
+        p.y,
         5,
         0,
         Math.PI*2
@@ -721,38 +631,24 @@ hands.onResults((results)=>{
   }
 
 
-  /* ===================================
+  /* ===============================================
      FIND PINCHING HANDS
-  =================================== */
+  =============================================== */
 
   let pinching=[];
 
 
   for(
     let i=0;
-    i<detectedHands.length;
+    i<detected.length;
     i++
   ){
 
-    const hand =
-      detectedHands[i];
-
-
-    const thumb =
-      hand[4];
-
-    const index =
-      hand[8];
-
-
-    const d =
-      Math.hypot(
-        thumb.x-index.x,
-        thumb.y-index.y
-      );
-
-
-    if(d<.065){
+    if(
+      isPinching(
+        detected[i]
+      )
+    ){
 
       pinching.push(i);
 
@@ -761,62 +657,57 @@ hands.onResults((results)=>{
   }
 
 
-  /* ===================================
-     TWO HAND MODE
-  =================================== */
+  /* ===============================================
+     TWO-HAND CONTROL
+  =============================================== */
 
   if(
-    pinching.length>=2
+    pinching.length===2 &&
+    cubeExists
   ){
-
-    const hand1 =
-      detectedHands[
-        pinching[0]
-      ];
-
-    const hand2 =
-      detectedHands[
-        pinching[1]
-      ];
-
 
     const p1 =
       screenPosition(
-        hand1[8]
+        detected[
+          pinching[0]
+        ][8]
       );
 
     const p2 =
       screenPosition(
-        hand2[8]
+        detected[
+          pinching[1]
+        ][8]
       );
 
 
-    const currentDistance =
-      distance(p1,p2);
+    const d =
+      getDistance(
+        p1,
+        p2
+      );
 
 
-    const currentAngle =
-      angle(p1,p2);
+    const a =
+      getAngle(
+        p1,
+        p2
+      );
 
 
-    /* START TWO HAND CONTROL */
+    if(!twoHandMode){
 
-    if(!twoHandActive){
+      twoHandMode=true;
 
-      twoHandActive =
-        true;
+      startDistance=d;
 
-      startingDistance =
-        currentDistance;
+      startScale=
+        cubeScale;
 
-      startingScale =
-        objectScale;
+      startAngle=a;
 
-      startingAngle =
-        currentAngle;
-
-      startingRotationZ =
-        objectRotationZ;
+      startRotation=
+        rotZ;
 
     }
 
@@ -824,174 +715,130 @@ hands.onResults((results)=>{
     /* SCALE */
 
     if(
-      startingDistance>1
+      startDistance>1
     ){
 
-      objectScale =
-        startingScale *
+      cubeScale =
+        startScale*
         (
-          currentDistance /
-          startingDistance
+          d/startDistance
         );
 
     }
 
 
-    /*
-      Keep scale reasonable.
-    */
-
-    objectScale =
+    cubeScale =
       Math.max(
-        .45,
+        .4,
         Math.min(
           3,
-          objectScale
+          cubeScale
         )
       );
 
 
     /* ROTATE */
 
-    const angleChange =
-      currentAngle -
-      startingAngle;
+    rotZ =
+      startRotation+
+      (
+        a-startAngle
+      )*
+      180/Math.PI;
 
 
-    objectRotationZ =
-      startingRotationZ +
-      angleChange *
-      180 /
-      Math.PI;
+    /* MOVE */
 
-
-    /*
-      Two fingertips midpoint
-      moves the object.
-    */
-
-    objectX =
+    cubeX =
       (p1.x+p2.x)/2;
 
-    objectY =
+    cubeY =
       (p1.y+p2.y)/2;
 
 
-    placed =
-      true;
-
-    grabbed =
-      true;
-
-    holo.style.display =
-      "block";
+    grabbed=true;
 
 
-    modeDisplay.textContent =
-      "Mode: TWO-HAND HOLOGRAM";
-
+    modeText.textContent =
+      "Mode: TWO HAND";
 
     status.textContent =
-      "SCALE + ROTATE";
+      "RESIZE + ROTATE";
 
 
-    updateObject();
-
+    updateCube();
 
     return;
 
   }
 
 
-  /* ===================================
+  /* ===============================================
      END TWO HAND MODE
-  =================================== */
+  =============================================== */
+
+  twoHandMode=false;
+
+
+  /* ===============================================
+     CURRENT GRAB
+  =============================================== */
 
   if(
-    twoHandActive
+    grabbed
   ){
 
-    twoHandActive =
-      false;
+    if(
+      grabbingHand<0 ||
+      grabbingHand>=detected.length
+    ){
 
-  }
+      grabbed=false;
 
+      grabbingHand=-1;
 
-  /* ===================================
-     EXISTING GRAB
-  =================================== */
+      modeText.textContent =
+        "Mode: PLACED";
 
-  if(
-    grabbed &&
-    grabHand>=0 &&
-    grabHand<detectedHands.length
-  ){
+      status.textContent =
+        "CUBE DROPPED ✓";
+
+      return;
+
+    }
+
 
     const hand =
-      detectedHands[
-        grabHand
+      detected[
+        grabbingHand
       ];
 
 
-    const thumb =
-      hand[4];
-
-    const index =
-      hand[8];
-
-
-    const pinchDistance =
-      Math.hypot(
-        thumb.x-index.x,
-        thumb.y-index.y
-      );
-
-
-    /* STILL PINCHING */
-
     if(
-      pinchDistance<.075
+      isPinching(hand)
     ){
 
       const fingertip =
-        screenPosition(index);
+        screenPosition(
+          hand[8]
+        );
 
 
-      objectX =
+      cubeX =
         fingertip.x;
 
-      objectY =
+      cubeY =
         fingertip.y;
 
 
-      holo.style.display =
-        "block";
-
-
-      placed =
-        true;
-
-
-      modeDisplay.textContent =
+      modeText.textContent =
         "Mode: GRABBED";
 
-
       status.textContent =
-        "HOLOGRAM CONTROL";
+        "CUBE GRABBED 🤏";
 
 
-      updateObject();
-
-
-      target.style.display =
-        "block";
-
-      target.style.left =
-        objectX+"px";
-
-      target.style.top =
-        objectY+"px";
-
+      updateCube();
 
       return;
 
@@ -1000,102 +847,78 @@ hands.onResults((results)=>{
 
     /* RELEASE */
 
-    grabbed =
-      false;
+    grabbed=false;
 
-    grabHand =
-      -1;
-
-    previousPinch =
-      false;
+    grabbingHand=-1;
 
 
-    target.style.display =
-      "none";
-
-
-    modeDisplay.textContent =
+    modeText.textContent =
       "Mode: PLACED";
 
-
     status.textContent =
-      "HOLOGRAM LOCKED";
+      "CUBE DROPPED ✓";
 
 
-    holo.style.display =
-      "block";
-
+    updateCube();
 
     return;
 
   }
 
 
-  /* ===================================
-     FIND NEW GRAB
-  =================================== */
+  /* ===============================================
+     GRAB EXISTING CUBE
+  =============================================== */
 
   if(
-    placed &&
+    cubeExists &&
     pinching.length>0
   ){
 
     for(
-      const handIndex
-      of pinching
+      const index of pinching
     ){
-
-      const hand =
-        detectedHands[
-          handIndex
-        ];
-
 
       const fingertip =
         screenPosition(
-          hand[8]
+          detected[index][8]
         );
 
 
-      const d =
+      const distanceToCube =
         Math.hypot(
-          fingertip.x-objectX,
-          fingertip.y-objectY
+          fingertip.x-cubeX,
+          fingertip.y-cubeY
         );
 
 
       /*
-        Only grab if the fingertip
-        is actually near the object.
+        You must pinch close
+        to the cube.
       */
 
       if(
-        d<
-        70*objectScale
+        distanceToCube
+        <
+        70*cubeScale
       ){
 
-        grabbed =
-          true;
+        grabbed=true;
 
-        grabHand =
-          handIndex;
-
-        previousPinch =
-          true;
+        grabbingHand=
+          index;
 
 
         status.textContent =
-          "HOLOGRAM GRABBED 🤏";
+          "CUBE GRABBED 🤏";
 
-        modeDisplay.textContent =
+        modeText.textContent =
           "Mode: GRABBED";
 
 
-        target.style.display =
-          "block";
+        updateCube();
 
-
-        break;
+        return;
 
       }
 
@@ -1104,17 +927,17 @@ hands.onResults((results)=>{
   }
 
 
-  /* ===================================
-     FIRST CREATION
-  =================================== */
+  /* ===============================================
+     FIRST CUBE
+  =============================================== */
 
   if(
-    !placed &&
+    !cubeExists &&
     pinching.length>0
   ){
 
     const hand =
-      detectedHands[
+      detected[
         pinching[0]
       ];
 
@@ -1125,81 +948,70 @@ hands.onResults((results)=>{
       );
 
 
-    objectX =
+    cubeX =
       fingertip.x;
 
-    objectY =
+    cubeY =
       fingertip.y;
 
 
-    objectScale =
-      1;
+    cubeScale=1;
+
+    rotX=-20;
+
+    rotY=30;
+
+    rotZ=0;
 
 
-    placed =
-      true;
+    cubeExists=true;
 
-    grabbed =
-      true;
+    grabbed=true;
 
-    grabHand =
+    grabbingHand=
       pinching[0];
 
-    previousPinch =
-      true;
-
-
-    holo.style.display =
-      "block";
-
-
-    modeDisplay.textContent =
-      "Mode: CREATED";
-
 
     status.textContent =
-      "HOLOGRAM CREATED";
+      "CUBE CREATED 🤏";
+
+    modeText.textContent =
+      "Mode: GRABBED";
 
 
-    updateObject();
+    updateCube();
+
+    return;
 
   }
 
 
-  /* ===================================
-     NORMAL STATE
-  =================================== */
+  /* ===============================================
+     NORMAL
+  =============================================== */
 
   if(
-    placed &&
-    !grabbed
+    cubeExists
   ){
 
-    holo.style.display =
+    cubeContainer.style.display =
+      "block";
+
+    centerDot.style.display =
       "block";
 
 
-    modeDisplay.textContent =
+    modeText.textContent =
       "Mode: PLACED";
 
+    status.textContent =
+      "PINCH THE CUBE TO GRAB";
+
+  }else{
 
     status.textContent =
-      "PINCH THE HOLOGRAM TO GRAB";
-
-  }
-
-
-  if(
-    !placed
-  ){
-
-    modeDisplay.textContent =
-      "Mode: STANDBY";
-
-
-    status.textContent =
-      detectedHands.length
-      ? "PINCH TO CREATE HOLOGRAM"
+      detected.length
+      ? "PINCH TO CREATE CUBE"
       : "SHOW YOUR HANDS";
 
   }
@@ -1207,9 +1019,9 @@ hands.onResults((results)=>{
 });
 
 
-/* =====================================
-   CAMERA
-===================================== */
+/* =================================================
+   CAMERA START
+================================================= */
 
 async function startCamera(){
 
@@ -1224,7 +1036,6 @@ async function startCamera(){
       .getUserMedia({
 
         video:{
-
           facingMode:"user",
 
           width:{
@@ -1239,7 +1050,6 @@ async function startCamera(){
             ideal:30,
             max:30
           }
-
         },
 
         audio:false
@@ -1294,9 +1104,9 @@ async function startCamera(){
 }
 
 
-/* =====================================
+/* =================================================
    START
-===================================== */
+================================================= */
 
 startCamera();
 
