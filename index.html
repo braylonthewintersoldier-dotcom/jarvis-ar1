@@ -4,7 +4,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JARVIS AR</title>
 
+  <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
+
+  <!-- MediaPipe -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
@@ -25,6 +28,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      transform: scaleX(-1);
     }
 
     #output {
@@ -47,42 +51,13 @@
       z-index: 10;
     }
 
-    #cube {
+    #threeCanvas {
       position: fixed;
-      width: 70px;
-      height: 70px;
-      display: none;
-      z-index: 5;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
-
-      transform: translate(-50%, -50%)
-                 rotateX(20deg)
-                 rotateY(20deg);
-
-      background: rgba(0,255,255,.25);
-      border: 3px solid cyan;
-
-      box-shadow:
-        0 0 10px cyan,
-        0 0 30px cyan;
-
-      animation: spin 2s linear infinite;
-    }
-
-    @keyframes spin {
-      from {
-        transform:
-          translate(-50%, -50%)
-          rotateX(0deg)
-          rotateY(0deg);
-      }
-
-      to {
-        transform:
-          translate(-50%, -50%)
-          rotateX(360deg)
-          rotateY(360deg);
-      }
+      z-index: 4;
     }
   </style>
 </head>
@@ -98,17 +73,19 @@
   <div id="status">Starting...</div>
 </div>
 
-<div id="cube"></div>
-
 <script>
 
 const video = document.getElementById("camera");
 const canvas = document.getElementById("output");
 const ctx = canvas.getContext("2d");
-
 const status = document.getElementById("status");
-const cube = document.getElementById("cube");
-  const scene = new THREE.Scene();
+
+
+/* =========================
+   THREE.JS AR SCENE
+========================= */
+
+const scene = new THREE.Scene();
 
 const threeCamera = new THREE.PerspectiveCamera(
   70,
@@ -116,6 +93,8 @@ const threeCamera = new THREE.PerspectiveCamera(
   0.01,
   100
 );
+
+threeCamera.position.z = 1;
 
 const renderer = new THREE.WebGLRenderer({
   alpha: true,
@@ -127,81 +106,118 @@ renderer.setSize(
   window.innerHeight
 );
 
-renderer.domElement.style.position = "fixed";
-renderer.domElement.style.left = "0";
-renderer.domElement.style.top = "0";
-renderer.domElement.style.zIndex = "4";
-renderer.domElement.style.pointerEvents = "none";
+renderer.setPixelRatio(
+  Math.min(window.devicePixelRatio, 2)
+);
 
-document.body.appendChild(renderer.domElement);
+renderer.domElement.id = "threeCanvas";
 
+document.body.appendChild(
+  renderer.domElement
+);
+
+
+/* REAL 3D CUBE */
 
 const geometry =
-  new THREE.BoxGeometry(0.12, 0.12, 0.12);
+  new THREE.BoxGeometry(
+    0.18,
+    0.18,
+    0.18
+  );
 
 const material =
   new THREE.MeshNormalMaterial();
 
-const cube3D =
+const cube =
   new THREE.Mesh(
     geometry,
     material
   );
 
-cube3D.visible = false;
+cube.visible = false;
 
-scene.add(cube3D);
+scene.add(cube);
 
 
-function animate3D() {
+/* LIGHT */
 
-  requestAnimationFrame(animate3D);
+const light =
+  new THREE.AmbientLight(
+    0xffffff,
+    1
+  );
 
-  cube3D.rotation.x += 0.01;
-  cube3D.rotation.y += 0.015;
+scene.add(light);
+
+
+/* ANIMATION */
+
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  cube.rotation.x += 0.015;
+  cube.rotation.y += 0.02;
 
   renderer.render(
     scene,
     threeCamera
   );
-
 }
 
-animate3D();
+animate();
 
-const hands = new Hands({
-  locateFile: (file) => {
-    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  }
-});
 
-hands.setOptions({
-  maxNumHands: 2,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.65,
-  minTrackingConfidence: 0.65
-});
-
+/* =========================
+   RESIZE
+========================= */
 
 function resizeCanvas() {
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width =
+    window.innerWidth;
 
+  canvas.height =
+    window.innerHeight;
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  threeCamera.aspect =
+    window.innerWidth /
+    window.innerHeight;
+
+  threeCamera.updateProjectionMatrix();
 }
 
 resizeCanvas();
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener(
+  "resize",
+  resizeCanvas
+);
 
+
+/* =========================
+   CAMERA COORDINATES
+========================= */
 
 function getCameraCoordinates(point) {
 
-  const videoWidth = video.videoWidth;
-  const videoHeight = video.videoHeight;
+  const videoWidth =
+    video.videoWidth;
 
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
+  const videoHeight =
+    video.videoHeight;
+
+  const screenWidth =
+    window.innerWidth;
+
+  const screenHeight =
+    window.innerHeight;
 
   const videoRatio =
     videoWidth / videoHeight;
@@ -215,82 +231,143 @@ function getCameraCoordinates(point) {
   let offsetX = 0;
   let offsetY = 0;
 
+
   if (screenRatio > videoRatio) {
 
-    displayedWidth = screenWidth;
+    displayedWidth =
+      screenWidth;
 
     displayedHeight =
-      screenWidth / videoRatio;
+      screenWidth /
+      videoRatio;
 
     offsetY =
-      (screenHeight - displayedHeight) / 2;
+      (screenHeight -
+       displayedHeight) / 2;
 
   } else {
 
-    displayedHeight = screenHeight;
+    displayedHeight =
+      screenHeight;
 
     displayedWidth =
-      screenHeight * videoRatio;
+      screenHeight *
+      videoRatio;
 
     offsetX =
-      (screenWidth - displayedWidth) / 2;
-
+      (screenWidth -
+       displayedWidth) / 2;
   }
 
+
   let x =
-    point.x * displayedWidth + offsetX;
+    point.x *
+    displayedWidth +
+    offsetX;
 
   let y =
-    point.y * displayedHeight + offsetY;
+    point.y *
+    displayedHeight +
+    offsetY;
 
-  return { x, y };
 
+  /*
+    Camera is mirrored,
+    so mirror X coordinate.
+  */
+
+  x =
+    screenWidth - x;
+
+
+  return {
+    x: x,
+    y: y
+  };
 }
 
 
-hands.onResults((results) => {
+/* =========================
+   MEDIAPIPE HAND TRACKING
+========================= */
 
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+const hands =
+  new Hands({
 
+    locateFile: (file) => {
 
-  if (
-    !results.multiHandLandmarks ||
-    results.multiHandLandmarks.length === 0
-  ) {
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 
-    status.textContent = "Show your hand";
+    }
 
-    cube.style.display = "none";
-
-    return;
-
-  }
+  });
 
 
-  status.textContent =
-    "HAND TRACKING ACTIVE ✓";
+hands.setOptions({
+
+  maxNumHands: 2,
+
+  modelComplexity: 1,
+
+  minDetectionConfidence: 0.65,
+
+  minTrackingConfidence: 0.65
+
+});
 
 
-  for (
-    const landmarks
-    of results.multiHandLandmarks
-  ) {
+/* =========================
+   HAND RESULTS
+========================= */
 
-    const converted =
-      landmarks.map(getCameraCoordinates);
+hands.onResults(
+  (results) => {
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    if (
+      !results.multiHandLandmarks ||
+      results.multiHandLandmarks.length === 0
+    ) {
+
+      status.textContent =
+        "Show your hand";
+
+      cube.visible = false;
+
+      return;
+    }
+
+
+    status.textContent =
+      "HAND TRACKING ACTIVE ✓";
+
+
+    const hand =
+      results.multiHandLandmarks[0];
 
 
     /*
-      DRAW CONNECTIONS
+      DRAW HAND
     */
 
-    ctx.strokeStyle = "cyan";
+    const converted =
+      hand.map(
+        getCameraCoordinates
+      );
+
+
+    ctx.strokeStyle =
+      "#00ffff";
+
     ctx.lineWidth = 3;
+
 
     for (
       const connection
@@ -298,10 +375,15 @@ hands.onResults((results) => {
     ) {
 
       const start =
-        converted[connection[0]];
+        converted[
+          connection[0]
+        ];
 
       const end =
-        converted[connection[1]];
+        converted[
+          connection[1]
+        ];
+
 
       ctx.beginPath();
 
@@ -316,7 +398,6 @@ hands.onResults((results) => {
       );
 
       ctx.stroke();
-
     }
 
 
@@ -324,7 +405,9 @@ hands.onResults((results) => {
       DRAW DOTS
     */
 
-    ctx.fillStyle = "cyan";
+    ctx.fillStyle =
+      "#00ffff";
+
 
     for (
       const point
@@ -342,19 +425,19 @@ hands.onResults((results) => {
       );
 
       ctx.fill();
-
     }
 
 
-    /*
-      PINCH
-    */
+    /* =========================
+       PINCH DETECTION
+    ========================= */
 
     const thumb =
-      landmarks[4];
+      hand[4];
 
     const index =
-      landmarks[8];
+      hand[8];
+
 
     const distance =
       Math.hypot(
@@ -366,57 +449,84 @@ hands.onResults((results) => {
     if (distance < 0.06) {
 
       status.textContent =
-        "PINCH DETECTED 🤏";
+        "PINCH — CUBE ACTIVE 🤏";
 
+
+      /*
+        Get fingertip position
+      */
 
       const position =
-        getCameraCoordinates(index);
+        getCameraCoordinates(
+          index
+        );
 
 
-      cube.style.display =
-        "block";
+      /*
+        Convert screen position
+        to Three.js position
+      */
+
+      const x =
+        (position.x /
+         window.innerWidth) * 2 - 1;
 
 
-      cube.style.left =
-        position.x + "px";
+      const y =
+        -(position.y /
+          window.innerHeight) * 2 + 1;
 
 
-      cube.style.top =
-        position.y + "px";
+      /*
+        Put cube in front
+        of the camera
+      */
 
-    }
+      cube.position.x =
+        x * 0.55;
 
-    else {
+      cube.position.y =
+        y * 0.55;
 
-      cube.style.display =
-        "none";
+      cube.position.z =
+        0;
+
+
+      cube.visible = true;
+
+    } else {
+
+      cube.visible = false;
 
     }
 
   }
+);
 
-});
 
-
-/*
-  CAMERA
-*/
+/* =========================
+   CAMERA
+========================= */
 
 const camera =
-  new Camera(video, {
+  new Camera(
+    video,
+    {
 
-    onFrame: async () => {
+      onFrame: async () => {
 
-      await hands.send({
-        image: video
-      });
+        await hands.send({
+          image: video
+        });
 
-    },
+      },
 
-    width: 1280,
-    height: 720
+      width: 1280,
 
-  });
+      height: 720
+
+    }
+  );
 
 
 camera.start();
