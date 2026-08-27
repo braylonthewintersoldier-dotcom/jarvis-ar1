@@ -4,10 +4,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JARVIS AR</title>
 
-  <!-- Three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.min.js"></script>
-
-  <!-- MediaPipe Hands -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
@@ -40,15 +36,6 @@
       z-index: 2;
     }
 
-    #three {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 4;
-    }
-
     #hud {
       position: fixed;
       top: 15px;
@@ -57,7 +44,81 @@
       background: rgba(0,0,0,.7);
       padding: 12px;
       border-radius: 10px;
+      z-index: 20;
+    }
+
+    /* 3D CUBE */
+
+    #cube-container {
+      position: fixed;
+      width: 90px;
+      height: 90px;
+      display: none;
       z-index: 10;
+      pointer-events: none;
+
+      transform-style: preserve-3d;
+      perspective: 600px;
+    }
+
+    #cube {
+      width: 90px;
+      height: 90px;
+      position: absolute;
+
+      transform-style: preserve-3d;
+
+      animation: rotateCube 2s linear infinite;
+    }
+
+    .face {
+      position: absolute;
+      width: 90px;
+      height: 90px;
+
+      border: 2px solid cyan;
+
+      background: rgba(0, 220, 255, 0.25);
+
+      box-shadow:
+        inset 0 0 20px cyan,
+        0 0 15px cyan;
+
+      box-sizing: border-box;
+    }
+
+    .front {
+      transform: translateZ(45px);
+    }
+
+    .back {
+      transform: rotateY(180deg) translateZ(45px);
+    }
+
+    .right {
+      transform: rotateY(90deg) translateZ(45px);
+    }
+
+    .left {
+      transform: rotateY(-90deg) translateZ(45px);
+    }
+
+    .top {
+      transform: rotateX(90deg) translateZ(45px);
+    }
+
+    .bottom {
+      transform: rotateX(-90deg) translateZ(45px);
+    }
+
+    @keyframes rotateCube {
+      0% {
+        transform: rotateX(0deg) rotateY(0deg);
+      }
+
+      100% {
+        transform: rotateX(360deg) rotateY(360deg);
+      }
     }
   </style>
 </head>
@@ -73,134 +134,108 @@
   <div id="status">Starting camera...</div>
 </div>
 
+<div id="cube-container">
+
+  <div id="cube">
+
+    <div class="face front"></div>
+    <div class="face back"></div>
+    <div class="face right"></div>
+    <div class="face left"></div>
+    <div class="face top"></div>
+    <div class="face bottom"></div>
+
+  </div>
+
+</div>
+
+
 <script>
 
-/* =====================================================
-   BASIC ELEMENTS
-===================================================== */
+const video =
+  document.getElementById("camera");
 
-const video = document.getElementById("camera");
-const canvas = document.getElementById("output");
-const ctx = canvas.getContext("2d");
-const status = document.getElementById("status");
+const canvas =
+  document.getElementById("output");
 
+const ctx =
+  canvas.getContext("2d");
 
-/* =====================================================
-   THREE.JS
-===================================================== */
+const status =
+  document.getElementById("status");
 
-const scene = new THREE.Scene();
-
-const threeCamera = new THREE.OrthographicCamera(
-  -1,
-   1,
-   1,
-  -1,
-   0.1,
-   10
-);
-
-threeCamera.position.z = 5;
-
-const renderer = new THREE.WebGLRenderer({
-  alpha: true,
-  antialias: true
-});
-
-renderer.setPixelRatio(
-  Math.min(window.devicePixelRatio, 2)
-);
-
-renderer.setSize(
-  window.innerWidth,
-  window.innerHeight
-);
-
-renderer.domElement.id = "three";
-
-document.body.appendChild(renderer.domElement);
+const cubeContainer =
+  document.getElementById("cube-container");
 
 
-/* =====================================================
-   REAL 3D CUBE
-===================================================== */
+/* =========================
+   CANVAS
+========================= */
 
-const geometry = new THREE.BoxGeometry(
-  0.18,
-  0.18,
-  0.18
-);
+function resizeCanvas() {
 
-const material = new THREE.MeshNormalMaterial();
+  canvas.width =
+    window.innerWidth;
 
-const cube = new THREE.Mesh(
-  geometry,
-  material
-);
+  canvas.height =
+    window.innerHeight;
 
-cube.visible = false;
-
-scene.add(cube);
-
-
-/* =====================================================
-   RESIZE
-===================================================== */
-
-function resize() {
-
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  renderer.setSize(
-    window.innerWidth,
-    window.innerHeight
-  );
 }
 
-resize();
+resizeCanvas();
 
 window.addEventListener(
   "resize",
-  resize
+  resizeCanvas
 );
 
 
-/* =====================================================
-   CAMERA → SCREEN POSITION
-===================================================== */
+/* =========================
+   CAMERA POSITION
+========================= */
 
 function screenPosition(point) {
 
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
+  const vw =
+    video.videoWidth;
 
-  const sw = window.innerWidth;
-  const sh = window.innerHeight;
+  const vh =
+    video.videoHeight;
+
+  const sw =
+    window.innerWidth;
+
+  const sh =
+    window.innerHeight;
 
   if (!vw || !vh) {
+
     return {
       x: sw / 2,
       y: sh / 2
     };
+
   }
 
-  const videoRatio = vw / vh;
-  const screenRatio = sw / sh;
+  const videoRatio =
+    vw / vh;
+
+  const screenRatio =
+    sw / sh;
 
   let displayWidth;
   let displayHeight;
+
   let offsetX = 0;
   let offsetY = 0;
 
-  /*
-    object-fit: cover
-  */
 
   if (screenRatio > videoRatio) {
 
     displayWidth = sw;
-    displayHeight = sw / videoRatio;
+
+    displayHeight =
+      sw / videoRatio;
 
     offsetY =
       (sh - displayHeight) / 2;
@@ -208,42 +243,53 @@ function screenPosition(point) {
   } else {
 
     displayHeight = sh;
-    displayWidth = sh * videoRatio;
+
+    displayWidth =
+      sh * videoRatio;
 
     offsetX =
       (sw - displayWidth) / 2;
+
   }
 
+
   let x =
-    point.x * displayWidth + offsetX;
+    point.x * displayWidth +
+    offsetX;
 
   let y =
-    point.y * displayHeight + offsetY;
+    point.y * displayHeight +
+    offsetY;
 
-  /*
-    Front camera is mirrored.
-  */
+
+  /* Mirror front camera */
 
   x = sw - x;
+
 
   return {
     x,
     y
   };
+
 }
 
 
-/* =====================================================
+/* =========================
    MEDIAPIPE
-===================================================== */
+========================= */
 
-const hands = new Hands({
+const hands =
+  new Hands({
 
-  locateFile: (file) => {
-    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  }
+    locateFile: (file) => {
 
-});
+      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+
+    }
+
+  });
+
 
 hands.setOptions({
 
@@ -258,19 +304,19 @@ hands.setOptions({
 });
 
 
-/* =====================================================
+/* =========================
    SMOOTHING
-===================================================== */
+========================= */
 
-let smoothX = 0;
-let smoothY = 0;
+let cubeX = 0;
+let cubeY = 0;
 
-const smoothing = 0.35;
+const smoothing = 0.4;
 
 
-/* =====================================================
+/* =========================
    HAND RESULTS
-===================================================== */
+========================= */
 
 hands.onResults((results) => {
 
@@ -290,9 +336,11 @@ hands.onResults((results) => {
     status.textContent =
       "Show your hand";
 
-    cube.visible = false;
+    cubeContainer.style.display =
+      "none";
 
     return;
+
   }
 
 
@@ -304,15 +352,17 @@ hands.onResults((results) => {
     "HAND TRACKING ACTIVE ✓";
 
 
-  /* =================================================
+  /* =========================
      DRAW HAND
-  ================================================= */
+  ========================= */
 
   const points =
     hand.map(screenPosition);
 
 
-  ctx.strokeStyle = "#00ffff";
+  ctx.strokeStyle =
+    "cyan";
+
   ctx.lineWidth = 3;
 
 
@@ -325,6 +375,7 @@ hands.onResults((results) => {
 
     const end =
       points[connection[1]];
+
 
     ctx.beginPath();
 
@@ -339,14 +390,17 @@ hands.onResults((results) => {
     );
 
     ctx.stroke();
+
   }
 
 
-  /* =================================================
+  /* =========================
      DRAW DOTS
-  ================================================= */
+  ========================= */
 
-  ctx.fillStyle = "#00ffff";
+  ctx.fillStyle =
+    "cyan";
+
 
   for (
     const point of points
@@ -363,12 +417,13 @@ hands.onResults((results) => {
     );
 
     ctx.fill();
+
   }
 
 
-  /* =================================================
+  /* =========================
      PINCH
-  ================================================= */
+  ========================= */
 
   const thumb =
     hand[4];
@@ -387,92 +442,48 @@ hands.onResults((results) => {
   if (distance < 0.065) {
 
     status.textContent =
-      "PINCH DETECTED 🤏";
+      "PINCH — CUBE GRABBED 🤏";
 
-
-    /*
-      Get index fingertip position.
-    */
 
     const target =
       screenPosition(index);
 
 
-    /*
-      Smooth the movement.
-    */
+    /* Smooth movement */
 
-    smoothX +=
-      (target.x - smoothX) *
+    cubeX +=
+      (target.x - cubeX) *
       smoothing;
 
-    smoothY +=
-      (target.y - smoothY) *
+    cubeY +=
+      (target.y - cubeY) *
       smoothing;
 
 
-    /*
-      Convert screen coordinates
-      to Three.js coordinates.
-    */
+    cubeContainer.style.left =
+      cubeX + "px";
 
-    const x =
-      (smoothX /
-       window.innerWidth) * 2 - 1;
+    cubeContainer.style.top =
+      cubeY + "px";
 
 
-    const y =
-      -(smoothY /
-        window.innerHeight) * 2 + 1;
+    cubeContainer.style.display =
+      "block";
 
-
-    cube.position.x =
-      x;
-
-    cube.position.y =
-      y;
-
-    cube.position.z =
-      0;
-
-
-    cube.visible = true;
 
   } else {
 
-    cube.visible = false;
+    cubeContainer.style.display =
+      "none";
+
   }
 
 });
 
 
-/* =====================================================
-   THREE.JS ANIMATION
-===================================================== */
-
-function animate() {
-
-  requestAnimationFrame(animate);
-
-  if (cube.visible) {
-
-    cube.rotation.x += 0.025;
-    cube.rotation.y += 0.035;
-
-  }
-
-  renderer.render(
-    scene,
-    threeCamera
-  );
-}
-
-animate();
-
-
-/* =====================================================
-   START CAMERA
-===================================================== */
+/* =========================
+   CAMERA
+========================= */
 
 async function startCamera() {
 
@@ -480,6 +491,7 @@ async function startCamera() {
 
     status.textContent =
       "Requesting camera...";
+
 
     const stream =
       await navigator.mediaDevices.getUserMedia({
@@ -499,7 +511,9 @@ async function startCamera() {
       });
 
 
-    video.srcObject = stream;
+    video.srcObject =
+      stream;
+
 
     await video.play();
 
@@ -507,10 +521,6 @@ async function startCamera() {
     status.textContent =
       "Starting hand tracking...";
 
-
-    /*
-      Start MediaPipe camera processing.
-    */
 
     const camera =
       new Camera(
@@ -526,6 +536,7 @@ async function startCamera() {
           },
 
           width: 1280,
+
           height: 720
 
         }
