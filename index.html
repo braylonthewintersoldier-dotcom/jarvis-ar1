@@ -42,7 +42,7 @@
       top: 15px;
       left: 15px;
       color: white;
-      background: rgba(0,0,0,.72);
+      background: rgba(0,0,0,0.72);
       padding: 12px 15px;
       border-radius: 10px;
       z-index: 30;
@@ -50,105 +50,175 @@
       line-height: 1.5;
     }
 
+    /* =========================
+       CUBE POSITION
+    ========================= */
+
     #cube-container {
       position: fixed;
+
       left: 0;
       top: 0;
+
       width: 0;
       height: 0;
+
       display: none;
+
       z-index: 10;
+
       pointer-events: none;
+
       perspective: 700px;
+
       transform-style: preserve-3d;
     }
 
+    /* =========================
+       CUBE
+    ========================= */
+
     #cube {
       position: absolute;
+
       left: -45px;
       top: -45px;
+
       width: 90px;
       height: 90px;
+
       transform-style: preserve-3d;
-      animation: rotateCube 2.5s linear infinite;
+
+      animation:
+        rotateCube 2.5s linear infinite;
     }
 
     .face {
       position: absolute;
+
       width: 90px;
       height: 90px;
+
       box-sizing: border-box;
+
       border: 3px solid cyan;
-      background: rgba(0,220,255,0.20);
+
+      background:
+        rgba(0,220,255,0.20);
+
       box-shadow:
         inset 0 0 18px cyan,
         0 0 15px cyan;
     }
 
     .front {
-      transform: translateZ(45px);
+      transform:
+        translateZ(45px);
     }
 
     .back {
-      transform: rotateY(180deg) translateZ(45px);
+      transform:
+        rotateY(180deg)
+        translateZ(45px);
     }
 
     .right {
-      transform: rotateY(90deg) translateZ(45px);
+      transform:
+        rotateY(90deg)
+        translateZ(45px);
     }
 
     .left {
-      transform: rotateY(-90deg) translateZ(45px);
+      transform:
+        rotateY(-90deg)
+        translateZ(45px);
     }
 
     .top {
-      transform: rotateX(90deg) translateZ(45px);
+      transform:
+        rotateX(90deg)
+        translateZ(45px);
     }
 
     .bottom {
-      transform: rotateX(-90deg) translateZ(45px);
+      transform:
+        rotateX(-90deg)
+        translateZ(45px);
     }
 
     @keyframes rotateCube {
+
       from {
-        transform: rotateX(0deg) rotateY(0deg);
+        transform:
+          rotateX(0deg)
+          rotateY(0deg);
       }
 
       to {
-        transform: rotateX(360deg) rotateY(360deg);
+        transform:
+          rotateX(360deg)
+          rotateY(360deg);
       }
+
     }
   </style>
 </head>
 
 <body>
 
-<video id="camera" autoplay playsinline></video>
+<video
+  id="camera"
+  autoplay
+  playsinline>
+</video>
 
 <canvas id="output"></canvas>
 
 <div id="hud">
+
   <b>JARVIS AR</b>
-  <div id="status">Starting camera...</div>
-  <div id="hands">Hands: 0</div>
+
+  <div id="status">
+    Starting camera...
+  </div>
+
+  <div id="hands">
+    Hands: 0
+  </div>
+
 </div>
+
+
+<!-- =========================
+     CUBE
+========================= -->
 
 <div id="cube-container">
 
   <div id="cube">
 
     <div class="face front"></div>
+
     <div class="face back"></div>
+
     <div class="face right"></div>
+
     <div class="face left"></div>
+
     <div class="face top"></div>
+
     <div class="face bottom"></div>
 
   </div>
 
 </div>
 
+
 <script>
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
 
 const video =
   document.getElementById("camera");
@@ -169,9 +239,9 @@ const cubeContainer =
   document.getElementById("cube-container");
 
 
-/* =================================
+/* =====================================================
    CANVAS
-================================= */
+===================================================== */
 
 function resizeCanvas() {
 
@@ -191,9 +261,9 @@ window.addEventListener(
 );
 
 
-/* =================================
-   SCREEN POSITION
-================================= */
+/* =====================================================
+   CAMERA → SCREEN
+===================================================== */
 
 function screenPosition(point) {
 
@@ -234,9 +304,15 @@ function screenPosition(point) {
   let offsetY = 0;
 
 
+  /*
+    Match the camera's
+    object-fit: cover.
+  */
+
   if (screenRatio > videoRatio) {
 
-    displayWidth = sw;
+    displayWidth =
+      sw;
 
     displayHeight =
       sw / videoRatio;
@@ -248,7 +324,8 @@ function screenPosition(point) {
 
   else {
 
-    displayHeight = sh;
+    displayHeight =
+      sh;
 
     displayWidth =
       sh * videoRatio;
@@ -270,21 +347,26 @@ function screenPosition(point) {
     offsetY;
 
 
+  /*
+    Mirror to match
+    the front camera.
+  */
+
   x =
     sw - x;
 
 
   return {
-    x,
-    y
+    x: x,
+    y: y
   };
 
 }
 
 
-/* =================================
+/* =====================================================
    MEDIAPIPE
-================================= */
+===================================================== */
 
 const hands =
   new Hands({
@@ -311,9 +393,9 @@ hands.setOptions({
 });
 
 
-/* =================================
+/* =====================================================
    CUBE STATE
-================================= */
+===================================================== */
 
 let cubeX =
   window.innerWidth / 2;
@@ -323,31 +405,41 @@ let cubeY =
 
 
 /*
-  Is the cube currently grabbed?
+  TRUE means the cube
+  is currently grabbed.
 */
 
 let grabbed = false;
 
 
 /*
-  Which hand grabbed it?
+  Which hand is controlling
+  the cube.
+
+  0 = first hand
+  1 = second hand
 */
 
-let grabbingHand = null;
+let grabbingHandIndex =
+  -1;
 
 
 /*
-  Smooth movement.
+  Faster response so the cube
+  stays close to the fingertip.
 */
 
-const smoothing = 0.65;
+const smoothing = 0.80;
 
 
-/* =================================
+/* =====================================================
    HAND RESULTS
-================================= */
+===================================================== */
 
 hands.onResults((results) => {
+
+
+  /* CLEAR OLD HAND DRAWING */
 
   ctx.clearRect(
     0,
@@ -361,10 +453,18 @@ hands.onResults((results) => {
     results.multiHandLandmarks || [];
 
 
+  /*
+    Display number of hands.
+  */
+
   handsDisplay.textContent =
     "Hands: " +
     detectedHands.length;
 
+
+  /* =================================================
+     NO HANDS
+  ================================================= */
 
   if (
     detectedHands.length === 0
@@ -378,31 +478,39 @@ hands.onResults((results) => {
   }
 
 
-  let currentPinchingHand =
-    null;
-
-
   /*
-    Process BOTH hands.
+    Store which hand is currently
+    pinching.
   */
 
+  let currentPinchingIndex =
+    -1;
+
+
+  /* =================================================
+     PROCESS BOTH HANDS
+  ================================================= */
+
   for (
-    let handIndex = 0;
-    handIndex < detectedHands.length;
-    handIndex++
+    let i = 0;
+    i < detectedHands.length;
+    i++
   ) {
 
+
     const hand =
-      detectedHands[handIndex];
+      detectedHands[i];
 
 
     const points =
-      hand.map(screenPosition);
+      hand.map(
+        screenPosition
+      );
 
 
-    /* =========================
-       DRAW CONNECTIONS
-    ========================= */
+    /* ===============================================
+       DRAW HAND LINES
+    =============================================== */
 
     ctx.strokeStyle =
       "cyan";
@@ -443,9 +551,9 @@ hands.onResults((results) => {
     }
 
 
-    /* =========================
-       DRAW LANDMARKS
-    ========================= */
+    /* ===============================================
+       DRAW HAND DOTS
+    =============================================== */
 
     ctx.fillStyle =
       "cyan";
@@ -471,9 +579,9 @@ hands.onResults((results) => {
     }
 
 
-    /* =========================
+    /* ===============================================
        PINCH DETECTION
-    ========================= */
+    =============================================== */
 
     const thumb =
       hand[4];
@@ -493,43 +601,110 @@ hands.onResults((results) => {
       distance < 0.065
     ) {
 
-      currentPinchingHand =
-        hand;
+      currentPinchingIndex =
+        i;
 
     }
 
   }
 
 
-  /* =================================
-     GRAB THE CUBE
-  ================================= */
+  /* =================================================
+     START GRAB
+  ================================================= */
 
   if (
-    currentPinchingHand &&
-    !grabbed
+    !grabbed &&
+    currentPinchingIndex !== -1
   ) {
 
     grabbed = true;
 
-    grabbingHand =
-      currentPinchingHand;
+    grabbingHandIndex =
+      currentPinchingIndex;
+
+
+    /*
+      Immediately place the cube
+      on the fingertip.
+    */
+
+    const hand =
+      detectedHands[
+        grabbingHandIndex
+      ];
+
+
+    const index =
+      hand[8];
+
+
+    const target =
+      screenPosition(index);
+
+
+    cubeX =
+      target.x;
+
+    cubeY =
+      target.y;
+
+
+    cubeContainer.style.left =
+      cubeX + "px";
+
+    cubeContainer.style.top =
+      cubeY + "px";
+
+
+    cubeContainer.style.display =
+      "block";
+
+
+    status.textContent =
+      "CUBE GRABBED 🤏";
 
   }
 
 
-  /* =================================
-     MOVE THE CUBE
-  ================================= */
+  /* =================================================
+     MOVE GRABBED CUBE
+  ================================================= */
 
-  if (
-    grabbed &&
-    grabbingHand
-  ) {
+  if (grabbed) {
+
 
     /*
-      Check if the same hand
-      is still pinching.
+      Make sure the hand that grabbed
+      the cube still exists.
+    */
+
+    if (
+      grabbingHandIndex >=
+      detectedHands.length
+    ) {
+
+      grabbed = false;
+
+      grabbingHandIndex = -1;
+
+      status.textContent =
+        "CUBE DROPPED";
+
+      return;
+
+    }
+
+
+    const grabbingHand =
+      detectedHands[
+        grabbingHandIndex
+      ];
+
+
+    /*
+      Check thumb/index distance
+      every frame.
     */
 
     const thumb =
@@ -546,13 +721,22 @@ hands.onResults((results) => {
       );
 
 
+    /* ===============================================
+       STILL PINCHING
+    =============================================== */
+
     if (
       distance < 0.075
     ) {
 
+
       const target =
         screenPosition(index);
 
+
+      /*
+        Follow the fingertip.
+      */
 
       cubeX +=
         (target.x - cubeX) *
@@ -563,6 +747,11 @@ hands.onResults((results) => {
         (target.y - cubeY) *
         smoothing;
 
+
+      /*
+        Center cube exactly
+        on fingertip.
+      */
 
       cubeContainer.style.left =
         cubeX + "px";
@@ -581,46 +770,72 @@ hands.onResults((results) => {
 
     }
 
+
+    /* ===============================================
+       RELEASE
+    =============================================== */
+
     else {
 
-      /*
-        Release the cube.
-      */
 
       grabbed = false;
 
-      grabbingHand = null;
+      grabbingHandIndex =
+        -1;
+
+
+      /*
+        DO NOT hide the cube.
+        It stays where it was dropped.
+      */
+
+      cubeContainer.style.left =
+        cubeX + "px";
+
+
+      cubeContainer.style.top =
+        cubeY + "px";
+
+
+      cubeContainer.style.display =
+        "block";
+
 
       status.textContent =
-        "CUBE RELEASED";
+        "CUBE DROPPED ✓";
 
     }
 
   }
 
 
-  /*
-    If the cube hasn't been grabbed yet,
-    don't show it.
-  */
+  /* =================================================
+     NOT GRABBED
+  ================================================= */
 
   if (!grabbed) {
 
-    cubeContainer.style.display =
-      "none";
+    /*
+      If the cube hasn't been grabbed,
+      don't show it.
+
+      Once it has been dropped,
+      it remains visible.
+    */
 
   }
 
 });
 
 
-/* =================================
+/* =====================================================
    START CAMERA
-================================= */
+===================================================== */
 
 async function startCamera() {
 
   try {
+
 
     status.textContent =
       "Requesting camera...";
@@ -704,6 +919,10 @@ async function startCamera() {
 
 }
 
+
+/* =====================================================
+   START
+===================================================== */
 
 startCamera();
 
