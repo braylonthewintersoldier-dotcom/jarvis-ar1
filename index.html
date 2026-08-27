@@ -3,11 +3,11 @@
 <html>
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
 <title>JARVIS AR</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
 <style>
@@ -24,33 +24,41 @@ html,body{
 #camera{
   position:fixed;
   inset:0;
+
   width:100%;
   height:100%;
+
   object-fit:cover;
+
   z-index:1;
 }
 
-#camera.front-camera{
+#camera.front{
   transform:scaleX(-1);
 }
 
-#camera.back-camera{
-  transform:scaleX(1);
+#camera.back{
+  transform:none;
 }
 
 #output{
   position:fixed;
   inset:0;
+
   width:100%;
   height:100%;
+
   pointer-events:none;
+
   z-index:2;
 }
 
 #hud{
   position:fixed;
+
   top:15px;
   left:15px;
+
   z-index:50;
 
   color:#00eaff;
@@ -58,16 +66,19 @@ html,body{
   background:rgba(0,0,0,.78);
 
   border:1px solid #00eaff;
+
   border-radius:10px;
 
   padding:12px 16px;
 
   line-height:1.5;
+
   font-size:15px;
 }
 
 #cameraButton{
   position:fixed;
+
   top:15px;
   right:15px;
 
@@ -77,27 +88,19 @@ html,body{
 
   color:#00eaff;
 
-  background:rgba(0,0,0,.78);
+  background:rgba(0,0,0,.8);
 
   border:1px solid #00eaff;
 
   border-radius:10px;
 
-  font-size:15px;
   font-weight:bold;
 
-  cursor:pointer;
-}
-
-#cameraButton:active{
-  transform:scale(.95);
-}
-
-#cameraButton:disabled{
-  opacity:.5;
+  font-size:14px;
 }
 
 #cube-container{
+
   position:fixed;
 
   left:50%;
@@ -118,6 +121,7 @@ html,body{
 }
 
 #cube{
+
   position:absolute;
 
   width:120px;
@@ -132,6 +136,7 @@ html,body{
 }
 
 .face{
+
   position:absolute;
 
   width:120px;
@@ -146,45 +151,44 @@ html,body{
   box-shadow:
     inset 0 0 25px rgba(0,240,255,.7),
     0 0 15px rgba(0,240,255,.8);
-
-  backface-visibility:visible;
 }
 
-.front{
+.frontFace{
   transform:translateZ(60px);
 }
 
-.back{
+.backFace{
   transform:
     rotateY(180deg)
     translateZ(60px);
 }
 
-.right{
+.rightFace{
   transform:
     rotateY(90deg)
     translateZ(60px);
 }
 
-.left{
+.leftFace{
   transform:
     rotateY(-90deg)
     translateZ(60px);
 }
 
-.top{
+.topFace{
   transform:
     rotateX(90deg)
     translateZ(60px);
 }
 
-.bottom{
+.bottomFace{
   transform:
     rotateX(-90deg)
     translateZ(60px);
 }
 
 #centerDot{
+
   position:fixed;
 
   width:7px;
@@ -205,6 +209,7 @@ html,body{
 }
 
 #grabRing{
+
   position:fixed;
 
   width:30px;
@@ -234,17 +239,19 @@ html,body{
 <video
   id="camera"
   autoplay
+  muted
   playsinline>
 </video>
 
 <canvas id="output"></canvas>
+
 
 <div id="hud">
 
 <b>JARVIS AR</b>
 
 <div id="status">
-Starting camera...
+Starting...
 </div>
 
 <div id="hands">
@@ -261,28 +268,37 @@ Camera: BACK
 
 </div>
 
+
 <button id="cameraButton">
 SWITCH TO FRONT
 </button>
+
 
 <div id="grabRing"></div>
 
 <div id="centerDot"></div>
 
+
 <div id="cube-container">
 
 <div id="cube">
 
-<div class="face front"></div>
-<div class="face back"></div>
-<div class="face right"></div>
-<div class="face left"></div>
-<div class="face top"></div>
-<div class="face bottom"></div>
+<div class="face frontFace"></div>
+
+<div class="face backFace"></div>
+
+<div class="face rightFace"></div>
+
+<div class="face leftFace"></div>
+
+<div class="face topFace"></div>
+
+<div class="face bottomFace"></div>
 
 </div>
 
 </div>
+
 
 <script>
 
@@ -331,28 +347,23 @@ document.getElementById("grabRing");
    CAMERA STATE
 ===================================================== */
 
-let savedCamera =
-localStorage.getItem("jarvisCamera");
-
-
 /*
-  BACK is the default.
+  IMPORTANT:
+
+  Back camera is the default.
+
+  We intentionally ignore the previous
+  saved camera once so the iPhone starts
+  with the rear camera.
 */
 
-let usingFrontCamera =
-savedCamera === "front";
+let usingFrontCamera=false;
 
+let currentStream=null;
 
-let currentStream =
-null;
+let processing=false;
 
-
-let cameraController =
-null;
-
-
-let switchingCamera =
-false;
+let cameraReady=false;
 
 
 /* =====================================================
@@ -361,20 +372,19 @@ false;
 
 function resizeCanvas(){
 
-  canvas.width =
-  window.innerWidth;
+  canvas.width=
+    window.innerWidth;
 
-  canvas.height =
-  window.innerHeight;
+  canvas.height=
+    window.innerHeight;
 
 }
 
 resizeCanvas();
 
-
 window.addEventListener(
-"resize",
-resizeCanvas
+  "resize",
+  resizeCanvas
 );
 
 
@@ -384,17 +394,17 @@ resizeCanvas
 
 function screenPosition(point){
 
-  const vw =
-  video.videoWidth;
+  const vw=
+    video.videoWidth;
 
-  const vh =
-  video.videoHeight;
+  const vh=
+    video.videoHeight;
 
-  const sw =
-  window.innerWidth;
+  const sw=
+    window.innerWidth;
 
-  const sh =
-  window.innerHeight;
+  const sh=
+    window.innerHeight;
 
 
   if(!vw || !vh){
@@ -407,11 +417,11 @@ function screenPosition(point){
   }
 
 
-  const videoRatio =
-  vw/vh;
+  const videoRatio=
+    vw/vh;
 
-  const screenRatio =
-  sw/sh;
+  const screenRatio=
+    sw/sh;
 
 
   let width;
@@ -421,18 +431,15 @@ function screenPosition(point){
   let offsetY=0;
 
 
-  if(
-    screenRatio >
-    videoRatio
-  ){
+  if(screenRatio>videoRatio){
 
     width=sw;
 
     height=
-    sw/videoRatio;
+      sw/videoRatio;
 
     offsetY=
-    (sh-height)/2;
+      (sh-height)/2;
 
   }
 
@@ -441,32 +448,34 @@ function screenPosition(point){
     height=sh;
 
     width=
-    sh*videoRatio;
+      sh*videoRatio;
 
     offsetX=
-    (sw-width)/2;
+      (sw-width)/2;
 
   }
 
 
-  let x =
-  point.x*width+
-  offsetX;
+  let x=
+    point.x*width+
+    offsetX;
 
-
-  let y =
-  point.y*height+
-  offsetY;
+  let y=
+    point.y*height+
+    offsetY;
 
 
   /*
-    Mirror ONLY the front camera.
+    MediaPipe coordinates are not
+    automatically affected by CSS.
+
+    Mirror only the front camera.
   */
 
   if(usingFrontCamera){
 
-    x =
-    sw-x;
+    x=
+      sw-x;
 
   }
 
@@ -483,7 +492,7 @@ function screenPosition(point){
    MEDIAPIPE
 ===================================================== */
 
-const hands =
+const hands=
 new Hands({
 
   locateFile:(file)=>{
@@ -514,19 +523,19 @@ hands.setOptions({
 
 let cubeExists=false;
 
-let cubeX =
-window.innerWidth/2;
+let cubeX=
+  window.innerWidth/2;
 
-let cubeY =
-window.innerHeight/2;
+let cubeY=
+  window.innerHeight/2;
+
+let cubeScale=1;
 
 let rotX=-20;
 
 let rotY=30;
 
 let rotZ=0;
-
-let cubeScale=1;
 
 
 /* =====================================================
@@ -548,7 +557,7 @@ let grabOffsetY=0;
 
 let twoHandMode=false;
 
-let twoStartDistance=0;
+let twoStartDistance=1;
 
 let twoStartScale=1;
 
@@ -556,7 +565,7 @@ let twoStartAngle=0;
 
 let twoStartRotZ=0;
 
-let twoStartAverageY=0;
+let twoStartCenterY=0;
 
 let twoStartRotX=0;
 
@@ -565,26 +574,23 @@ let twoStartRotX=0;
    PINCH
 ===================================================== */
 
-function pinchDistance(hand){
-
-  const thumb =
-  hand[4];
-
-  const index =
-  hand[8];
-
-
-  return Math.hypot(
-    thumb.x-index.x,
-    thumb.y-index.y
-  );
-
-}
-
-
 function isPinching(hand){
 
-  return pinchDistance(hand)<.055;
+  const thumb=
+    hand[4];
+
+  const index=
+    hand[8];
+
+
+  const d=
+    Math.hypot(
+      thumb.x-index.x,
+      thumb.y-index.y
+    );
+
+
+  return d<.055;
 
 }
 
@@ -595,35 +601,34 @@ function isPinching(hand){
 
 function updateCube(){
 
-  cubeContainer.style.left =
-  cubeX+"px";
+  cubeContainer.style.left=
+    cubeX+"px";
 
-  cubeContainer.style.top =
-  cubeY+"px";
+  cubeContainer.style.top=
+    cubeY+"px";
 
 
-  cube.style.transform =
+  cube.style.transform=
   `
-  scale(${cubeScale})
-  rotateX(${rotX}deg)
-  rotateY(${rotY}deg)
-  rotateZ(${rotZ}deg)
+    scale(${cubeScale})
+    rotateX(${rotX}deg)
+    rotateY(${rotY}deg)
+    rotateZ(${rotZ}deg)
   `;
 
 
-  cubeContainer.style.display =
-  "block";
+  cubeContainer.style.display=
+    "block";
 
 
-  centerDot.style.display =
-  "block";
+  centerDot.style.display=
+    "block";
 
+  centerDot.style.left=
+    cubeX+"px";
 
-  centerDot.style.left =
-  cubeX+"px";
-
-  centerDot.style.top =
-  cubeY+"px";
+  centerDot.style.top=
+    cubeY+"px";
 
 }
 
@@ -634,32 +639,32 @@ function updateCube(){
 
 function showRing(x,y){
 
-  grabRing.style.display =
-  "block";
+  grabRing.style.display=
+    "block";
 
-  grabRing.style.left =
-  x+"px";
+  grabRing.style.left=
+    x+"px";
 
-  grabRing.style.top =
-  y+"px";
+  grabRing.style.top=
+    y+"px";
 
 }
 
 
 function hideRing(){
 
-  grabRing.style.display =
-  "none";
+  grabRing.style.display=
+    "none";
 
 }
 
 
 /* =====================================================
-   PINCHING HANDS
+   FIND PINCHING HANDS
 ===================================================== */
 
 function getPinchingHands(
-detected
+  detected
 ){
 
   const list=[];
@@ -690,71 +695,16 @@ detected
 
 
 /* =====================================================
-   CLOSEST HAND
-===================================================== */
-
-function closestPinchingHand(
-detected,
-pinching
-){
-
-  let best=-1;
-
-  let bestDistance=
-  Infinity;
-
-
-  for(
-    const index
-    of pinching
-  ){
-
-    const fingertip =
-    screenPosition(
-      detected[index][8]
-    );
-
-
-    const d =
-    Math.hypot(
-
-      fingertip.x-cubeX,
-
-      fingertip.y-cubeY
-
-    );
-
-
-    if(
-      d<bestDistance
-    ){
-
-      bestDistance=d;
-
-      best=index;
-
-    }
-
-  }
-
-
-  return{
-    index:best,
-    distance:bestDistance
-  };
-
-}
-
-
-/* =====================================================
    HAND RESULTS
 ===================================================== */
 
 hands.onResults(
 (results)=>{
 
-  if(switchingCamera){
+  if(!cameraReady){
+
     return;
+
   }
 
 
@@ -766,13 +716,13 @@ hands.onResults(
   );
 
 
-  const detected =
-  results.multiHandLandmarks || [];
+  const detected=
+    results.multiHandLandmarks || [];
 
 
-  handsText.textContent =
-  "Hands: "+
-  detected.length;
+  handsText.textContent=
+    "Hands: "+
+    detected.length;
 
 
   /* ===============================================
@@ -783,14 +733,14 @@ hands.onResults(
     const hand of detected
   ){
 
-    const points =
-    hand.map(
-      screenPosition
-    );
+    const points=
+      hand.map(
+        screenPosition
+      );
 
 
-    ctx.strokeStyle =
-    "#00eaff";
+    ctx.strokeStyle=
+      "#00eaff";
 
     ctx.lineWidth=2.5;
 
@@ -800,15 +750,15 @@ hands.onResults(
       of HAND_CONNECTIONS
     ){
 
-      const a =
-      points[
-        connection[0]
-      ];
+      const a=
+        points[
+          connection[0]
+        ];
 
-      const b =
-      points[
-        connection[1]
-      ];
+      const b=
+        points[
+          connection[1]
+        ];
 
 
       ctx.beginPath();
@@ -828,20 +778,19 @@ hands.onResults(
     }
 
 
-    ctx.fillStyle =
-    "#00eaff";
+    ctx.fillStyle=
+      "#00eaff";
 
 
     for(
-      const point
-      of points
+      const p of points
     ){
 
       ctx.beginPath();
 
       ctx.arc(
-        point.x,
-        point.y,
+        p.x,
+        p.y,
         4,
         0,
         Math.PI*2
@@ -854,10 +803,10 @@ hands.onResults(
   }
 
 
-  const pinching =
-  getPinchingHands(
-    detected
-  );
+  const pinching=
+    getPinchingHands(
+      detected
+    );
 
 
   /* ===============================================
@@ -869,48 +818,48 @@ hands.onResults(
     pinching.length===2
   ){
 
-    const p1 =
-    screenPosition(
-      detected[
-        pinching[0]
-      ][8]
-    );
+    const p1=
+      screenPosition(
+        detected[
+          pinching[0]
+        ][8]
+      );
 
 
-    const p2 =
-    screenPosition(
-      detected[
-        pinching[1]
-      ][8]
-    );
+    const p2=
+      screenPosition(
+        detected[
+          pinching[1]
+        ][8]
+      );
 
 
-    const dx =
-    p2.x-p1.x;
+    const dx=
+      p2.x-p1.x;
 
-    const dy =
-    p2.y-p1.y;
-
-
-    const distance =
-    Math.hypot(
-      dx,
-      dy
-    );
+    const dy=
+      p2.y-p1.y;
 
 
-    const angle =
-    Math.atan2(
-      dy,
-      dx
-    );
+    const distance=
+      Math.hypot(
+        dx,
+        dy
+      );
 
 
-    const centerX =
-    (p1.x+p2.x)/2;
+    const angle=
+      Math.atan2(
+        dy,
+        dx
+      );
 
-    const centerY =
-    (p1.y+p2.y)/2;
+
+    const centerX=
+      (p1.x+p2.x)/2;
+
+    const centerY=
+      (p1.y+p2.y)/2;
 
 
     if(!twoHandMode){
@@ -920,70 +869,70 @@ hands.onResults(
       grabbed=true;
 
 
-      twoStartDistance =
-      Math.max(
-        distance,
-        10
-      );
+      twoStartDistance=
+        Math.max(
+          distance,
+          10
+        );
 
 
-      twoStartScale =
-      cubeScale;
+      twoStartScale=
+        cubeScale;
 
 
-      twoStartAngle =
-      angle;
+      twoStartAngle=
+        angle;
 
 
-      twoStartRotZ =
-      rotZ;
+      twoStartRotZ=
+        rotZ;
 
 
-      twoStartAverageY =
-      centerY;
+      twoStartCenterY=
+        centerY;
 
 
-      twoStartRotX =
-      rotX;
+      twoStartRotX=
+        rotX;
 
     }
 
 
     /* SCALE */
 
-    let targetScale =
-    twoStartScale*
-    (
-      distance/
-      twoStartDistance
-    );
+    let targetScale=
+      twoStartScale*
+      (
+        distance/
+        twoStartDistance
+      );
 
 
-    targetScale =
-    Math.max(
-      .4,
-      Math.min(
-        3.5,
-        targetScale
-      )
-    );
+    targetScale=
+      Math.max(
+        .4,
+        Math.min(
+          3.5,
+          targetScale
+        )
+      );
 
 
-    cubeScale +=
-    (
-      targetScale-
-      cubeScale
-    )*.25;
+    cubeScale+=
+      (
+        targetScale-
+        cubeScale
+      )*.25;
 
 
-    /* ROTATION */
+    /* ROTATE Z */
 
-    let angleChange =
-    (
-      angle-
-      twoStartAngle
-    )*
-    180/Math.PI;
+    let angleChange=
+      (
+        angle-
+        twoStartAngle
+      )*
+      180/Math.PI;
 
 
     while(
@@ -1004,57 +953,57 @@ hands.onResults(
     }
 
 
-    rotZ +=
-    (
-      twoStartRotZ+
-      angleChange-
-      rotZ
-    )*.25;
+    rotZ+=
+      (
+        twoStartRotZ+
+        angleChange-
+        rotZ
+      )*.25;
 
 
-    /* FORWARD / BACKWARD TILT */
+    /* TILT FORWARD / BACK */
 
-    const vertical =
-    centerY-
-    twoStartAverageY;
-
-
-    let targetRotX =
-    twoStartRotX+
-    vertical*.8;
+    const vertical=
+      centerY-
+      twoStartCenterY;
 
 
-    targetRotX =
-    Math.max(
-      -80,
-      Math.min(
-        80,
-        targetRotX
-      )
-    );
+    let targetRotX=
+      twoStartRotX+
+      vertical*.8;
 
 
-    rotX +=
-    (
-      targetRotX-
-      rotX
-    )*.25;
+    targetRotX=
+      Math.max(
+        -80,
+        Math.min(
+          80,
+          targetRotX
+        )
+      );
+
+
+    rotX+=
+      (
+        targetRotX-
+        rotX
+      )*.25;
 
 
     /* MOVE */
 
-    cubeX =
-    centerX;
+    cubeX=
+      centerX;
 
-    cubeY =
-    centerY;
+    cubeY=
+      centerY;
 
 
-    modeText.textContent =
-    "Mode: TWO HAND";
+    modeText.textContent=
+      "Mode: TWO HAND";
 
-    status.textContent =
-    "MOVE • TWIST • TILT • RESIZE";
+    status.textContent=
+      "MOVE • TWIST • TILT • RESIZE";
 
 
     updateCube();
@@ -1068,15 +1017,15 @@ hands.onResults(
 
 
   /* ===============================================
-     CURRENT GRAB
+     EXISTING GRAB
   =============================================== */
 
   if(grabbed){
 
-    let bestHand=-1;
+    let best=-1;
 
     let bestDistance=
-    Infinity;
+      Infinity;
 
 
     for(
@@ -1096,20 +1045,20 @@ hands.onResults(
       }
 
 
-      const fingertip =
-      screenPosition(
-        detected[i][8]
-      );
+      const fingertip=
+        screenPosition(
+          detected[i][8]
+        );
 
 
-      const d =
-      Math.hypot(
+      const d=
+        Math.hypot(
 
-        fingertip.x-grabX,
+          fingertip.x-grabX,
 
-        fingertip.y-grabY
+          fingertip.y-grabY
 
-      );
+        );
 
 
       if(
@@ -1118,7 +1067,7 @@ hands.onResults(
 
         bestDistance=d;
 
-        bestHand=i;
+        best=i;
 
       }
 
@@ -1126,31 +1075,31 @@ hands.onResults(
 
 
     if(
-      bestHand>=0 &&
+      best>=0 &&
       bestDistance<180
     ){
 
-      const fingertip =
-      screenPosition(
-        detected[bestHand][8]
-      );
+      const fingertip=
+        screenPosition(
+          detected[best][8]
+        );
 
 
-      cubeX =
-      fingertip.x+
-      grabOffsetX;
+      cubeX=
+        fingertip.x+
+        grabOffsetX;
 
 
-      cubeY =
-      fingertip.y+
-      grabOffsetY;
+      cubeY=
+        fingertip.y+
+        grabOffsetY;
 
 
-      grabX =
-      fingertip.x;
+      grabX=
+        fingertip.x;
 
-      grabY =
-      fingertip.y;
+      grabY=
+        fingertip.y;
 
 
       showRing(
@@ -1159,11 +1108,11 @@ hands.onResults(
       );
 
 
-      modeText.textContent =
-      "Mode: GRABBED";
+      modeText.textContent=
+        "Mode: GRABBED";
 
-      status.textContent =
-      "CUBE IN HAND 🤏";
+      status.textContent=
+        "CUBE IN HAND 🤏";
 
 
       updateCube();
@@ -1180,11 +1129,11 @@ hands.onResults(
     hideRing();
 
 
-    modeText.textContent =
-    "Mode: PLACED";
+    modeText.textContent=
+      "Mode: PLACED";
 
-    status.textContent =
-    "CUBE RELEASED";
+    status.textContent=
+      "CUBE RELEASED";
 
 
     return;
@@ -1201,45 +1150,75 @@ hands.onResults(
     pinching.length>0
   ){
 
-    const result =
-    closestPinchingHand(
-      detected,
-      pinching
-    );
+    let closest=-1;
+
+    let closestDistance=
+      Infinity;
+
+
+    for(
+      const i of pinching
+    ){
+
+      const fingertip=
+        screenPosition(
+          detected[i][8]
+        );
+
+
+      const d=
+        Math.hypot(
+
+          fingertip.x-cubeX,
+
+          fingertip.y-cubeY
+
+        );
+
+
+      if(
+        d<closestDistance
+      ){
+
+        closestDistance=d;
+
+        closest=i;
+
+      }
+
+    }
 
 
     if(
-      result.index>=0 &&
-      result.distance<
+      closest>=0 &&
+      closestDistance<
       110*cubeScale
     ){
 
-      const fingertip =
-      screenPosition(
-        detected[
-          result.index
-        ][8]
-      );
+      const fingertip=
+        screenPosition(
+          detected[closest][8]
+        );
 
 
       grabbed=true;
 
 
-      grabX =
-      fingertip.x;
+      grabX=
+        fingertip.x;
 
-      grabY =
-      fingertip.y;
-
-
-      grabOffsetX =
-      cubeX-
-      fingertip.x;
+      grabY=
+        fingertip.y;
 
 
-      grabOffsetY =
-      cubeY-
-      fingertip.y;
+      grabOffsetX=
+        cubeX-
+        fingertip.x;
+
+
+      grabOffsetY=
+        cubeY-
+        fingertip.y;
 
 
       showRing(
@@ -1248,11 +1227,11 @@ hands.onResults(
       );
 
 
-      modeText.textContent =
-      "Mode: GRABBED";
+      modeText.textContent=
+        "Mode: GRABBED";
 
-      status.textContent =
-      "CUBE GRABBED 🤏";
+      status.textContent=
+        "CUBE GRABBED 🤏";
 
 
       updateCube();
@@ -1273,21 +1252,19 @@ hands.onResults(
     pinching.length>0
   ){
 
-    const index =
-    pinching[0];
+    const fingertip=
+      screenPosition(
+        detected[
+          pinching[0]
+        ][8]
+      );
 
 
-    const fingertip =
-    screenPosition(
-      detected[index][8]
-    );
+    cubeX=
+      fingertip.x;
 
-
-    cubeX =
-    fingertip.x;
-
-    cubeY =
-    fingertip.y;
+    cubeY=
+      fingertip.y;
 
 
     cubeScale=1;
@@ -1304,11 +1281,11 @@ hands.onResults(
     grabbed=true;
 
 
-    grabX =
-    fingertip.x;
+    grabX=
+      fingertip.x;
 
-    grabY =
-    fingertip.y;
+    grabY=
+      fingertip.y;
 
 
     grabOffsetX=0;
@@ -1322,11 +1299,11 @@ hands.onResults(
     );
 
 
-    modeText.textContent =
-    "Mode: GRABBED";
+    modeText.textContent=
+      "Mode: GRABBED";
 
-    status.textContent =
-    "CUBE CREATED 🤏";
+    status.textContent=
+      "CUBE CREATED 🤏";
 
 
     updateCube();
@@ -1344,22 +1321,22 @@ hands.onResults(
 
     updateCube();
 
-    modeText.textContent =
-    "Mode: PLACED";
+    modeText.textContent=
+      "Mode: PLACED";
 
-    status.textContent =
-    "PINCH THE CUBE TO GRAB";
+    status.textContent=
+      "PINCH THE CUBE TO GRAB";
 
   }
 
   else{
 
-    status.textContent =
-    detected.length
-    ?
-    "PINCH TO CREATE CUBE"
-    :
-    "SHOW YOUR HANDS";
+    status.textContent=
+      detected.length
+      ?
+      "PINCH TO CREATE CUBE"
+      :
+      "SHOW YOUR HANDS";
 
   }
 
@@ -1367,127 +1344,22 @@ hands.onResults(
 
 
 /* =====================================================
-   GET CAMERA DEVICES
-===================================================== */
-
-async function getCameraDevices(){
-
-  try{
-
-    const devices =
-    await navigator.mediaDevices
-    .enumerateDevices();
-
-
-    return devices.filter(
-      device =>
-      device.kind ===
-      "videoinput"
-    );
-
-  }
-
-  catch(error){
-
-    console.error(
-      "Could not enumerate cameras:",
-      error
-    );
-
-    return [];
-
-  }
-
-}
-
-
-/* =====================================================
-   FIND BEST CAMERA
-===================================================== */
-
-function findCamera(
-devices,
-front
-){
-
-  if(!devices.length){
-
-    return null;
-
-  }
-
-
-  const keywords =
-  front
-  ?
-  [
-    "front",
-    "facetime",
-    "user"
-  ]
-  :
-  [
-    "back",
-    "rear",
-    "environment",
-    "wide",
-    "ultra"
-  ];
-
-
-  for(
-    const keyword
-    of keywords
-  ){
-
-    const found =
-    devices.find(
-      device =>
-      device.label
-      .toLowerCase()
-      .includes(keyword)
-    );
-
-
-    if(found){
-
-      return found;
-
-    }
-
-  }
-
-
-  /*
-    If no label is available,
-    let facingMode handle it.
-  */
-
-  return null;
-
-}
-
-
-/* =====================================================
-   START CAMERA
+   CAMERA
 ===================================================== */
 
 async function startCamera(){
 
-  if(switchingCamera){
-
-    return;
-
-  }
-
-
-  switchingCamera=true;
+  cameraReady=false;
 
 
   try{
 
-    status.textContent =
-    "Requesting camera...";
+    status.textContent=
+      usingFrontCamera
+      ?
+      "Starting front camera..."
+      :
+      "Starting BACK camera...";
 
 
     /* STOP OLD STREAM */
@@ -1506,60 +1378,45 @@ async function startCamera(){
     }
 
 
-    /* STOP MEDIAPIPE CAMERA */
+    /*
+      Clear video before assigning
+      the new stream.
+    */
 
-    if(cameraController){
+    video.pause();
 
-      try{
-
-        cameraController.stop();
-
-      }
-
-      catch(e){}
-
-      cameraController=null;
-
-    }
+    video.srcObject=null;
 
 
     /*
-      First request permission.
+      IMPORTANT:
 
-      This is important on iOS because
-      camera labels may be hidden until
-      permission has been granted.
+      Use exact facingMode.
+
+      NOT ideal.
+
+      NOT MediaPipe Camera.
+
+      This forces the browser to request
+      the selected camera.
     */
 
-    let devices =
-    await getCameraDevices();
-
-
-    let selectedCamera =
-    findCamera(
-      devices,
-      usingFrontCamera
-    );
-
-
-    let constraints;
-
-
-    /*
-      If we know the exact camera,
-      use its deviceId.
-    */
-
-    if(selectedCamera){
-
-      constraints={
+    const stream=
+      await navigator
+      .mediaDevices
+      .getUserMedia({
 
         video:{
 
-          deviceId:{
-            exact:
-            selectedCamera.deviceId
-          },
+          facingMode:
+            {
+              exact:
+                usingFrontCamera
+                ?
+                "user"
+                :
+                "environment"
+            },
 
           width:{
             ideal:1280
@@ -1578,84 +1435,31 @@ async function startCamera(){
 
         audio:false
 
-      };
-
-    }
-
-    else{
-
-      /*
-        Fallback for iOS browsers that
-        don't expose useful camera labels.
-      */
-
-      constraints={
-
-        video:{
-
-          facingMode:{
-            ideal:
-            usingFrontCamera
-            ?
-            "user"
-            :
-            "environment"
-          },
-
-          width:{
-            ideal:1280
-          },
-
-          height:{
-            ideal:720
-          },
-
-          frameRate:{
-            ideal:30,
-            max:30
-          }
-
-        },
-
-        audio:false
-
-      };
-
-    }
+      });
 
 
-    const stream =
-    await navigator.mediaDevices
-    .getUserMedia(
-      constraints
-    );
+    currentStream=
+      stream;
 
 
-    currentStream =
-    stream;
-
-
-    video.srcObject =
-    stream;
+    video.srcObject=
+      stream;
 
 
     /*
-      Camera orientation.
-
-      BACK = never mirror.
-      FRONT = mirror.
+      Set mirror BEFORE playback.
     */
 
     video.classList.remove(
-      "front-camera",
-      "back-camera"
+      "front",
+      "back"
     );
 
 
     if(usingFrontCamera){
 
       video.classList.add(
-        "front-camera"
+        "front"
       );
 
     }
@@ -1663,7 +1467,7 @@ async function startCamera(){
     else{
 
       video.classList.add(
-        "back-camera"
+        "back"
       );
 
     }
@@ -1673,161 +1477,197 @@ async function startCamera(){
 
 
     /*
-      Check the actual camera
-      selected by the browser.
+      Confirm the actual stream.
     */
 
-    const track =
-    stream.getVideoTracks()[0];
-
-
-    const settings =
-    track.getSettings();
+    const track=
+      stream.getVideoTracks()[0];
 
 
     console.log(
-      "Camera settings:",
-      settings
+      "ACTIVE CAMERA:",
+      track.getSettings()
     );
 
 
-    cameraModeText.textContent =
-    usingFrontCamera
-    ?
-    "Camera: FRONT"
-    :
-    "Camera: BACK";
+    cameraModeText.textContent=
+      usingFrontCamera
+      ?
+      "Camera: FRONT"
+      :
+      "Camera: BACK";
 
 
-    cameraButton.textContent =
-    usingFrontCamera
-    ?
-    "SWITCH TO BACK"
-    :
-    "SWITCH TO FRONT";
+    cameraButton.textContent=
+      usingFrontCamera
+      ?
+      "SWITCH TO BACK"
+      :
+      "SWITCH TO FRONT";
 
 
-    status.textContent =
-    "Starting hand tracking...";
+    status.textContent=
+      "Hand tracking active";
+
+
+    cameraReady=true;
 
 
     /*
-      Start MediaPipe.
+      Begin MediaPipe manually.
     */
 
-    cameraController =
-    new Camera(
-      video,
-      {
-
-        onFrame:
-        async()=>{
-
-          if(
-            !switchingCamera
-          ){
-
-            await hands.send({
-              image:video
-            });
-
-          }
-
-        },
-
-        width:1280,
-
-        height:720
-
-      }
+    requestAnimationFrame(
+      processFrame
     );
-
-
-    cameraController.start();
-
-
-    /*
-      Give the camera a moment
-      before allowing tracking.
-    */
-
-    await new Promise(
-      resolve =>
-      setTimeout(
-        resolve,
-        400
-      )
-    );
-
 
   }
 
   catch(error){
 
     console.error(
-      "Camera error:",
       error
     );
 
 
-    status.textContent =
-    "Camera error: "+
-    error.message;
+    /*
+      Some browsers may reject exact
+      facingMode.
+
+      Try the opposite method once.
+    */
+
+    status.textContent=
+      "Camera error: "+
+      error.message;
 
   }
-
-
-  switchingCamera=false;
 
 }
 
 
 /* =====================================================
-   SWITCH CAMERA
+   PROCESS VIDEO FRAMES
 ===================================================== */
 
-cameraButton.addEventListener(
-"click",
-async()=>{
+async function processFrame(){
 
-  if(switchingCamera){
+  if(
+    cameraReady &&
+    video.readyState>=2 &&
+    !processing
+  ){
 
-    return;
+    processing=true;
+
+
+    try{
+
+      await hands.send({
+        image:video
+      });
+
+    }
+
+    catch(error){
+
+      console.error(
+        "Tracking error:",
+        error
+      );
+
+    }
+
+
+    processing=false;
 
   }
 
 
-  /*
-    Change state FIRST.
-  */
-
-  usingFrontCamera =
-  !usingFrontCamera;
-
-
-  /*
-    Save choice immediately.
-  */
-
-  localStorage.setItem(
-    "jarvisCamera",
-
-    usingFrontCamera
-    ?
-    "front"
-    :
-    "back"
+  requestAnimationFrame(
+    processFrame
   );
 
+}
 
-  await startCamera();
 
-});
+/* =====================================================
+   CAMERA SWITCH
+===================================================== */
+
+cameraButton.addEventListener(
+  "click",
+  async()=>{
+
+    if(
+      !cameraReady
+    ){
+
+      return;
+
+    }
+
+
+    cameraButton.disabled=true;
+
+
+    /*
+      Change camera.
+    */
+
+    usingFrontCamera=
+      !usingFrontCamera;
+
+
+    /*
+      Save camera choice.
+    */
+
+    localStorage.setItem(
+      "jarvisCamera",
+      usingFrontCamera
+      ?
+      "front"
+      :
+      "back"
+    );
+
+
+    await startCamera();
+
+
+    cameraButton.disabled=false;
+
+  }
+);
 
 
 /* =====================================================
    START
 ===================================================== */
+
+/*
+  FORCE BACK CAMERA ON FIRST LOAD.
+*/
+
+const saved=
+  localStorage.getItem(
+    "jarvisCamera"
+  );
+
+
+if(saved==="front"){
+
+  usingFrontCamera=true;
+
+}
+
+else{
+
+  usingFrontCamera=false;
+
+}
+
 
 startCamera();
 
