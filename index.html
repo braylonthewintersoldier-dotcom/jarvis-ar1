@@ -4,7 +4,6 @@
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>JARVIS AR</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
@@ -84,55 +83,21 @@ html,body{
   height:120px;
   box-sizing:border-box;
   border:3px solid #00eaff;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(0,255,255,.24),
-      rgba(0,80,255,.08)
-    );
+  background:rgba(0,220,255,.18);
 
   box-shadow:
     inset 0 0 25px rgba(0,240,255,.7),
-    0 0 15px rgba(0,240,255,.8),
-    0 0 35px rgba(0,180,255,.25);
+    0 0 15px rgba(0,240,255,.8);
 
   backface-visibility:visible;
 }
 
-.front{
-  transform:translateZ(60px);
-}
-
-.back{
-  transform:
-    rotateY(180deg)
-    translateZ(60px);
-}
-
-.right{
-  transform:
-    rotateY(90deg)
-    translateZ(60px);
-}
-
-.left{
-  transform:
-    rotateY(-90deg)
-    translateZ(60px);
-}
-
-.top{
-  transform:
-    rotateX(90deg)
-    translateZ(60px);
-}
-
-.bottom{
-  transform:
-    rotateX(-90deg)
-    translateZ(60px);
-}
+.front{transform:translateZ(60px);}
+.back{transform:rotateY(180deg) translateZ(60px);}
+.right{transform:rotateY(90deg) translateZ(60px);}
+.left{transform:rotateY(-90deg) translateZ(60px);}
+.top{transform:rotateX(90deg) translateZ(60px);}
+.bottom{transform:rotateX(-90deg) translateZ(60px);}
 
 #centerDot{
   position:fixed;
@@ -142,9 +107,7 @@ html,body{
   margin-top:-3.5px;
   border-radius:50%;
   background:#00eaff;
-  box-shadow:
-    0 0 12px #00eaff,
-    0 0 25px #00eaff;
+  box-shadow:0 0 12px #00eaff;
   display:none;
   z-index:15;
 }
@@ -155,7 +118,7 @@ html,body{
   height:30px;
   margin-left:-15px;
   margin-top:-15px;
-  border:2px solid rgba(0,234,255,.8);
+  border:2px solid #00eaff;
   border-radius:50%;
   display:none;
   z-index:14;
@@ -174,19 +137,13 @@ html,body{
 
 <div id="hud">
 
-  <b>JARVIS AR</b>
+<b>JARVIS AR</b>
 
-  <div id="status">
-    Starting camera...
-  </div>
+<div id="status">Starting camera...</div>
 
-  <div id="hands">
-    Hands: 0
-  </div>
+<div id="hands">Hands: 0</div>
 
-  <div id="mode">
-    Mode: STANDBY
-  </div>
+<div id="mode">Mode: STANDBY</div>
 
 </div>
 
@@ -196,18 +153,19 @@ html,body{
 
 <div id="cube-container">
 
-  <div id="cube">
+<div id="cube">
 
-    <div class="face front"></div>
-    <div class="face back"></div>
-    <div class="face right"></div>
-    <div class="face left"></div>
-    <div class="face top"></div>
-    <div class="face bottom"></div>
-
-  </div>
+<div class="face front"></div>
+<div class="face back"></div>
+<div class="face right"></div>
+<div class="face left"></div>
+<div class="face top"></div>
+<div class="face bottom"></div>
 
 </div>
+
+</div>
+
 
 <script>
 
@@ -216,34 +174,34 @@ html,body{
 ===================================================== */
 
 const video =
-  document.getElementById("camera");
+document.getElementById("camera");
 
 const canvas =
-  document.getElementById("output");
+document.getElementById("output");
 
 const ctx =
-  canvas.getContext("2d");
+canvas.getContext("2d");
 
 const status =
-  document.getElementById("status");
+document.getElementById("status");
 
 const handsText =
-  document.getElementById("hands");
+document.getElementById("hands");
 
 const modeText =
-  document.getElementById("mode");
+document.getElementById("mode");
 
 const cubeContainer =
-  document.getElementById("cube-container");
+document.getElementById("cube-container");
 
 const cube =
-  document.getElementById("cube");
+document.getElementById("cube");
 
 const centerDot =
-  document.getElementById("centerDot");
+document.getElementById("centerDot");
 
 const grabRing =
-  document.getElementById("grabRing");
+document.getElementById("grabRing");
 
 
 /* =====================================================
@@ -252,19 +210,19 @@ const grabRing =
 
 function resizeCanvas(){
 
-  canvas.width =
-    window.innerWidth;
+canvas.width =
+window.innerWidth;
 
-  canvas.height =
-    window.innerHeight;
+canvas.height =
+window.innerHeight;
 
 }
 
 resizeCanvas();
 
 window.addEventListener(
-  "resize",
-  resizeCanvas
+"resize",
+resizeCanvas
 );
 
 
@@ -274,76 +232,76 @@ window.addEventListener(
 
 function screenPosition(point){
 
-  const vw =
-    video.videoWidth;
+const vw =
+video.videoWidth;
 
-  const vh =
-    video.videoHeight;
+const vh =
+video.videoHeight;
 
-  const sw =
-    window.innerWidth;
+const sw =
+window.innerWidth;
 
-  const sh =
-    window.innerHeight;
+const sh =
+window.innerHeight;
 
-  if(!vw || !vh){
+if(!vw || !vh){
 
-    return {
-      x:sw/2,
-      y:sh/2
-    };
+return{
+x:sw/2,
+y:sh/2
+};
 
-  }
+}
 
-  const videoRatio =
-    vw/vh;
+const videoRatio =
+vw/vh;
 
-  const screenRatio =
-    sw/sh;
+const screenRatio =
+sw/sh;
 
-  let width;
-  let height;
+let width;
+let height;
 
-  let offsetX=0;
-  let offsetY=0;
+let offsetX=0;
+let offsetY=0;
 
-  if(screenRatio > videoRatio){
+if(screenRatio>videoRatio){
 
-    width=sw;
+width=sw;
 
-    height=
-      sw/videoRatio;
+height=
+sw/videoRatio;
 
-    offsetY=
-      (sh-height)/2;
+offsetY=
+(sh-height)/2;
 
-  }else{
+}else{
 
-    height=sh;
+height=sh;
 
-    width=
-      sh*videoRatio;
+width=
+sh*videoRatio;
 
-    offsetX=
-      (sw-width)/2;
+offsetX=
+(sw-width)/2;
 
-  }
+}
 
-  let x =
-    point.x*width+
-    offsetX;
+let x =
+point.x*width+
+offsetX;
 
-  let y =
-    point.y*height+
-    offsetY;
+let y =
+point.y*height+
+offsetY;
 
-  x =
-    sw-x;
+x =
+sw-x;
 
-  return {
-    x:x,
-    y:y
-  };
+return{
+x:x,
+y:y
+};
 
 }
 
@@ -353,137 +311,133 @@ function screenPosition(point){
 ===================================================== */
 
 const hands =
-  new Hands({
+new Hands({
 
-    locateFile:(file)=>{
+locateFile:(file)=>{
 
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
 
-    }
+}
 
-  });
+});
 
 hands.setOptions({
 
-  maxNumHands:2,
+maxNumHands:2,
 
-  modelComplexity:1,
+modelComplexity:1,
 
-  minDetectionConfidence:.60,
+minDetectionConfidence:.60,
 
-  minTrackingConfidence:.60
+minTrackingConfidence:.60
 
 });
 
 
 /* =====================================================
-   CUBE STATE
+   CUBE
 ===================================================== */
 
-let cubeExists =
-  false;
+let cubeExists=false;
 
-let cubeX =
-  window.innerWidth/2;
+let cubeX=
+window.innerWidth/2;
 
-let cubeY =
-  window.innerHeight/2;
+let cubeY=
+window.innerHeight/2;
 
-let rotX =
-  -20;
+let rotX=-20;
 
-let rotY =
-  30;
+let rotY=30;
 
-let rotZ =
-  0;
+let rotZ=0;
 
-let cubeScale =
-  1;
+let cubeScale=1;
 
 
 /* =====================================================
    PHYSICS
 ===================================================== */
 
-let velocityX =
-  0;
+let velocityX=0;
 
-let velocityY =
-  0;
+let velocityY=0;
 
 
 /* =====================================================
-   GRAB STATE
+   GRAB
 ===================================================== */
 
-let grabbed =
-  false;
+let grabbed=false;
 
-let grabbingHand =
-  -1;
+let grabbingHand=null;
 
-let grabOffsetX =
-  0;
+let grabOffsetX=0;
 
-let grabOffsetY =
-  0;
+let grabOffsetY=0;
 
 
 /* =====================================================
-   TWO HAND STATE
+   TWO HAND
 ===================================================== */
 
-let twoHandMode =
-  false;
+let twoHandMode=false;
 
-let twoHandStartDistance =
-  0;
+let twoHandStartDistance=0;
 
-let twoHandStartScale =
-  1;
+let twoHandStartScale=1;
 
-let twoHandStartAngle =
-  0;
+let twoHandStartAngle=0;
 
-let twoHandStartRotZ =
-  0;
+let twoHandStartRotZ=0;
 
-let twoHandStartAverageY =
-  0;
+let twoHandStartY=0;
 
-let twoHandStartRotX =
-  0;
+let twoHandStartRotX=0;
+
+
+/* =====================================================
+   HAND IDENTITY
+===================================================== */
+
+function getHandLabel(
+results,
+index
+){
+
+if(
+results.multiHandedness &&
+results.multiHandedness[index]
+){
+
+return results
+.multiHandedness[index]
+.label;
+
+}
+
+return "Unknown";
+
+}
 
 
 /* =====================================================
    PINCH
 ===================================================== */
 
-function pinchDistance(hand){
-
-  const thumb =
-    hand[4];
-
-  const index =
-    hand[8];
-
-  return Math.hypot(
-
-    thumb.x-index.x,
-
-    thumb.y-index.y,
-
-    thumb.z-index.z
-
-  );
-
-}
-
 function isPinching(hand){
 
-  return pinchDistance(hand)
-    < .070;
+const thumb=hand[4];
+
+const index=hand[8];
+
+const d=
+Math.hypot(
+thumb.x-index.x,
+thumb.y-index.y
+);
+
+return d<.070;
 
 }
 
@@ -492,12 +446,12 @@ function isPinching(hand){
    DISTANCE
 ===================================================== */
 
-function distance(a,b){
+function getDistance(a,b){
 
-  return Math.hypot(
-    a.x-b.x,
-    a.y-b.y
-  );
+return Math.hypot(
+a.x-b.x,
+a.y-b.y
+);
 
 }
 
@@ -506,12 +460,12 @@ function distance(a,b){
    ANGLE
 ===================================================== */
 
-function angle(a,b){
+function getAngle(a,b){
 
-  return Math.atan2(
-    b.y-a.y,
-    b.x-a.x
-  );
+return Math.atan2(
+b.y-a.y,
+b.x-a.x
+);
 
 }
 
@@ -522,31 +476,31 @@ function angle(a,b){
 
 function updateCube(){
 
-  cubeContainer.style.left =
-    cubeX+"px";
+cubeContainer.style.left=
+cubeX+"px";
 
-  cubeContainer.style.top =
-    cubeY+"px";
+cubeContainer.style.top=
+cubeY+"px";
 
-  cube.style.transform =
-    `
-    scale(${cubeScale})
-    rotateX(${rotX}deg)
-    rotateY(${rotY}deg)
-    rotateZ(${rotZ}deg)
-    `;
+cube.style.transform=
+`
+scale(${cubeScale})
+rotateX(${rotX}deg)
+rotateY(${rotY}deg)
+rotateZ(${rotZ}deg)
+`;
 
-  cubeContainer.style.display =
-    "block";
+cubeContainer.style.display=
+"block";
 
-  centerDot.style.display =
-    "block";
+centerDot.style.display=
+"block";
 
-  centerDot.style.left =
-    cubeX+"px";
+centerDot.style.left=
+cubeX+"px";
 
-  centerDot.style.top =
-    cubeY+"px";
+centerDot.style.top=
+cubeY+"px";
 
 }
 
@@ -555,747 +509,730 @@ function updateCube(){
    GRAB RING
 ===================================================== */
 
-function updateGrabRing(x,y){
+function showGrabRing(x,y){
 
-  grabRing.style.display =
-    "block";
+grabRing.style.display=
+"block";
 
-  grabRing.style.left =
-    x+"px";
+grabRing.style.left=
+x+"px";
 
-  grabRing.style.top =
-    y+"px";
+grabRing.style.top=
+y+"px";
 
 }
 
 function hideGrabRing(){
 
-  grabRing.style.display =
-    "none";
+grabRing.style.display=
+"none";
 
 }
 
 
 /* =====================================================
-   FIND CLOSEST PINCH
-===================================================== */
-
-function findClosestPinch(
-  detected,
-  pinching
-){
-
-  let best =
-    -1;
-
-  let bestDistance =
-    Infinity;
-
-  for(
-    const index of pinching
-  ){
-
-    const fingertip =
-      screenPosition(
-        detected[index][8]
-      );
-
-    const d =
-      Math.hypot(
-
-        fingertip.x-cubeX,
-
-        fingertip.y-cubeY
-
-      );
-
-    if(
-      d<bestDistance
-    ){
-
-      bestDistance=d;
-
-      best=index;
-
-    }
-
-  }
-
-  return best;
-
-}
-
-
-/* =====================================================
-   HAND RESULTS
+   RESULTS
 ===================================================== */
 
 hands.onResults((results)=>{
 
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+ctx.clearRect(
+0,
+0,
+canvas.width,
+canvas.height
+);
 
 
-  const detected =
-    results.multiHandLandmarks || [];
+const detected=
+results.multiHandLandmarks || [];
 
 
-  handsText.textContent =
-    "Hands: "+
-    detected.length;
+handsText.textContent=
+"Hands: "+
+detected.length;
 
 
-  /* ===================================================
-     DRAW HANDS
-  =================================================== */
+/* =====================================================
+   DRAW HANDS
+===================================================== */
 
-  for(
-    const hand of detected
-  ){
+for(
+let i=0;
+i<detected.length;
+i++
+){
 
-    const points =
-      hand.map(
-        screenPosition
-      );
+const hand=
+detected[i];
 
+const points=
+hand.map(screenPosition);
 
-    ctx.strokeStyle =
-      "#00eaff";
 
-    ctx.lineWidth=2.5;
+ctx.strokeStyle=
+"#00eaff";
 
+ctx.lineWidth=2.5;
 
-    for(
-      const connection
-      of HAND_CONNECTIONS
-    ){
 
-      const a =
-        points[
-          connection[0]
-        ];
+for(
+const connection
+of HAND_CONNECTIONS
+){
 
-      const b =
-        points[
-          connection[1]
-        ];
+const a=
+points[connection[0]];
 
+const b=
+points[connection[1]];
 
-      ctx.beginPath();
 
-      ctx.moveTo(
-        a.x,
-        a.y
-      );
+ctx.beginPath();
 
-      ctx.lineTo(
-        b.x,
-        b.y
-      );
+ctx.moveTo(
+a.x,
+a.y
+);
 
-      ctx.stroke();
+ctx.lineTo(
+b.x,
+b.y
+);
 
-    }
+ctx.stroke();
 
+}
 
-    ctx.fillStyle =
-      "#00eaff";
 
+ctx.fillStyle=
+"#00eaff";
 
-    for(
-      const p of points
-    ){
 
-      ctx.beginPath();
+for(
+const p of points
+){
 
-      ctx.arc(
-        p.x,
-        p.y,
-        4,
-        0,
-        Math.PI*2
-      );
+ctx.beginPath();
 
-      ctx.fill();
+ctx.arc(
+p.x,
+p.y,
+4,
+0,
+Math.PI*2
+);
 
-    }
+ctx.fill();
 
-  }
+}
 
+}
 
-  /* ===================================================
-     PINCHING HANDS
-  =================================================== */
 
-  let pinching=[];
+/* =====================================================
+   FIND PINCHING HANDS
+===================================================== */
 
+let pinching=[];
 
-  for(
-    let i=0;
-    i<detected.length;
-    i++
-  ){
 
-    if(
-      isPinching(
-        detected[i]
-      )
-    ){
+for(
+let i=0;
+i<detected.length;
+i++
+){
 
-      pinching.push(i);
+if(
+isPinching(
+detected[i]
+)
+){
 
-    }
+pinching.push({
 
-  }
+index:i,
 
+label:getHandLabel(
+results,
+i
+)
 
-  /* ===================================================
-     TWO HAND CONTROL
-  =================================================== */
+});
 
-  if(
-    cubeExists &&
-    pinching.length===2
-  ){
+}
 
-    const handA =
-      detected[
-        pinching[0]
-      ];
+}
 
-    const handB =
-      detected[
-        pinching[1]
-      ];
 
+/* =====================================================
+   TWO HAND GRAB
+===================================================== */
 
-    const p1 =
-      screenPosition(
-        handA[8]
-      );
+if(
+cubeExists &&
+pinching.length===2
+){
 
-    const p2 =
-      screenPosition(
-        handB[8]
-      );
+const handA=
+detected[
+pinching[0].index
+];
 
+const handB=
+detected[
+pinching[1].index
+];
 
-    const d =
-      distance(
-        p1,
-        p2
-      );
 
+const p1=
+screenPosition(
+handA[8]
+);
 
-    const a =
-      angle(
-        p1,
-        p2
-      );
+const p2=
+screenPosition(
+handB[8]
+);
 
 
-    const averageX =
-      (p1.x+p2.x)/2;
+const d=
+getDistance(
+p1,
+p2
+);
 
-    const averageY =
-      (p1.y+p2.y)/2;
+const a=
+getAngle(
+p1,
+p2
+);
 
 
-    /* START */
+const averageX=
+(p1.x+p2.x)/2;
 
-    if(!twoHandMode){
+const averageY=
+(p1.y+p2.y)/2;
 
-      twoHandMode=true;
 
-      grabbed=true;
+if(!twoHandMode){
 
-      twoHandStartDistance =
-        d;
+twoHandMode=true;
 
-      twoHandStartScale =
-        cubeScale;
+grabbed=true;
 
-      twoHandStartAngle =
-        a;
+twoHandStartDistance=d;
 
-      twoHandStartRotZ =
-        rotZ;
+twoHandStartScale=
+cubeScale;
 
-      twoHandStartAverageY =
-        averageY;
+twoHandStartAngle=a;
 
-      twoHandStartRotX =
-        rotX;
+twoHandStartRotZ=
+rotZ;
 
-    }
+twoHandStartY=
+averageY;
 
+twoHandStartRotX=
+rotX;
 
-    /* SCALE */
+}
 
-    if(
-      twoHandStartDistance>5
-    ){
 
-      let targetScale =
-        twoHandStartScale*
-        (
-          d/
-          twoHandStartDistance
-        );
+/* SCALE */
 
+if(
+twoHandStartDistance>5
+){
 
-      targetScale =
-        Math.max(
-          .45,
-          Math.min(
-            3.5,
-            targetScale
-          )
-        );
+let targetScale=
+twoHandStartScale*
+(
+d/
+twoHandStartDistance
+);
 
+targetScale=
+Math.max(
+.45,
+Math.min(
+3.5,
+targetScale
+)
+);
 
-      cubeScale +=
-        (
-          targetScale-
-          cubeScale
-        )*.25;
+cubeScale +=
+(
+targetScale-
+cubeScale
+)*.25;
 
-    }
+}
 
 
-    /* TWIST */
+/* TWIST */
 
-    let difference =
-      (
-        a-
-        twoHandStartAngle
-      )*
-      180/Math.PI;
+let angleDifference=
+(
+a-
+twoHandStartAngle
+)*
+180/Math.PI;
 
 
-    while(
-      difference>180
-    ){
+while(
+angleDifference>180
+){
 
-      difference-=360;
+angleDifference-=360;
 
-    }
+}
 
-    while(
-      difference<-180
-    ){
+while(
+angleDifference<-180
+){
 
-      difference+=360;
+angleDifference+=360;
 
-    }
+}
 
 
-    const targetRotZ =
-      twoHandStartRotZ+
-      difference;
+rotZ +=
+(
+twoHandStartRotZ+
+angleDifference-
+rotZ
+)*.25;
 
 
-    rotZ +=
-      (
-        targetRotZ-
-        rotZ
-      )*.25;
+/* FORWARD / BACKWARD TILT */
 
+let vertical=
+averageY-
+twoHandStartY;
 
-    /* FORWARD / BACKWARD */
 
-    const verticalMovement =
-      averageY-
-      twoHandStartAverageY;
+let targetRotX=
+twoHandStartRotX+
+vertical*.85;
 
 
-    let targetRotX =
-      twoHandStartRotX+
-      verticalMovement*
-      .85;
+targetRotX=
+Math.max(
+-80,
+Math.min(
+80,
+targetRotX
+)
+);
 
 
-    targetRotX =
-      Math.max(
-        -80,
-        Math.min(
-          80,
-          targetRotX
-        )
-      );
+rotX +=
+(
+targetRotX-
+rotX
+)*.25;
 
 
-    rotX +=
-      (
-        targetRotX-
-        rotX
-      )*.25;
+/* MOVE */
 
+cubeX=
+averageX;
 
-    /* MOVE */
+cubeY=
+averageY;
 
-    cubeX =
-      averageX;
+velocityX=0;
+velocityY=0;
 
-    cubeY =
-      averageY;
 
+modeText.textContent=
+"Mode: TWO-HAND";
 
-    velocityX=0;
-    velocityY=0;
+status.textContent=
+"MOVE • TWIST • TILT • RESIZE";
 
 
-    modeText.textContent =
-      "Mode: TWO-HAND GRAB";
+updateCube();
 
-    status.textContent =
-      "MOVE • TWIST • TILT • RESIZE";
+return;
 
+}
 
-    updateCube();
 
-    return;
+/* =====================================================
+   EXIT TWO HAND
+===================================================== */
 
-  }
+if(twoHandMode){
 
+twoHandMode=false;
 
-  /* ===================================================
-     END TWO HAND
-  =================================================== */
+}
 
-  if(twoHandMode){
 
-    twoHandMode=false;
+/* =====================================================
+   CURRENT GRAB
+===================================================== */
 
-  }
+if(
+grabbed &&
+grabbingHand
+){
 
+let activeIndex=-1;
 
-  /* ===================================================
-     CURRENT ONE-HAND GRAB
-  =================================================== */
 
-  if(
-    grabbed &&
-    grabbingHand>=0
-  ){
+/*
+ Find the SAME physical hand
+ using its Left/Right identity.
+*/
 
-    if(
-      grabbingHand<
-      detected.length
-    ){
+for(
+let i=0;
+i<detected.length;
+i++
+){
 
-      const hand =
-        detected[
-          grabbingHand
-        ];
+const label=
+getHandLabel(
+results,
+i
+);
 
+if(
+label===
+grabbingHand
+){
 
-      if(
-        isPinching(hand)
-      ){
+activeIndex=i;
 
-        const fingertip =
-          screenPosition(
-            hand[8]
-          );
+break;
 
+}
 
-        /*
-          DIRECT TRACKING
+}
 
-          No smoothing here.
-          The cube stays attached
-          directly to the grab point.
-        */
 
-        cubeX =
-          fingertip.x+
-          grabOffsetX;
+/* =================================================
+   HAND STILL THERE
+================================================= */
 
-        cubeY =
-          fingertip.y+
-          grabOffsetY;
+if(
+activeIndex>=0
+){
 
+const hand=
+detected[
+activeIndex
+];
 
-        /*
-          Calculate velocity
-          for release momentum.
-        */
 
-        velocityX =
-          cubeX-
-          (cubeX-velocityX);
+if(
+isPinching(hand)
+){
 
-        velocityY =
-          cubeY-
-          (cubeY-velocityY);
+const fingertip=
+screenPosition(
+hand[8]
+);
 
 
-        updateGrabRing(
-          fingertip.x,
-          fingertip.y
-        );
+/*
+ DIRECT ATTACHMENT
 
+ The cube follows the fingertip
+ without lag.
+*/
 
-        modeText.textContent =
-          "Mode: GRABBED";
+cubeX=
+fingertip.x+
+grabOffsetX;
 
-        status.textContent =
-          "CUBE IN HAND 🤏";
+cubeY=
+fingertip.y+
+grabOffsetY;
 
 
-        updateCube();
+/*
+ Velocity is reset while holding.
+*/
 
-        return;
+velocityX=0;
 
-      }
+velocityY=0;
 
-    }
 
+showGrabRing(
+fingertip.x,
+fingertip.y
+);
 
-    /* RELEASE */
 
-    grabbed=false;
+modeText.textContent=
+"Mode: GRABBED "+
+grabbingHand;
 
-    grabbingHand=-1;
+status.textContent=
+"CUBE IN HAND 🤏";
 
-    hideGrabRing();
 
+updateCube();
 
-    modeText.textContent =
-      "Mode: PLACED";
+return;
 
-    status.textContent =
-      "CUBE RELEASED";
+}
 
+}
 
-    return;
 
-  }
+/* =================================================
+   HAND RELEASED
+================================================= */
 
+grabbed=false;
 
-  /* ===================================================
-     GRAB EXISTING CUBE
-  =================================================== */
+grabbingHand=null;
 
-  if(
-    cubeExists &&
-    pinching.length>0
-  ){
+hideGrabRing();
 
-    const candidate =
-      findClosestPinch(
-        detected,
-        pinching
-      );
 
+modeText.textContent=
+"Mode: PLACED";
 
-    if(candidate>=0){
+status.textContent=
+"CUBE RELEASED";
 
-      const fingertip =
-        screenPosition(
-          detected[candidate][8]
-        );
 
+return;
 
-      const distanceToCube =
-        Math.hypot(
+}
 
-          fingertip.x-cubeX,
 
-          fingertip.y-cubeY
+/* =====================================================
+   GRAB EXISTING CUBE
+===================================================== */
 
-        );
+if(
+cubeExists &&
+pinching.length>0
+){
 
+let closest=null;
 
-      const grabRadius =
-        90*cubeScale;
+let closestDistance=
+Infinity;
 
 
-      if(
-        distanceToCube<
-        grabRadius
-      ){
+for(
+const p of pinching
+){
 
-        grabbed=true;
+const fingertip=
+screenPosition(
+detected[p.index][8]
+);
 
-        grabbingHand=
-          candidate;
+const d=
+Math.hypot(
+fingertip.x-cubeX,
+fingertip.y-cubeY
+);
 
+if(
+d<closestDistance
+){
 
-        grabOffsetX =
-          cubeX-
-          fingertip.x;
+closestDistance=d;
 
+closest=p;
 
-        grabOffsetY =
-          cubeY-
-          fingertip.y;
+}
 
+}
 
-        velocityX=0;
-        velocityY=0;
 
+if(
+closest &&
+closestDistance<
+100*cubeScale
+){
 
-        updateGrabRing(
-          fingertip.x,
-          fingertip.y
-        );
+const fingertip=
+screenPosition(
+detected[
+closest.index
+][8]
+);
 
 
-        modeText.textContent =
-          "Mode: GRABBED";
+/*
+ Store the actual LEFT/RIGHT
+ hand identity.
+*/
 
-        status.textContent =
-          "CUBE GRABBED 🤏";
+grabbingHand=
+closest.label;
 
+grabbed=true;
 
-        updateCube();
 
-        return;
+grabOffsetX=
+cubeX-
+fingertip.x;
 
-      }
+grabOffsetY=
+cubeY-
+fingertip.y;
 
-    }
 
-  }
+velocityX=0;
+velocityY=0;
 
 
-  /* ===================================================
-     CREATE CUBE
-  =================================================== */
+showGrabRing(
+fingertip.x,
+fingertip.y
+);
 
-  if(
-    !cubeExists &&
-    pinching.length>0
-  ){
 
-    const index =
-      pinching[0];
+modeText.textContent=
+"Mode: GRABBED "+
+grabbingHand;
 
+status.textContent=
+"CUBE GRABBED 🤏";
 
-    const fingertip =
-      screenPosition(
-        detected[index][8]
-      );
 
+updateCube();
 
-    cubeX =
-      fingertip.x;
+return;
 
-    cubeY =
-      fingertip.y;
+}
 
+}
 
-    cubeScale=1;
 
-    rotX=-20;
-    rotY=30;
-    rotZ=0;
+/* =====================================================
+   CREATE FIRST CUBE
+===================================================== */
 
+if(
+!cubeExists &&
+pinching.length>0
+){
 
-    velocityX=0;
-    velocityY=0;
+const first=
+pinching[0];
 
+const fingertip=
+screenPosition(
+detected[
+first.index
+][8]
+);
 
-    cubeExists=true;
 
-    grabbed=true;
+cubeX=
+fingertip.x;
 
-    grabbingHand=
-      index;
+cubeY=
+fingertip.y;
 
 
-    grabOffsetX=0;
-    grabOffsetY=0;
+cubeScale=1;
 
+rotX=-20;
 
-    updateGrabRing(
-      fingertip.x,
-      fingertip.y
-    );
+rotY=30;
 
+rotZ=0;
 
-    modeText.textContent =
-      "Mode: GRABBED";
 
-    status.textContent =
-      "CUBE CREATED 🤏";
+velocityX=0;
 
+velocityY=0;
 
-    updateCube();
 
-    return;
+cubeExists=true;
 
-  }
+grabbed=true;
 
+grabbingHand=
+first.label;
 
-  /* ===================================================
-     PHYSICS AFTER RELEASE
-  =================================================== */
+grabOffsetX=0;
 
-  if(
-    cubeExists &&
-    !grabbed
-  ){
+grabOffsetY=0;
 
-    cubeX +=
-      velocityX;
 
-    cubeY +=
-      velocityY;
+showGrabRing(
+fingertip.x,
+fingertip.y
+);
 
 
-    velocityX *=
-      .88;
+modeText.textContent=
+"Mode: GRABBED "+
+grabbingHand;
 
-    velocityY *=
-      .88;
+status.textContent=
+"CUBE CREATED 🤏";
 
 
-    if(
-      Math.abs(velocityX)<.05
-    ){
+updateCube();
 
-      velocityX=0;
+return;
 
-    }
+}
 
-    if(
-      Math.abs(velocityY)<.05
-    ){
 
-      velocityY=0;
+/* =====================================================
+   RELEASE PHYSICS
+===================================================== */
 
-    }
+if(
+cubeExists &&
+!grabbed
+){
 
+cubeX +=
+velocityX;
 
-    updateCube();
+cubeY +=
+velocityY;
 
 
-    modeText.textContent =
-      "Mode: PLACED";
+velocityX *=
+.90;
 
-    status.textContent =
-      "PINCH CUBE TO GRAB";
+velocityY *=
+.90;
 
-  }
 
+updateCube();
 
-  else if(
-    !cubeExists
-  ){
 
-    status.textContent =
-      detected.length
-      ? "PINCH TO CREATE CUBE"
-      : "SHOW YOUR HANDS";
+modeText.textContent=
+"Mode: PLACED";
 
-  }
+status.textContent=
+"PINCH CUBE TO GRAB";
+
+}else if(
+!cubeExists
+){
+
+status.textContent=
+detected.length
+?
+"PINCH TO CREATE CUBE"
+:
+"SHOW YOUR HANDS";
+
+}
 
 });
 
@@ -1306,85 +1243,85 @@ hands.onResults((results)=>{
 
 async function startCamera(){
 
-  try{
+try{
 
-    status.textContent =
-      "Requesting camera...";
-
-
-    const stream =
-      await navigator.mediaDevices
-      .getUserMedia({
-
-        video:{
-
-          facingMode:"user",
-
-          width:{
-            ideal:1280
-          },
-
-          height:{
-            ideal:720
-          },
-
-          frameRate:{
-            ideal:30,
-            max:30
-          }
-
-        },
-
-        audio:false
-
-      });
+status.textContent=
+"Requesting camera...";
 
 
-    video.srcObject =
-      stream;
+const stream=
+await navigator.mediaDevices
+.getUserMedia({
+
+video:{
+
+facingMode:"user",
+
+width:{
+ideal:1280
+},
+
+height:{
+ideal:720
+},
+
+frameRate:{
+ideal:30,
+max:30
+}
+
+},
+
+audio:false
+
+});
 
 
-    await video.play();
+video.srcObject=
+stream;
 
 
-    status.textContent =
-      "Starting hand tracking...";
+await video.play();
 
 
-    const camera =
-      new Camera(
-        video,
-        {
-
-          onFrame:
-            async()=>{
-
-              await hands.send({
-                image:video
-              });
-
-            },
-
-          width:1280,
-
-          height:720
-
-        }
-      );
+status.textContent=
+"Starting hand tracking...";
 
 
-    camera.start();
+const camera=
+new Camera(
+video,
+{
+
+onFrame:
+async()=>{
+
+await hands.send({
+image:video
+});
+
+},
+
+width:1280,
+
+height:720
+
+}
+);
 
 
-  }catch(error){
+camera.start();
 
-    console.error(error);
 
-    status.textContent =
-      "Camera error: "+
-      error.message;
+}catch(error){
 
-  }
+console.error(error);
+
+status.textContent=
+"Camera error: "+
+error.message;
+
+}
 
 }
 
