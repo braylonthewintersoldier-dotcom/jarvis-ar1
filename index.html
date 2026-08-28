@@ -1,262 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<title>JARVIS AR</title>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<title>JARVIS 3D ENGINEERING</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/OBJLoader.js"></script>
+
 <style>
-html,body{
+
+html,
+body{
+
   margin:0;
+
   width:100%;
   height:100%;
+
   overflow:hidden;
+
   background:#000;
-  font-family:Arial,Helvetica,sans-serif;
-  color:#00eaff;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
 }
+
+/* CAMERA */
 
 #camera{
+
   position:fixed;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   object-fit:cover;
+
   z-index:1;
+
 }
 
-#camera.front{transform:scaleX(-1)}
-#camera.back{transform:scaleX(1)}
+#camera.front{
+
+  transform:scaleX(-1);
+
+}
+
+#camera.back{
+
+  transform:scaleX(1);
+
+}
+
+
+/* THREE */
 
 #threeCanvas{
+
   position:fixed;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   z-index:5;
+
   pointer-events:none;
+
 }
+
+
+/* HANDS */
 
 #handCanvas{
+
   position:fixed;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   z-index:10;
+
   pointer-events:none;
+
 }
 
-#hud{
-  position:fixed;
-  top:15px;
-  left:15px;
-  z-index:100;
-  min-width:220px;
-  padding:14px 17px;
-  background:rgba(0,10,20,.78);
-  border:1px solid #00eaff;
-  border-radius:12px;
-  box-shadow:0 0 20px rgba(0,234,255,.25);
-  backdrop-filter:blur(8px);
-}
 
-#title{
-  font-size:19px;
-  font-weight:bold;
-  letter-spacing:3px;
-  margin-bottom:5px;
-}
+/* INVISIBLE FILE INPUT */
 
-.line{
-  margin-top:4px;
-  font-size:13px;
-}
+#modelInput{
 
-.online{color:#00ff88}
-
-#cameraButton{
-  position:fixed;
-  right:15px;
-  top:15px;
-  z-index:110;
-  padding:11px 15px;
-  border:1px solid #00eaff;
-  border-radius:10px;
-  background:rgba(0,10,20,.85);
-  color:#00eaff;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-#crosshair{
-  position:fixed;
-  left:50%;
-  top:50%;
-  width:18px;
-  height:18px;
-  margin-left:-9px;
-  margin-top:-9px;
-  border:1px solid rgba(0,234,255,.5);
-  border-radius:50%;
-  z-index:20;
-  pointer-events:none;
-}
-
-#reticle{
-  position:fixed;
-  width:35px;
-  height:35px;
-  margin-left:-17.5px;
-  margin-top:-17.5px;
-  border:2px solid #00eaff;
-  border-radius:50%;
-  z-index:30;
   display:none;
-  pointer-events:none;
-  box-shadow:0 0 15px #00eaff;
+
 }
 
-#bottom{
+
+/* JARVIS STATUS */
+
+#jarvisStatus{
+
   position:fixed;
+
   left:50%;
-  bottom:20px;
+
+  bottom:28px;
+
   transform:translateX(-50%);
+
   z-index:100;
-  padding:10px 22px;
-  background:rgba(0,10,20,.8);
-  border:1px solid #00eaff;
-  border-radius:20px;
-  font-size:13px;
-  letter-spacing:1px;
-}
 
-.scanline{
-  position:fixed;
-  left:0;
-  right:0;
-  height:1px;
-  background:rgba(0,234,255,.12);
-  z-index:15;
+  color:rgba(255,255,255,.75);
+
+  font-size:12px;
+
+  letter-spacing:2px;
+
+  text-align:center;
+
   pointer-events:none;
-  animation:scan 5s linear infinite;
+
+  text-shadow:
+    0 0 12px rgba(0,220,255,.8);
+
 }
 
-@keyframes scan{
-  from{top:0}
-  to{top:100%}
-}
 
-#vignette{
+/* VOICE INDICATOR */
+
+#voiceIndicator{
+
   position:fixed;
-  inset:0;
-  z-index:18;
+
+  left:50%;
+
+  top:50%;
+
+  transform:
+    translate(-50%,-50%)
+    scale(.8);
+
+  width:70px;
+  height:70px;
+
+  border-radius:50%;
+
+  border:
+    1px solid
+    rgba(0,220,255,.8);
+
+  opacity:0;
+
+  z-index:90;
+
   pointer-events:none;
-  box-shadow:inset 0 0 180px rgba(0,0,0,.75);
+
+  box-shadow:
+    0 0 30px rgba(0,220,255,.5),
+    inset 0 0 20px rgba(0,220,255,.2);
+
+  transition:
+    opacity .2s,
+    transform .2s;
+
 }
 
-@media(max-width:600px){
-  #hud{
-    min-width:170px;
-    padding:10px 12px;
-  }
+#voiceIndicator.active{
 
-  #title{
-    font-size:15px;
-  }
+  opacity:1;
 
-  .line{
-    font-size:11px;
-  }
+  transform:
+    translate(-50%,-50%)
+    scale(1.15);
 
-  #bottom{
-    bottom:12px;
-    font-size:11px;
-    white-space:nowrap;
-  }
+  animation:
+    voicePulse 1s infinite;
+
 }
+
+
+@keyframes voicePulse{
+
+  0%{
+
+    box-shadow:
+      0 0 15px rgba(0,220,255,.4);
+
+  }
+
+  50%{
+
+    box-shadow:
+      0 0 50px rgba(0,220,255,.9);
+
+  }
+
+  100%{
+
+    box-shadow:
+      0 0 15px rgba(0,220,255,.4);
+
+  }
+
+}
+
+
+/* SELECTED PART */
+
+#selectionRing{
+
+  position:fixed;
+
+  width:45px;
+  height:45px;
+
+  border:
+    1px solid
+    rgba(0,220,255,.9);
+
+  border-radius:50%;
+
+  z-index:30;
+
+  display:none;
+
+  pointer-events:none;
+
+  box-shadow:
+    0 0 20px rgba(0,220,255,.7);
+
+}
+
+
+/* JARVIS TEXT */
+
+#jarvisMessage{
+
+  position:fixed;
+
+  left:50%;
+
+  top:25%;
+
+  transform:translateX(-50%);
+
+  max-width:600px;
+
+  padding:12px 20px;
+
+  color:rgba(255,255,255,.85);
+
+  font-size:14px;
+
+  text-align:center;
+
+  letter-spacing:.5px;
+
+  opacity:0;
+
+  z-index:100;
+
+  pointer-events:none;
+
+  text-shadow:
+    0 0 12px rgba(0,220,255,.8);
+
+  transition:opacity .3s;
+
+}
+
+#jarvisMessage.show{
+
+  opacity:1;
+
+}
+
+
+/* DESKTOP HELP */
+
+#help{
+
+  position:fixed;
+
+  right:18px;
+
+  bottom:18px;
+
+  z-index:100;
+
+  color:rgba(255,255,255,.35);
+
+  font-size:10px;
+
+  text-align:right;
+
+  line-height:1.7;
+
+  pointer-events:none;
+
+}
+
 </style>
+
 </head>
+
 
 <body>
 
-<video id="camera" autoplay muted playsinline></video>
+
+<video
+  id="camera"
+  autoplay
+  muted
+  playsinline>
+</video>
+
 
 <canvas id="handCanvas"></canvas>
 
 <canvas id="threeCanvas"></canvas>
 
-<div id="hud">
 
-  <div id="title">
-    JARVIS AR
-  </div>
+<input
+  id="modelInput"
+  type="file"
+  accept=".glb,.gltf,.obj"
+>
 
-  <div class="line">
-    SYSTEM:
-    <span id="system" class="online">
-      ONLINE
-    </span>
-  </div>
 
-  <div class="line">
-    TRACKING:
-    <span id="tracking">
-      INITIALIZING
-    </span>
-  </div>
+<div id="voiceIndicator"></div>
 
-  <div class="line">
-    HANDS:
-    <span id="hands">
-      0
-    </span>
-  </div>
+<div id="selectionRing"></div>
 
-  <div class="line">
-    OBJECTS:
-    <span id="objects">
-      0
-    </span>
-  </div>
+<div id="jarvisMessage"></div>
 
-  <div class="line">
-    MODE:
-    <span id="mode">
-      STANDBY
-    </span>
-  </div>
+<div id="jarvisStatus">
+  JARVIS INITIALIZING
+</div>
 
-  <div class="line">
-    ACTIVE:
-    <span id="active">
-      NONE
-    </span>
-  </div>
+<div id="help">
+
+  SAY "JARVIS" TO ACTIVATE<br>
+  PINCH TO GRAB • TWO HANDS TO ROTATE / SCALE<br>
+  "JARVIS LOAD MODEL" TO IMPORT A MODEL
 
 </div>
 
-<button id="cameraButton">
-  SWITCH CAMERA
-</button>
-
-<div id="crosshair"></div>
-
-<div id="reticle"></div>
-
-<div class="scanline"></div>
-
-<div id="vignette"></div>
-
-<div id="bottom">
-  PINCH • GRAB • MOVE • ROTATE • RESIZE
-</div>
 
 <script>
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
 
 const video =
   document.getElementById("camera");
@@ -270,123 +385,115 @@ const handCtx =
 const threeCanvas =
   document.getElementById("threeCanvas");
 
-const systemText =
-  document.getElementById("system");
+const jarvisStatus =
+  document.getElementById("jarvisStatus");
 
-const trackingText =
-  document.getElementById("tracking");
+const jarvisMessage =
+  document.getElementById("jarvisMessage");
 
-const handsText =
-  document.getElementById("hands");
+const voiceIndicator =
+  document.getElementById("voiceIndicator");
 
-const objectsText =
-  document.getElementById("objects");
+const selectionRing =
+  document.getElementById("selectionRing");
 
-const modeText =
-  document.getElementById("mode");
-
-const activeText =
-  document.getElementById("active");
-
-const cameraButton =
-  document.getElementById("cameraButton");
-
-const reticle =
-  document.getElementById("reticle");
+const modelInput =
+  document.getElementById("modelInput");
 
 
-/* CAMERA */
+/* =====================================================
+   CAMERA
+===================================================== */
 
 let usingFrontCamera = true;
+
 let currentStream = null;
+
 let cameraReady = false;
+
 let processing = false;
 
 
 async function startCamera(){
 
-  cameraReady = false;
+  cameraReady=false;
 
   if(currentStream){
 
     currentStream
       .getTracks()
-      .forEach(track => track.stop());
+      .forEach(
+        track =>
+        track.stop()
+      );
 
   }
 
-  currentStream = null;
 
   try{
 
-    systemText.textContent = "STARTING";
+    const stream =
+      await navigator
+      .mediaDevices
+      .getUserMedia({
 
-    let stream;
+        video:{
 
-    try{
+          facingMode:
+            usingFrontCamera
+            ?
+            "user"
+            :
+            "environment",
 
-      stream =
-        await navigator.mediaDevices.getUserMedia({
-
-          video:{
-
-            facingMode:
-              usingFrontCamera
-              ? "user"
-              : "environment",
-
-            width:{
-              ideal:1280
-            },
-
-            height:{
-              ideal:720
-            },
-
-            frameRate:{
-              ideal:30,
-              max:30
-            }
-
+          width:{
+            ideal:1280
           },
 
-          audio:false
+          height:{
+            ideal:720
+          },
 
-        });
+          frameRate:{
+            ideal:30,
+            max:30
+          }
 
-    }
+        },
 
-    catch(error){
+        audio:false
 
-      stream =
-        await navigator.mediaDevices.getUserMedia({
+      });
 
-          video:true,
-          audio:false
 
-        });
+    currentStream=stream;
 
-    }
+    video.srcObject=stream;
 
-    currentStream = stream;
 
-    video.srcObject = stream;
+    video.classList.remove(
+      "front",
+      "back"
+    );
 
-    video.classList.remove("front","back");
 
     video.classList.add(
       usingFrontCamera
-      ? "front"
-      : "back"
+      ?
+      "front"
+      :
+      "back"
     );
+
 
     await video.play();
 
-    cameraReady = true;
 
-    systemText.textContent = "ONLINE";
+    cameraReady=true;
 
-    trackingText.textContent = "ACTIVE";
+
+    jarvisStatus.textContent =
+      "JARVIS ONLINE";
 
   }
 
@@ -394,36 +501,24 @@ async function startCamera(){
 
     console.error(error);
 
-    systemText.textContent =
-      "CAMERA ERROR";
-
-    trackingText.textContent =
-      error.message;
+    jarvisStatus.textContent =
+      "CAMERA ACCESS REQUIRED";
 
   }
 
 }
 
 
-cameraButton.onclick =
-async function(){
-
-  usingFrontCamera =
-    !usingFrontCamera;
-
-  await startCamera();
-
-};
-
-
-/* RESIZE */
+/* =====================================================
+   RESIZE
+===================================================== */
 
 function resize(){
 
-  handCanvas.width =
+  handCanvas.width=
     window.innerWidth;
 
-  handCanvas.height =
+  handCanvas.height=
     window.innerHeight;
 
 }
@@ -436,102 +531,9 @@ window.addEventListener(
 );
 
 
-/* SCREEN POSITION */
-
-function screenPosition(point){
-
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-
-  const sw = window.innerWidth;
-  const sh = window.innerHeight;
-
-  if(!vw || !vh){
-
-    return{
-      x:sw/2,
-      y:sh/2
-    };
-
-  }
-
-  const videoRatio = vw/vh;
-  const screenRatio = sw/sh;
-
-  let width;
-  let height;
-
-  let offsetX = 0;
-  let offsetY = 0;
-
-  if(screenRatio > videoRatio){
-
-    width = sw;
-    height = sw/videoRatio;
-
-    offsetY =
-      (sh-height)/2;
-
-  }
-
-  else{
-
-    height = sh;
-    width = sh*videoRatio;
-
-    offsetX =
-      (sw-width)/2;
-
-  }
-
-  let x =
-    point.x*width+
-    offsetX;
-
-  let y =
-    point.y*height+
-    offsetY;
-
-  if(usingFrontCamera){
-
-    x = sw-x;
-
-  }
-
-  return{
-    x,
-    y
-  };
-
-}
-
-
-/* MEDIAPIPE */
-
-const hands =
-  new Hands({
-
-    locateFile:
-    file =>
-      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-
-  });
-
-
-hands.setOptions({
-
-  maxNumHands:2,
-
-  modelComplexity:1,
-
-  minDetectionConfidence:.65,
-
-  minTrackingConfidence:.65
-
-});
-
-
-/* THREE */
+/* =====================================================
+   THREE
+===================================================== */
 
 const renderer =
   new THREE.WebGLRenderer({
@@ -552,6 +554,7 @@ renderer.setPixelRatio(
   )
 );
 
+
 renderer.setSize(
   window.innerWidth,
   window.innerHeight
@@ -571,235 +574,791 @@ const camera =
     window.innerHeight,
 
     .1,
+
     100
 
   );
 
 
-camera.position.z = 8;
+camera.position.z=8;
 
 
-/* LIGHTING */
+/* =====================================================
+   LIGHTING
+===================================================== */
 
-const ambient =
+scene.add(
   new THREE.AmbientLight(
     0xffffff,
-    1.5
+    2
+  )
+);
+
+
+const keyLight =
+  new THREE.DirectionalLight(
+    0xffffff,
+    2
   );
 
-scene.add(ambient);
+
+keyLight.position.set(
+  4,
+  6,
+  8
+);
 
 
-const pointLight =
+scene.add(keyLight);
+
+
+const rimLight =
   new THREE.PointLight(
-    0x00eaff,
-    5,
+    0x00d9ff,
+    4,
     20
   );
 
-pointLight.position.set(
-  0,
+
+rimLight.position.set(
+  -3,
   2,
-  4
+  5
 );
 
-scene.add(pointLight);
+
+scene.add(rimLight);
 
 
-/* OBJECTS */
+/* =====================================================
+   MODEL SYSTEM
+===================================================== */
 
-const objects = [];
-
-let activeObject = null;
-
-
-/* SHAPES */
-
-const shapeNames = [
-
-  "CUBE",
-  "SPHERE",
-  "PYRAMID",
-  "TORUS",
-  "CYLINDER",
-  "STAR"
-
-];
-
-let nextShape = 0;
+const modelRoot =
+  new THREE.Group();
 
 
-/* MATERIAL */
+scene.add(modelRoot);
 
-function hologramMaterial(){
+
+const parts=[];
+
+let activePart=null;
+
+let grabbing=false;
+
+let grabOffset =
+  new THREE.Vector3();
+
+let previousFinger=null;
+
+
+/* =====================================================
+   MATERIAL
+===================================================== */
+
+function createMaterial(){
 
   return new THREE.MeshStandardMaterial({
 
-    color:
-      new THREE.Color(
-        `hsl(${Math.random()*360},100%,60%)`
-      ),
+    color:0x9fa8b5,
 
-    emissive:
-      new THREE.Color(
-        `hsl(${Math.random()*360},100%,45%)`
-      ),
+    metalness:.7,
 
-    emissiveIntensity:2,
+    roughness:.3,
 
     transparent:true,
 
-    opacity:.75,
-
-    wireframe:true
+    opacity:.92
 
   });
 
 }
 
 
-/* CREATE SHAPE */
+/* =====================================================
+   ADD PART
+===================================================== */
 
-function createShape(type){
+function registerPart(
+  object,
+  name
+){
 
-  let geometry;
+  object.userData.isPart=true;
 
-  if(type==="CUBE"){
+  object.userData.partName =
+    name ||
+    object.name ||
+    "Component";
 
-    geometry =
+
+  object.userData.originalPosition =
+    object.position.clone();
+
+
+  object.userData.originalRotation =
+    object.rotation.clone();
+
+
+  object.userData.detached=false;
+
+
+  parts.push(object);
+
+}
+
+
+/* =====================================================
+   EXAMPLE ENGINE
+===================================================== */
+
+function createExampleAssembly(){
+
+  clearModel();
+
+
+  const engine =
+    new THREE.Group();
+
+
+  engine.name =
+    "Example Engine";
+
+
+  modelRoot.add(engine);
+
+
+  /* BLOCK */
+
+  const block =
+    new THREE.Mesh(
+
       new THREE.BoxGeometry(
-        1.4,
-        1.4,
-        1.4
+        2.8,
+        1.8,
+        1.7
+      ),
+
+      createMaterial()
+
+    );
+
+
+  block.position.set(
+    0,
+    0,
+    0
+  );
+
+
+  block.userData.partName =
+    "Engine Block";
+
+
+  engine.add(block);
+
+  registerPart(
+    block,
+    "Engine Block"
+  );
+
+
+  /* CYLINDERS */
+
+  for(
+    let i=0;
+    i<4;
+    i++
+  ){
+
+    const cylinder =
+      new THREE.Mesh(
+
+        new THREE.CylinderGeometry(
+          .3,
+          .3,
+          1.8,
+          24
+        ),
+
+        createMaterial()
+
       );
+
+
+    cylinder.rotation.z=
+      Math.PI/2;
+
+
+    cylinder.position.set(
+
+      -.9+
+      i*.6,
+
+      .2,
+
+      0
+
+    );
+
+
+    engine.add(
+      cylinder
+    );
+
+
+    registerPart(
+      cylinder,
+      "Cylinder "+(i+1)
+    );
 
   }
 
-  else if(type==="SPHERE"){
 
-    geometry =
-      new THREE.SphereGeometry(
-        .8,
-        32,
-        32
-      );
+  /* CRANKSHAFT */
 
-  }
+  const crank =
+    new THREE.Mesh(
 
-  else if(type==="PYRAMID"){
-
-    geometry =
-      new THREE.ConeGeometry(
-        .9,
-        1.6,
-        4
-      );
-
-  }
-
-  else if(type==="TORUS"){
-
-    geometry =
-      new THREE.TorusGeometry(
-        .65,
-        .22,
-        16,
-        40
-      );
-
-  }
-
-  else if(type==="CYLINDER"){
-
-    geometry =
       new THREE.CylinderGeometry(
-        .65,
-        .65,
-        1.5,
-        32
+        .18,
+        .18,
+        3,
+        24
+      ),
+
+      createMaterial()
+
+    );
+
+
+  crank.rotation.z=
+    Math.PI/2;
+
+
+  crank.position.y=
+    -.8;
+
+
+  engine.add(crank);
+
+
+  registerPart(
+    crank,
+    "Crankshaft"
+  );
+
+
+  /* HEAD */
+
+  const head =
+    new THREE.Mesh(
+
+      new THREE.BoxGeometry(
+        2.5,
+        .5,
+        1.5
+      ),
+
+      createMaterial()
+
+    );
+
+
+  head.position.y=
+    1.05;
+
+
+  engine.add(head);
+
+
+  registerPart(
+    head,
+    "Cylinder Head"
+  );
+
+
+  /* FLYWHEEL */
+
+  const flywheel =
+    new THREE.Mesh(
+
+      new THREE.CylinderGeometry(
+        .75,
+        .75,
+        .25,
+        40
+      ),
+
+      createMaterial()
+
+    );
+
+
+  flywheel.rotation.z=
+    Math.PI/2;
+
+
+  flywheel.position.x=
+    1.65;
+
+
+  engine.add(
+    flywheel
+  );
+
+
+  registerPart(
+    flywheel,
+    "Flywheel"
+  );
+
+
+  modelRoot.position.set(
+    0,
+    0,
+    -2
+  );
+
+
+  say(
+    "Example mechanical assembly loaded."
+  );
+
+}
+
+
+/* =====================================================
+   CLEAR MODEL
+===================================================== */
+
+function clearModel(){
+
+  while(
+    modelRoot.children.length
+  ){
+
+    modelRoot.remove(
+      modelRoot.children[0]
+    );
+
+  }
+
+
+  parts.length=0;
+
+  activePart=null;
+
+}
+
+
+/* =====================================================
+   LOAD GLB / GLTF
+===================================================== */
+
+function loadGLTF(
+  file
+){
+
+  const loader =
+    new THREE.GLTFLoader();
+
+
+  const url =
+    URL.createObjectURL(file);
+
+
+  loader.load(
+
+    url,
+
+    gltf=>{
+
+      clearModel();
+
+
+      const loaded =
+        gltf.scene;
+
+
+      modelRoot.add(
+        loaded
       );
+
+
+      loaded.traverse(
+        object=>{
+
+          if(
+            object.isMesh
+          ){
+
+            object.material =
+              object.material ||
+              createMaterial();
+
+
+            registerPart(
+              object,
+              object.name
+            );
+
+          }
+
+        }
+      );
+
+
+      centerModel();
+
+
+      say(
+        "Model loaded. I found "+
+        parts.length+
+        " separate components."
+      );
+
+
+      URL.revokeObjectURL(
+        url
+      );
+
+    },
+
+    undefined,
+
+    error=>{
+
+      console.error(error);
+
+      say(
+        "I could not load that model."
+      );
+
+    }
+
+  );
+
+}
+
+
+/* =====================================================
+   LOAD OBJ
+===================================================== */
+
+function loadOBJ(
+  file
+){
+
+  const loader =
+    new THREE.OBJLoader();
+
+
+  const url =
+    URL.createObjectURL(file);
+
+
+  loader.load(
+
+    url,
+
+    object=>{
+
+      clearModel();
+
+
+      modelRoot.add(
+        object
+      );
+
+
+      object.traverse(
+        child=>{
+
+          if(
+            child.isMesh
+          ){
+
+            if(
+              !child.material
+            ){
+
+              child.material =
+                createMaterial();
+
+            }
+
+
+            registerPart(
+              child,
+              child.name
+            );
+
+          }
+
+        }
+      );
+
+
+      centerModel();
+
+
+      say(
+        "OBJ model loaded with "+
+        parts.length+
+        " components."
+      );
+
+
+      URL.revokeObjectURL(
+        url
+      );
+
+    },
+
+    undefined,
+
+    error=>{
+
+      console.error(error);
+
+      say(
+        "The OBJ model could not be loaded."
+      );
+
+    }
+
+  );
+
+}
+
+
+/* =====================================================
+   CENTER MODEL
+===================================================== */
+
+function centerModel(){
+
+  const box =
+    new THREE.Box3()
+      .setFromObject(
+        modelRoot
+      );
+
+
+  const center =
+    box.getCenter(
+      new THREE.Vector3()
+    );
+
+
+  modelRoot.position.sub(
+    center
+  );
+
+
+  modelRoot.position.z=
+    -2;
+
+}
+
+
+/* =====================================================
+   FILE INPUT
+===================================================== */
+
+modelInput.addEventListener(
+  "change",
+  ()=>{
+
+    const file =
+      modelInput.files[0];
+
+
+    if(!file)
+      return;
+
+
+    if(
+      file.name
+        .toLowerCase()
+        .endsWith(".obj")
+    ){
+
+      loadOBJ(file);
+
+    }
+
+    else{
+
+      loadGLTF(file);
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   SCREEN POSITION
+===================================================== */
+
+function screenPosition(
+  point
+){
+
+  const vw=
+    video.videoWidth;
+
+  const vh=
+    video.videoHeight;
+
+
+  const sw=
+    window.innerWidth;
+
+  const sh=
+    window.innerHeight;
+
+
+  if(!vw || !vh){
+
+    return{
+
+      x:sw/2,
+
+      y:sh/2
+
+    };
+
+  }
+
+
+  const ratio=
+    vw/vh;
+
+  const screenRatio=
+    sw/sh;
+
+
+  let width;
+
+  let height;
+
+  let offsetX=0;
+
+  let offsetY=0;
+
+
+  if(
+    screenRatio>ratio
+  ){
+
+    width=sw;
+
+    height=
+      sw/ratio;
+
+    offsetY=
+      (sh-height)/2;
 
   }
 
   else{
 
-    geometry =
-      new THREE.IcosahedronGeometry(
-        .9,
-        1
-      );
+    height=sh;
+
+    width=
+      sh*ratio;
+
+    offsetX=
+      (sw-width)/2;
 
   }
 
-  const mesh =
-    new THREE.Mesh(
-      geometry,
-      hologramMaterial()
-    );
 
-  mesh.userData.type =
-    type;
+  let x=
+    point.x*width+
+    offsetX;
 
-  mesh.userData.velocity =
-    new THREE.Vector3();
 
-  mesh.userData.angularVelocity =
-    new THREE.Vector3();
+  let y=
+    point.y*height+
+    offsetY;
 
-  mesh.userData.mass = 1;
 
-  scene.add(mesh);
+  if(usingFrontCamera){
 
-  objects.push(mesh);
+    x=
+      sw-x;
 
-  objectsText.textContent =
-    objects.length;
+  }
 
-  return mesh;
+
+  return{
+    x,
+    y
+  };
 
 }
 
 
-/* HAND TO WORLD */
+/* =====================================================
+   WORLD POSITION
+===================================================== */
 
-function handToWorld(x,y){
+function handToWorld(
+  x,
+  y
+){
 
-  const nx =
-    (x/window.innerWidth)*2-1;
+  const nx=
+    (x/
+    window.innerWidth)*2-1;
 
-  const ny =
-    -(y/window.innerHeight)*2+1;
 
-  const vector =
+  const ny=
+    -(y/
+    window.innerHeight)*2+1;
+
+
+  const vector=
     new THREE.Vector3(
       nx,
       ny,
       0
     );
 
-  vector.unproject(camera);
 
-  const direction =
+  vector.unproject(
+    camera
+  );
+
+
+  const direction=
     vector
       .sub(camera.position)
       .normalize();
 
-  const distance = 6;
 
   return camera.position
     .clone()
     .add(
-      direction.multiplyScalar(
-        distance
-      )
+      direction.multiplyScalar(6)
     );
 
 }
 
 
-/* DISTANCE */
+/* =====================================================
+   DISTANCE
+===================================================== */
 
-function distance2D(a,b){
+function distance2D(
+  a,
+  b
+){
 
   return Math.hypot(
     a.x-b.x,
@@ -809,182 +1368,103 @@ function distance2D(a,b){
 }
 
 
-/* PINCH */
+/* =====================================================
+   PINCH
+===================================================== */
 
-function isPinching(hand){
+function isPinching(
+  hand
+){
 
   return(
     distance2D(
       hand[4],
       hand[8]
-    ) < .055
+    )<.055
   );
 
 }
 
 
-/* OPEN PALM */
+/* =====================================================
+   FIND PART
+===================================================== */
 
-function isOpenPalm(hand){
+function findPart(
+  position
+){
 
-  const wrist = hand[0];
+  let closest=null;
 
-  const tips = [
+  let distance=Infinity;
 
-    hand[8],
-    hand[12],
-    hand[16],
-    hand[20]
-
-  ];
-
-  let count = 0;
 
   for(
-    const tip of tips
+    const part of parts
   ){
 
     if(
-      tip.y < wrist.y
-    ){
-
-      count++;
-
-    }
-
-  }
-
-  return count >= 3;
-
-}
+      !part.visible
+    )
+      continue;
 
 
-/* FIST */
-
-function isFist(hand){
-
-  const wrist = hand[0];
-
-  const tips = [
-
-    hand[8],
-    hand[12],
-    hand[16],
-    hand[20]
-
-  ];
-
-  let count = 0;
-
-  for(
-    const tip of tips
-  ){
-
-    if(
-      distance2D(
-        tip,
-        wrist
-      ) < .25
-    ){
-
-      count++;
-
-    }
-
-  }
-
-  return count >= 3;
-
-}
-
-
-/* GRAB */
-
-let grabbing = false;
-
-let grabHand = -1;
-
-let grabOffset =
-  new THREE.Vector3();
-
-let previousFinger = null;
-
-let grabVelocity =
-  new THREE.Vector3();
-
-
-/* TWO HAND */
-
-let twoHand = false;
-
-let twoStartDistance = 1;
-
-let twoStartScale = 1;
-
-let twoStartAngle = 0;
-
-let twoStartRotation = 0;
-
-let twoStartTilt = 0;
-
-
-/* FIND OBJECT */
-
-function findObject(position){
-
-  let closest = null;
-
-  let closestDistance =
-    Infinity;
-
-  for(
-    const obj of objects
-  ){
-
-    const screen =
+    const screen=
       worldToScreen(
-        obj.position
+        part
+          .getWorldPosition(
+            new THREE.Vector3()
+          )
       );
 
-    const d =
+
+    const d=
       distance2D(
         position,
         screen
       );
 
+
     if(
-      d < closestDistance
+      d<distance
     ){
 
-      closestDistance = d;
+      distance=d;
 
-      closest = obj;
+      closest=part;
 
     }
 
   }
 
+
   if(
-    closestDistance < 130
+    distance<150
   ){
 
     return closest;
 
   }
 
+
   return null;
 
 }
 
 
-/* WORLD TO SCREEN */
+/* =====================================================
+   WORLD TO SCREEN
+===================================================== */
 
-function worldToScreen(position){
+function worldToScreen(
+  position
+){
 
-  const vector =
+  const vector=
     position
       .clone()
       .project(camera);
+
 
   return{
 
@@ -1001,126 +1481,440 @@ function worldToScreen(position){
 }
 
 
-/* PARTICLES */
+/* =====================================================
+   SELECT PART
+===================================================== */
 
-const particleGeometry =
-  new THREE.BufferGeometry();
-
-const particleCount = 800;
-
-const positions =
-  new Float32Array(
-    particleCount*3
-  );
-
-for(
-  let i=0;
-  i<particleCount;
-  i++
+function selectPart(
+  part
 ){
 
-  positions[i*3] =
-    (Math.random()-.5)*16;
+  if(
+    activePart &&
+    activePart!==part
+  ){
 
-  positions[i*3+1] =
-    (Math.random()-.5)*10;
+    restoreMaterial(
+      activePart
+    );
 
-  positions[i*3+2] =
-    (Math.random()-.5)*8;
+  }
+
+
+  activePart=part;
+
+
+  if(!part)
+    return;
+
+
+  highlightMaterial(
+    part
+  );
+
+
+  say(
+    part.userData.partName+
+    " selected."
+  );
 
 }
 
-particleGeometry.setAttribute(
 
-  "position",
+/* =====================================================
+   HIGHLIGHT
+===================================================== */
 
-  new THREE.BufferAttribute(
-    positions,
-    3
-  )
+function highlightMaterial(
+  object
+){
 
-);
+  object.traverse(
+    child=>{
+
+      if(
+        child.isMesh &&
+        child.material
+      ){
+
+        child.userData.originalEmissive=
+          child.material.emissive
+          ?
+          child.material.emissive.clone()
+          :
+          new THREE.Color(0,0,0);
 
 
-const particleMaterial =
-  new THREE.PointsMaterial({
+        if(
+          child.material.emissive
+        ){
 
-    color:0x00eaff,
+          child.material.emissive.set(
+            0x0088aa
+          );
 
-    size:.035,
+        }
 
-    transparent:true,
+      }
 
-    opacity:.7
+    }
+  );
+
+}
+
+
+/* =====================================================
+   RESTORE
+===================================================== */
+
+function restoreMaterial(
+  object
+){
+
+  object.traverse(
+    child=>{
+
+      if(
+        child.isMesh &&
+        child.material &&
+        child.material.emissive
+      ){
+
+        if(
+          child.userData
+            .originalEmissive
+        ){
+
+          child.material.emissive.copy(
+            child.userData
+              .originalEmissive
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   DETACH PART
+===================================================== */
+
+function detachPart(
+  part
+){
+
+  if(!part)
+    return;
+
+
+  part.userData.detached=true;
+
+
+  say(
+    part.userData.partName+
+    " detached. You can inspect it independently."
+  );
+
+}
+
+
+/* =====================================================
+   REATTACH
+===================================================== */
+
+function reattachPart(
+  part
+){
+
+  if(!part)
+    return;
+
+
+  part.position.copy(
+    part.userData.originalPosition
+  );
+
+
+  part.rotation.copy(
+    part.userData.originalRotation
+  );
+
+
+  part.userData.detached=false;
+
+
+  say(
+    part.userData.partName+
+    " returned to its original position."
+  );
+
+}
+
+
+/* =====================================================
+   EXPLODE MODEL
+===================================================== */
+
+function explodeModel(){
+
+  if(!parts.length)
+    return;
+
+
+  const center=
+    new THREE.Vector3();
+
+
+  for(
+    const part of parts
+  ){
+
+    center.add(
+      part.position
+    );
+
+  }
+
+
+  center.divideScalar(
+    parts.length
+  );
+
+
+  for(
+    const part of parts
+  ){
+
+    const direction=
+      part.position
+        .clone()
+        .sub(center);
+
+
+    if(
+      direction.length()<.1
+    ){
+
+      direction.set(
+        Math.random()-.5,
+        Math.random()-.5,
+        Math.random()-.5
+      );
+
+    }
+
+
+    direction.normalize();
+
+
+    part.position.add(
+      direction.multiplyScalar(2)
+    );
+
+
+    part.userData.detached=true;
+
+  }
+
+
+  say(
+    "Exploded view activated."
+  );
+
+}
+
+
+/* =====================================================
+   RESET MODEL
+===================================================== */
+
+function resetModel(){
+
+  for(
+    const part of parts
+  ){
+
+    part.position.copy(
+      part.userData.originalPosition
+    );
+
+
+    part.rotation.copy(
+      part.userData.originalRotation
+    );
+
+
+    part.scale.set(
+      1,
+      1,
+      1
+    );
+
+
+    part.userData.detached=false;
+
+  }
+
+
+  modelRoot.rotation.set(
+    0,
+    0,
+    0
+  );
+
+
+  say(
+    "Assembly restored."
+  );
+
+}
+
+
+/* =====================================================
+   TWO HAND MANIPULATION
+===================================================== */
+
+let twoHand=false;
+
+let twoStartDistance=1;
+
+let twoStartScale=1;
+
+let twoStartAngle=0;
+
+let twoStartRotation=0;
+
+
+function twoHandManipulation(
+  p1,
+  p2
+){
+
+  if(!activePart)
+    return;
+
+
+  const distance=
+    distance2D(
+      p1,
+      p2
+    );
+
+
+  const angle=
+    Math.atan2(
+      p2.y-p1.y,
+      p2.x-p1.x
+    );
+
+
+  const centerX=
+    (p1.x+p2.x)/2;
+
+
+  const centerY=
+    (p1.y+p2.y)/2;
+
+
+  if(!twoHand){
+
+    twoHand=true;
+
+
+    twoStartDistance=
+      Math.max(
+        distance,
+        10
+      );
+
+
+    twoStartScale=
+      activePart.scale.x;
+
+
+    twoStartAngle=
+      angle;
+
+
+    twoStartRotation=
+      activePart.rotation.z;
+
+  }
+
+
+  let scale=
+    twoStartScale*
+    distance/
+    twoStartDistance;
+
+
+  scale=
+    Math.max(
+      .15,
+      Math.min(
+        8,
+        scale
+      )
+    );
+
+
+  activePart.scale.setScalar(
+    scale
+  );
+
+
+  activePart.rotation.z=
+    twoStartRotation+
+    (
+      angle-
+      twoStartAngle
+    );
+
+
+  activePart.position.copy(
+    handToWorld(
+      centerX,
+      centerY
+    )
+  );
+
+}
+
+
+/* =====================================================
+   HAND TRACKING
+===================================================== */
+
+const hands=
+  new Hands({
+
+    locateFile:
+    file=>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 
   });
 
 
-const particles =
-  new THREE.Points(
-    particleGeometry,
-    particleMaterial
-  );
+hands.setOptions({
 
-scene.add(particles);
+  maxNumHands:2,
 
+  modelComplexity:1,
 
-/* RINGS */
+  minDetectionConfidence:.65,
 
-const rings = [];
+  minTrackingConfidence:.65
 
-for(
-  let i=0;
-  i<5;
-  i++
-){
+});
 
-  const geometry =
-    new THREE.TorusGeometry(
-      1.5+i*.4,
-      .008,
-      8,
-      100
-    );
-
-  const material =
-    new THREE.MeshBasicMaterial({
-
-      color:0x00eaff,
-
-      transparent:true,
-
-      opacity:.4-i*.05
-
-    });
-
-  const ring =
-    new THREE.Mesh(
-      geometry,
-      material
-    );
-
-  ring.rotation.x =
-    Math.PI/2;
-
-  ring.position.y =
-    -2;
-
-  scene.add(ring);
-
-  rings.push(ring);
-
-}
-
-
-/* HAND RESULTS */
 
 hands.onResults(
-(results)=>{
-
-  if(!cameraReady){
-    return;
-  }
+results=>{
 
   handCtx.clearRect(
     0,
@@ -1129,92 +1923,13 @@ hands.onResults(
     handCanvas.height
   );
 
-  const detected =
+
+  const detected=
     results.multiHandLandmarks || [];
 
-  handsText.textContent =
-    detected.length;
 
-  trackingText.textContent =
-    detected.length
-    ? "ACTIVE"
-    : "SEARCHING";
+  const pinching=[];
 
-
-  /* DRAW HANDS */
-
-  for(
-    const hand of detected
-  ){
-
-    const points =
-      hand.map(
-        screenPosition
-      );
-
-    handCtx.strokeStyle =
-      "#00eaff";
-
-    handCtx.lineWidth = 2;
-
-    for(
-      const connection
-      of HAND_CONNECTIONS
-    ){
-
-      const a =
-        points[
-          connection[0]
-        ];
-
-      const b =
-        points[
-          connection[1]
-        ];
-
-      handCtx.beginPath();
-
-      handCtx.moveTo(
-        a.x,
-        a.y
-      );
-
-      handCtx.lineTo(
-        b.x,
-        b.y
-      );
-
-      handCtx.stroke();
-
-    }
-
-    handCtx.fillStyle =
-      "#00eaff";
-
-    for(
-      const p of points
-    ){
-
-      handCtx.beginPath();
-
-      handCtx.arc(
-        p.x,
-        p.y,
-        3,
-        0,
-        Math.PI*2
-      );
-
-      handCtx.fill();
-
-    }
-
-  }
-
-
-  /* PINCHING */
-
-  const pinching = [];
 
   for(
     let i=0;
@@ -1235,300 +1950,158 @@ hands.onResults(
   }
 
 
-  /* TWO HAND */
+  /* TWO HANDS */
 
   if(
-    pinching.length === 2
+    pinching.length===2
   ){
 
-    const p1 =
+    const p1=
       screenPosition(
         detected[
           pinching[0]
         ][8]
       );
 
-    const p2 =
+
+    const p2=
       screenPosition(
         detected[
           pinching[1]
         ][8]
       );
 
-    const d =
-      distance2D(
-        p1,
-        p2
-      );
 
-    const angle =
-      Math.atan2(
-        p2.y-p1.y,
-        p2.x-p1.x
-      );
+    if(!activePart){
 
-    const centerX =
-      (p1.x+p2.x)/2;
-
-    const centerY =
-      (p1.y+p2.y)/2;
+      const center={
+        x:(p1.x+p2.x)/2,
+        y:(p1.y+p2.y)/2
+      };
 
 
-    if(
-      !twoHand &&
-      activeObject
-    ){
-
-      twoHand = true;
-
-      grabbing = true;
-
-      twoStartDistance =
-        Math.max(d,10);
-
-      twoStartScale =
-        activeObject.scale.x;
-
-      twoStartAngle =
-        angle;
-
-      twoStartRotation =
-        activeObject.rotation.z;
-
-      twoStartTilt =
-        activeObject.rotation.x;
-
-    }
+      const found=
+        findPart(center);
 
 
-    if(activeObject){
+      if(found){
 
-      let scale =
-        twoStartScale *
-        d /
-        twoStartDistance;
-
-      scale =
-        Math.max(
-          .35,
-          Math.min(
-            4,
-            scale
-          )
-        );
-
-      activeObject.scale.setScalar(
-        scale
-      );
-
-
-      let change =
-        (
-          angle-
-          twoStartAngle
-        ) *
-        180/Math.PI;
-
-      activeObject.rotation.z =
-        twoStartRotation+
-        change;
-
-
-      const tilt =
-        (
-          centerY-
-          window.innerHeight/2
-        )*.008;
-
-      activeObject.rotation.x =
-        twoStartTilt+
-        tilt;
-
-
-      activeObject.position.copy(
-        handToWorld(
-          centerX,
-          centerY
-        )
-      );
-
-
-      modeText.textContent =
-        "TWO HAND MANIPULATION";
-
-      activeText.textContent =
-        activeObject.userData.type;
-
-    }
-
-    return;
-
-  }
-
-
-  twoHand = false;
-
-
-  /* NORMAL PINCH */
-
-  if(
-    pinching.length > 0
-  ){
-
-    const index =
-      pinching[0];
-
-    const fingertip =
-      screenPosition(
-        detected[index][8]
-      );
-
-    reticle.style.display =
-      "block";
-
-    reticle.style.left =
-      fingertip.x+"px";
-
-    reticle.style.top =
-      fingertip.y+"px";
-
-
-    /* CONTINUE GRAB */
-
-    if(grabbing){
-
-      if(activeObject){
-
-        const target =
-          handToWorld(
-            fingertip.x,
-            fingertip.y
-          );
-
-        target.add(
-          grabOffset
-        );
-
-        activeObject.position.lerp(
-          target,
-          .75
-        );
-
-
-        if(previousFinger){
-
-          grabVelocity.set(
-
-            fingertip.x-
-            previousFinger.x,
-
-            previousFinger.y-
-            fingertip.y,
-
-            0
-
-          );
-
-        }
-
-        previousFinger =
-          fingertip;
-
-        modeText.textContent =
-          "GRABBING";
-
-        activeText.textContent =
-          activeObject.userData.type;
-
-        return;
+        selectPart(found);
 
       }
 
     }
 
 
-    /* FIND OBJECT */
+    twoHandManipulation(
+      p1,
+      p2
+    );
 
-    const found =
-      findObject(
-        fingertip
+
+    return;
+
+  }
+
+
+  twoHand=false;
+
+
+  /* ONE HAND */
+
+  if(
+    pinching.length>0
+  ){
+
+    const index=
+      pinching[0];
+
+
+    const fingertip=
+      screenPosition(
+        detected[index][8]
       );
 
-    if(found){
 
-      activeObject =
-        found;
+    selectionRing.style.display=
+      "block";
 
-      grabbing = true;
 
-      grabHand = index;
+    selectionRing.style.left=
+      fingertip.x+"px";
 
-      previousFinger =
-        fingertip;
 
-      const target =
+    selectionRing.style.top=
+      fingertip.y+"px";
+
+
+    /* CONTINUE GRAB */
+
+    if(
+      grabbing &&
+      activePart
+    ){
+
+      const target=
         handToWorld(
           fingertip.x,
           fingertip.y
         );
 
-      grabOffset =
-        activeObject.position
-          .clone()
-          .sub(target);
 
-      modeText.textContent =
-        "GRABBED";
+      target.add(
+        grabOffset
+      );
 
-      activeText.textContent =
-        activeObject.userData.type;
+
+      activePart.position.lerp(
+        target,
+        .8
+      );
+
+
+      previousFinger=
+        fingertip;
+
 
       return;
 
     }
 
 
-    /* CREATE OBJECT */
+    /* FIND PART */
 
-    if(!grabbing){
+    const found=
+      findPart(
+        fingertip
+      );
 
-      const type =
-        shapeNames[
-          nextShape
-        ];
 
-      nextShape =
-        (nextShape+1) %
-        shapeNames.length;
+    if(found){
 
-      activeObject =
-        createShape(type);
+      selectPart(found);
 
-      activeObject.position.copy(
+
+      grabbing=true;
+
+
+      const target=
         handToWorld(
           fingertip.x,
           fingertip.y
-        )
+        );
+
+
+      grabOffset=
+        activePart.position
+          .clone()
+          .sub(target);
+
+
+      detachPart(
+        activePart
       );
 
-      activeObject.scale.setScalar(1);
-
-      grabbing = true;
-
-      grabHand = index;
-
-      previousFinger =
-        fingertip;
-
-      grabOffset.set(
-        0,0,0
-      );
-
-      modeText.textContent =
-        "CREATED";
-
-      activeText.textContent =
-        type;
 
       return;
 
@@ -1541,166 +2114,170 @@ hands.onResults(
 
   if(grabbing){
 
-    grabbing = false;
+    grabbing=false;
 
-    grabHand = -1;
+    previousFinger=null;
 
-    if(activeObject){
 
-      activeObject.userData.velocity.x =
-        grabVelocity.x*.045;
+    if(activePart){
 
-      activeObject.userData.velocity.y =
-        grabVelocity.y*.045;
-
-      activeObject.userData.angularVelocity.z =
-        grabVelocity.x*.002;
-
-      modeText.textContent =
-        "RELEASED";
+      say(
+        activePart.userData.partName+
+        " released."
+      );
 
     }
 
-    previousFinger = null;
-
-    grabVelocity.set(
-      0,0,0
-    );
-
   }
 
 
-  reticle.style.display =
+  selectionRing.style.display=
     "none";
-
-
-  if(
-    detected.length>0 &&
-    isOpenPalm(
-      detected[0]
-    )
-  ){
-
-    modeText.textContent =
-      "PALM DETECTED";
-
-  }
-
-
-  if(
-    detected.length>0 &&
-    isFist(
-      detected[0]
-    )
-  ){
-
-    modeText.textContent =
-      "FIST / PHYSICS";
-
-  }
 
 });
 
 
-/* PHYSICS */
+/* =====================================================
+   VOICE ASSISTANT
+===================================================== */
 
-const clock =
-  new THREE.Clock();
+const SpeechRecognition=
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
 
 
-function physics(){
+let recognition=null;
 
-  const dt =
-    Math.min(
-      clock.getDelta(),
-      .033
+let listening=false;
+
+
+if(SpeechRecognition){
+
+  recognition=
+    new SpeechRecognition();
+
+
+  recognition.continuous=true;
+
+  recognition.interimResults=false;
+
+  recognition.lang="en-US";
+
+
+  recognition.onstart=
+  ()=>{
+
+    listening=true;
+
+    voiceIndicator
+      .classList
+      .add("active");
+
+  };
+
+
+  recognition.onend=
+  ()=>{
+
+    listening=false;
+
+    voiceIndicator
+      .classList
+      .remove("active");
+
+
+    if(
+      window.jarvisVoiceEnabled
+    ){
+
+      try{
+
+        recognition.start();
+
+      }
+
+      catch(e){}
+
+    }
+
+  };
+
+
+  recognition.onerror=
+  error=>{
+
+    console.log(
+      "Voice:",
+      error
     );
 
-  for(
-    const obj of objects
+  };
+
+
+  recognition.onresult=
+  event=>{
+
+    const result=
+      event.results[
+        event.results.length-1
+      ][0]
+      .transcript
+      .toLowerCase()
+      .trim();
+
+
+    console.log(
+      "Voice command:",
+      result
+    );
+
+
+    processVoiceCommand(
+      result
+    );
+
+  };
+
+}
+
+
+window.jarvisVoiceEnabled=true;
+
+
+/* =====================================================
+   VOICE COMMANDS
+===================================================== */
+
+function processVoiceCommand(
+command
+){
+
+  if(
+    command.includes("jarvis")
   ){
 
-    if(
-      obj===activeObject &&
-      grabbing
-    ){
-
-      continue;
-
-    }
-
-    const velocity =
-      obj.userData.velocity;
-
-    /* GRAVITY */
-
-    velocity.y -=
-      1.2*dt;
-
-    obj.position.add(
-      velocity
-        .clone()
-        .multiplyScalar(dt)
-    );
-
-    /* FRICTION */
-
-    velocity.multiplyScalar(
-      .985
-    );
-
-    /* ROTATION */
-
-    obj.rotation.x +=
-      obj.userData
-        .angularVelocity.x;
-
-    obj.rotation.y +=
-      obj.userData
-        .angularVelocity.y;
-
-    obj.rotation.z +=
-      obj.userData
-        .angularVelocity.z;
-
-    obj.userData
-      .angularVelocity
-      .multiplyScalar(.99);
+    const cleaned=
+      command
+        .replace(
+          "jarvis",
+          ""
+        )
+        .trim();
 
 
-    /* FLOOR */
+    if(cleaned){
 
-    if(
-      obj.position.y < -2.8
-    ){
-
-      obj.position.y = -2.8;
-
-      velocity.y *= -.65;
+      executeCommand(
+        cleaned
+      );
 
     }
 
+    else{
 
-    /* SIDES */
-
-    if(
-      obj.position.x < -6
-    ){
-
-      obj.position.x = -6;
-
-      velocity.x *= -.7;
-
-    }
-
-
-    if(
-      obj.position.x > 6
-    ){
-
-      obj.position.x = 6;
-
-      velocity.x *= -.7;
+      say(
+        "Yes. How can I help?"
+      );
 
     }
 
@@ -1709,7 +2286,480 @@ function physics(){
 }
 
 
-/* ANIMATION */
+/* =====================================================
+   COMMAND ENGINE
+===================================================== */
+
+function executeCommand(
+command
+){
+
+  console.log(
+    "JARVIS:",
+    command
+  );
+
+
+  /* LOAD MODEL */
+
+  if(
+    command.includes(
+      "load model"
+    ) ||
+    command.includes(
+      "open model"
+    ) ||
+    command.includes(
+      "import model"
+    )
+  ){
+
+    modelInput.click();
+
+    return;
+
+  }
+
+
+  /* EXAMPLE */
+
+  if(
+    command.includes(
+      "example"
+    ) ||
+    command.includes(
+      "engine"
+    )
+  ){
+
+    createExampleAssembly();
+
+    return;
+
+  }
+
+
+  /* EXPLODE */
+
+  if(
+    command.includes(
+      "explode"
+    ) ||
+    command.includes(
+      "take apart"
+    ) ||
+    command.includes(
+      "disassemble"
+    )
+  ){
+
+    explodeModel();
+
+    return;
+
+  }
+
+
+  /* RESET */
+
+  if(
+    command.includes(
+      "reset"
+    ) ||
+    command.includes(
+      "reassemble"
+    ) ||
+    command.includes(
+      "put it back"
+    )
+  ){
+
+    resetModel();
+
+    return;
+
+  }
+
+
+  /* DETACH */
+
+  if(
+    command.includes(
+      "detach"
+    ) ||
+    command.includes(
+      "remove"
+    ) ||
+    command.includes(
+      "pull off"
+    )
+  ){
+
+    if(activePart){
+
+      detachPart(
+        activePart
+      );
+
+    }
+
+    else{
+
+      say(
+        "Select a component first."
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* REATTACH */
+
+  if(
+    command.includes(
+      "attach"
+    ) ||
+    command.includes(
+      "reattach"
+    )
+  ){
+
+    if(activePart){
+
+      reattachPart(
+        activePart
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* SELECT */
+
+  if(
+    command.includes(
+      "select"
+    )
+  ){
+
+    const words=
+      command.split(" ");
+
+
+    const target=
+      words
+        .slice(
+          words.indexOf("select")+1
+        )
+        .join(" ");
+
+
+    const found=
+      parts.find(
+        part=>
+          part.userData
+            .partName
+            .toLowerCase()
+            .includes(
+              target
+            )
+      );
+
+
+    if(found){
+
+      selectPart(
+        found
+      );
+
+    }
+
+    else{
+
+      say(
+        "I cannot find that component."
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* INSPECT */
+
+  if(
+    command.includes(
+      "inspect"
+    ) ||
+    command.includes(
+      "what is this"
+    )
+  ){
+
+    if(activePart){
+
+      const box=
+        new THREE.Box3()
+          .setFromObject(
+            activePart
+          );
+
+
+      const size=
+        box.getSize(
+          new THREE.Vector3()
+        );
+
+
+      say(
+        activePart
+          .userData
+          .partName+
+        ". Dimensions approximately "+
+        size.x.toFixed(2)+
+        " by "+
+        size.y.toFixed(2)+
+        " by "+
+        size.z.toFixed(2)+
+        " scene units."
+      );
+
+    }
+
+    else{
+
+      say(
+        "Select a component and I will inspect it."
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* ROTATE */
+
+  if(
+    command.includes(
+      "rotate"
+    )
+  ){
+
+    if(activePart){
+
+      activePart.rotation.y+=
+        Math.PI/2;
+
+      say(
+        "Rotated "+
+        activePart
+          .userData
+          .partName
+      );
+
+    }
+
+    return;
+
+  }
+
+
+  /* HELP */
+
+  if(
+    command.includes(
+      "help"
+    ) ||
+    command.includes(
+      "what can you do"
+    )
+  ){
+
+    say(
+      "I can load 3D models, identify components, detach parts, inspect parts, create exploded views, rotate and scale components, and reassemble the model."
+    );
+
+    return;
+
+  }
+
+
+  /* DEFAULT */
+
+  say(
+    "I heard you say: "+
+    command+
+    ". I do not have an engineering answer for that command yet."
+  );
+
+}
+
+
+/* =====================================================
+   JARVIS SPEECH
+===================================================== */
+
+function say(
+text
+){
+
+  jarvisMessage.textContent=
+    text;
+
+
+  jarvisMessage
+    .classList
+    .add("show");
+
+
+  jarvisStatus.textContent=
+    "JARVIS • "+text;
+
+
+  setTimeout(
+    ()=>{
+      jarvisMessage
+        .classList
+        .remove("show");
+
+      jarvisStatus.textContent=
+        "JARVIS ONLINE";
+
+    },
+    5000
+  );
+
+
+  if(
+    "speechSynthesis"
+    in window
+  ){
+
+    speechSynthesis.cancel();
+
+
+    const utterance=
+      new SpeechSynthesisUtterance(
+        text
+      );
+
+
+    utterance.rate=.95;
+
+    utterance.pitch=.9;
+
+    utterance.volume=1;
+
+
+    speechSynthesis.speak(
+      utterance
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   KEYBOARD COMMANDS
+===================================================== */
+
+window.addEventListener(
+  "keydown",
+  event=>{
+
+    if(
+      event.key.toLowerCase()==="v"
+    ){
+
+      if(
+        recognition
+      ){
+
+        try{
+
+          recognition.start();
+
+        }
+
+        catch(e){}
+
+      }
+
+    }
+
+
+    if(
+      event.key.toLowerCase()==="e"
+    ){
+
+      explodeModel();
+
+    }
+
+
+    if(
+      event.key.toLowerCase()==="r"
+    ){
+
+      resetModel();
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   PHYSICS
+===================================================== */
+
+/*
+
+IMPORTANT:
+
+THERE IS NO GRAVITY.
+
+Parts stay exactly where you leave them.
+
+*/
+
+function physics(){
+
+  for(
+    const part of parts
+  ){
+
+    if(
+      part.userData.detached
+    ){
+
+      /*
+        NO GRAVITY
+        NO VELOCITY
+        NO BOUNCING
+      */
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
+   ANIMATION
+===================================================== */
 
 function animate(){
 
@@ -1717,45 +2767,27 @@ function animate(){
     animate
   );
 
+
   physics();
 
-  particles.rotation.y += .0008;
 
-  particles.rotation.x += .0002;
+  if(activePart){
 
-
-  for(
-    let i=0;
-    i<rings.length;
-    i++
-  ){
-
-    rings[i].rotation.z +=
-      .002+i*.0005;
-
-  }
+    const position=
+      worldToScreen(
+        activePart
+          .getWorldPosition(
+            new THREE.Vector3()
+          )
+      );
 
 
-  for(
-    const obj of objects
-  ){
+    selectionRing.style.left=
+      position.x+"px";
 
-    if(
-      obj.material &&
-      obj.material.emissive
-    ){
 
-      obj.material.emissiveIntensity =
-        obj===activeObject
-        ?
-        3+
-        Math.sin(
-          performance.now()*.005
-        )
-        :
-        1.5;
-
-    }
+    selectionRing.style.top=
+      position.y+"px";
 
   }
 
@@ -1767,27 +2799,35 @@ function animate(){
 
 }
 
+
 animate();
 
 
-/* MEDIAPIPE LOOP */
+/* =====================================================
+   MEDIAPIPE LOOP
+===================================================== */
 
 async function trackingLoop(){
 
   if(
 
     cameraReady &&
+
     video.readyState>=2 &&
+
     !processing
 
   ){
 
-    processing = true;
+    processing=true;
+
 
     try{
 
       await hands.send({
+
         image:video
+
       });
 
     }
@@ -1798,9 +2838,11 @@ async function trackingLoop(){
 
     }
 
-    processing = false;
+
+    processing=false;
 
   }
+
 
   requestAnimationFrame(
     trackingLoop
@@ -1809,56 +2851,73 @@ async function trackingLoop(){
 }
 
 
-/* THREE RESIZE */
+/* =====================================================
+   RESIZE THREE
+===================================================== */
 
 window.addEventListener(
   "resize",
   ()=>{
 
-    camera.aspect =
-      window.innerWidth /
+    camera.aspect=
+      window.innerWidth/
       window.innerHeight;
 
+
     camera.updateProjectionMatrix();
+
 
     renderer.setSize(
       window.innerWidth,
       window.innerHeight
     );
 
-    renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio,
-        2
-      )
-    );
-
   }
 );
 
 
-/* START */
+/* =====================================================
+   BOOT
+===================================================== */
 
 async function boot(){
 
-  statusSafe();
+  jarvisStatus.textContent=
+    "JARVIS BOOTING";
 
-  usingFrontCamera = true;
+
+  createExampleAssembly();
+
 
   await startCamera();
 
+
   trackingLoop();
 
-}
+
+  setTimeout(
+    ()=>{
+
+      say(
+        "JARVIS online. Your engineering workspace is ready."
+      );
 
 
-function statusSafe(){
+      if(recognition){
 
-  systemText.textContent =
-    "BOOTING";
+        try{
 
-  trackingText.textContent =
-    "LOADING";
+          recognition.start();
+
+        }
+
+        catch(e){}
+
+      }
+
+    },
+    1500
+  );
 
 }
 
