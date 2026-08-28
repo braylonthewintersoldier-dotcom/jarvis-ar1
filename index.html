@@ -2,105 +2,409 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
-<title>JARVIS AR ENGINEERING ASSISTANT</title>
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1.0,
+             viewport-fit=cover"
+>
+
+<title>JARVIS AR</title>
+
+<!-- ================================
+     HAND TRACKING
+================================ -->
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+
+<!-- ================================
+     THREE.JS
+================================ -->
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
 
 <style>
 
-html,body{
+/* =========================================================
+   BASE
+========================================================= */
+
+html,
+body{
+
     margin:0;
+
     width:100%;
     height:100%;
+
     overflow:hidden;
+
     background:#000;
-    font-family:Arial,Helvetica,sans-serif;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    user-select:none;
+
 }
 
-/* CAMERA */
+
+/* =========================================================
+   CAMERA
+========================================================= */
 
 #camera{
+
     position:fixed;
+
     inset:0;
+
     width:100%;
     height:100%;
+
     object-fit:cover;
+
     z-index:1;
+
 }
+
 
 #camera.front{
-    transform:scaleX(-1);
+
+    transform:
+        scaleX(-1);
+
 }
+
 
 #camera.back{
-    transform:scaleX(1);
+
+    transform:
+        scaleX(1);
+
 }
 
-/* THREE */
+
+/* =========================================================
+   THREE CANVAS
+========================================================= */
 
 #threeCanvas{
+
     position:fixed;
+
     inset:0;
+
     width:100%;
     height:100%;
+
     z-index:5;
+
     pointer-events:none;
+
 }
 
-/* HAND TRACKING */
+
+/* =========================================================
+   HAND CANVAS
+========================================================= */
 
 #handCanvas{
+
     position:fixed;
+
     inset:0;
+
     width:100%;
     height:100%;
+
     z-index:10;
+
     pointer-events:none;
+
 }
 
-/*
-    JARVIS HAS NO VISIBLE HUD.
-    Everything is controlled through voice
-    and hand interaction.
-*/
 
-#voiceButton{
+/* =========================================================
+   MINIMAL JARVIS INDICATOR
+========================================================= */
+
+#jarvisCore{
+
     position:fixed;
-    left:50%;
-    bottom:25px;
-    transform:translateX(-50%);
 
-    width:65px;
-    height:65px;
+    left:50%;
+
+    bottom:28px;
+
+    transform:
+        translateX(-50%);
+
+    width:42px;
+
+    height:42px;
 
     border-radius:50%;
-    border:1px solid rgba(0,234,255,.35);
 
-    background:rgba(0,10,20,.15);
+    border:
+        1px solid
+        rgba(0,220,255,.35);
 
-    color:#00eaff;
+    background:
+        radial-gradient(
+            circle,
+            rgba(0,220,255,.3),
+            rgba(0,220,255,.03) 60%,
+            transparent 70%
+        );
 
-    opacity:.18;
+    box-shadow:
+        0 0 20px
+        rgba(0,220,255,.15);
 
     z-index:100;
 
-    transition:.2s;
+    opacity:.25;
+
+    transition:
+        .25s ease;
+
 }
 
-#voiceButton.listening{
+
+/* =========================================================
+   JARVIS LISTENING
+========================================================= */
+
+#jarvisCore.listening{
+
+    opacity:1;
+
+    transform:
+        translateX(-50%)
+        scale(1.18);
+
+    box-shadow:
+        0 0 30px
+        rgba(0,220,255,.7);
+
+}
+
+
+/* =========================================================
+   JARVIS THINKING
+========================================================= */
+
+#jarvisCore.thinking{
+
     opacity:.9;
-    box-shadow:0 0 35px rgba(0,234,255,.8);
+
+    animation:
+        thinkingPulse 1s
+        infinite;
+
+}
+
+
+@keyframes thinkingPulse{
+
+    0%{
+
+        transform:
+            translateX(-50%)
+            scale(1);
+
+    }
+
+    50%{
+
+        transform:
+            translateX(-50%)
+            scale(1.25);
+
+    }
+
+    100%{
+
+        transform:
+            translateX(-50%)
+            scale(1);
+
+    }
+
+}
+
+
+/* =========================================================
+   PART NAME
+========================================================= */
+
+#partLabel{
+
+    position:fixed;
+
+    left:50%;
+
+    top:50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    z-index:90;
+
+    color:
+        rgba(0,230,255,.85);
+
+    font-size:13px;
+
+    letter-spacing:2px;
+
+    pointer-events:none;
+
+    opacity:0;
+
+    transition:
+        opacity .2s;
+
+}
+
+
+#partLabel.visible{
+
+    opacity:1;
+
+}
+
+
+/* =========================================================
+   RETICLE
+========================================================= */
+
+#reticle{
+
+    position:fixed;
+
+    width:34px;
+
+    height:34px;
+
+    margin-left:-17px;
+
+    margin-top:-17px;
+
+    border:
+        1px solid
+        rgba(0,230,255,.75);
+
+    border-radius:50%;
+
+    z-index:80;
+
+    display:none;
+
+    pointer-events:none;
+
+}
+
+
+#reticle::before,
+#reticle::after{
+
+    content:"";
+
+    position:absolute;
+
+    background:
+        rgba(0,230,255,.8);
+
+}
+
+
+#reticle::before{
+
+    width:7px;
+
+    height:1px;
+
+    left:-4px;
+
+    top:16px;
+
+}
+
+
+#reticle::after{
+
+    width:1px;
+
+    height:7px;
+
+    left:16px;
+
+    top:-4px;
+
+}
+
+
+/* =========================================================
+   VERY SUBTLE VIGNETTE
+========================================================= */
+
+#vignette{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:20;
+
+    pointer-events:none;
+
+    box-shadow:
+        inset 0 0 160px
+        rgba(0,0,0,.5);
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    #jarvisCore{
+
+        bottom:20px;
+
+        width:36px;
+
+        height:36px;
+
+    }
+
 }
 
 </style>
+
 </head>
 
+
 <body>
+
+
+<!-- =======================================================
+     CAMERA
+======================================================= -->
 
 <video
     id="camera"
@@ -109,16 +413,53 @@ html,body{
     playsinline>
 </video>
 
+
+<!-- =======================================================
+     HAND TRACKING
+======================================================= -->
+
 <canvas id="handCanvas"></canvas>
+
+
+<!-- =======================================================
+     THREE.JS
+======================================================= -->
 
 <canvas id="threeCanvas"></canvas>
 
-<button id="voiceButton">🎙</button>
+
+<!-- =======================================================
+     JARVIS CORE
+======================================================= -->
+
+<div id="jarvisCore"></div>
+
+
+<!-- =======================================================
+     OBJECT LABEL
+======================================================= -->
+
+<div id="partLabel"></div>
+
+
+<!-- =======================================================
+     RETICLE
+======================================================= -->
+
+<div id="reticle"></div>
+
+
+<!-- =======================================================
+     VIGNETTE
+======================================================= -->
+
+<div id="vignette"></div>
+
 
 <script>
 
 /* =========================================================
-   JARVIS AR ENGINEERING ASSISTANT
+   JARVIS AR ENGINEERING SYSTEM
 ========================================================= */
 
 
@@ -127,68 +468,108 @@ html,body{
 ========================================================= */
 
 const video =
-    document.getElementById("camera");
+    document.getElementById(
+        "camera"
+    );
 
 const handCanvas =
-    document.getElementById("handCanvas");
+    document.getElementById(
+        "handCanvas"
+    );
 
 const handCtx =
-    handCanvas.getContext("2d");
+    handCanvas.getContext(
+        "2d"
+    );
 
 const threeCanvas =
-    document.getElementById("threeCanvas");
+    document.getElementById(
+        "threeCanvas"
+    );
 
-const voiceButton =
-    document.getElementById("voiceButton");
+const jarvisCore =
+    document.getElementById(
+        "jarvisCore"
+    );
+
+const partLabel =
+    document.getElementById(
+        "partLabel"
+    );
+
+const reticle =
+    document.getElementById(
+        "reticle"
+    );
 
 
 /* =========================================================
-   CAMERA
+   CAMERA STATE
 ========================================================= */
 
 let usingFrontCamera = true;
+
 let currentStream = null;
+
 let cameraReady = false;
+
 let processing = false;
 
 
+/* =========================================================
+   START CAMERA
+========================================================= */
+
 async function startCamera(){
+
+    cameraReady=false;
+
 
     if(currentStream){
 
         currentStream
             .getTracks()
-            .forEach(track => track.stop());
+            .forEach(
+                track =>
+                    track.stop()
+            );
 
     }
+
 
     try{
 
         currentStream =
-            await navigator.mediaDevices.getUserMedia({
+            await navigator
+                .mediaDevices
+                .getUserMedia({
 
-                video:{
-                    facingMode:
-                        usingFrontCamera
-                        ? "user"
-                        : "environment",
+                    video:{
 
-                    width:{
-                        ideal:1280
+                        facingMode:
+                            usingFrontCamera
+                            ?
+                            "user"
+                            :
+                            "environment",
+
+                        width:{
+                            ideal:1280
+                        },
+
+                        height:{
+                            ideal:720
+                        },
+
+                        frameRate:{
+                            ideal:30
+                        }
+
                     },
 
-                    height:{
-                        ideal:720
-                    },
+                    audio:false
 
-                    frameRate:{
-                        ideal:30
-                    }
-                },
-
-                audio:false
-
-            });
+                });
 
 
         video.srcObject =
@@ -202,9 +583,13 @@ async function startCamera(){
 
 
         video.classList.add(
+
             usingFrontCamera
-            ? "front"
-            : "back"
+            ?
+            "front"
+            :
+            "back"
+
         );
 
 
@@ -214,10 +599,6 @@ async function startCamera(){
         cameraReady=true;
 
 
-        jarvisSpeak(
-            "Camera online."
-        );
-
     }
 
     catch(error){
@@ -225,7 +606,7 @@ async function startCamera(){
         console.error(error);
 
         jarvisSpeak(
-            "I cannot access the camera."
+            "Camera access is unavailable."
         );
 
     }
@@ -245,10 +626,12 @@ function resize(){
     handCanvas.height =
         window.innerHeight;
 
+
     renderer.setSize(
         window.innerWidth,
         window.innerHeight
     );
+
 
     renderer.setPixelRatio(
         Math.min(
@@ -257,9 +640,11 @@ function resize(){
         )
     );
 
+
     camera.aspect =
         window.innerWidth /
         window.innerHeight;
+
 
     camera.updateProjectionMatrix();
 
@@ -294,18 +679,21 @@ function screenPosition(point){
     if(!vw || !vh){
 
         return{
+
             x:sw/2,
+
             y:sh/2
+
         };
 
     }
 
 
     const videoRatio =
-        vw / vh;
+        vw/vh;
 
     const screenRatio =
-        sw / sh;
+        sw/sh;
 
 
     let width;
@@ -315,7 +703,10 @@ function screenPosition(point){
     let offsetY=0;
 
 
-    if(screenRatio > videoRatio){
+    if(
+        screenRatio >
+        videoRatio
+    ){
 
         width=sw;
 
@@ -358,8 +749,10 @@ function screenPosition(point){
 
 
     return{
+
         x,
         y
+
     };
 
 }
@@ -373,8 +766,8 @@ const hands =
     new Hands({
 
         locateFile:
-        file =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            file =>
+                `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 
     });
 
@@ -451,84 +844,94 @@ camera.position.z=8;
 scene.add(
     new THREE.AmbientLight(
         0xffffff,
-        1.7
+        1.8
     )
 );
 
 
-const light =
+const mainLight =
     new THREE.PointLight(
-        0x00eaff,
+        0xffffff,
         4,
-        20
+        25
     );
 
 
-light.position.set(
+mainLight.position.set(
     0,
     3,
     5
 );
 
 
-scene.add(light);
+scene.add(
+    mainLight
+);
 
 
 /* =========================================================
-   MODEL SYSTEM
+   SECOND LIGHT
+========================================================= */
+
+const blueLight =
+    new THREE.PointLight(
+        0x00dfff,
+        2,
+        18
+    );
+
+
+blueLight.position.set(
+    -4,
+    1,
+    4
+);
+
+
+scene.add(
+    blueLight
+);
+
+
+/* =========================================================
+   MODEL STORAGE
 ========================================================= */
 
 const objects=[];
 
 let activeObject=null;
 
-let grabbing=false;
-
-let grabOffset=
-    new THREE.Vector3();
-
-let previousFinger=null;
-
-let grabVelocity=
-    new THREE.Vector3();
-
-let twoHand=false;
-
 
 /* =========================================================
-   PART MATERIAL
+   PART COLORS
 ========================================================= */
 
-function partMaterial(){
+function normalMaterial(){
 
     return new THREE.MeshStandardMaterial({
 
-        color:0x8aa0aa,
+        color:0x9aa5aa,
 
-        metalness:.65,
+        metalness:.72,
 
-        roughness:.35,
-
-        transparent:true,
-
-        opacity:.92
+        roughness:.3
 
     });
 
 }
 
 
-function selectedMaterial(){
+function activeMaterial(){
 
     return new THREE.MeshStandardMaterial({
 
-        color:0x00eaff,
+        color:0x00dfff,
 
-        emissive:0x007c91,
+        emissive:0x005566,
 
-        emissiveIntensity:1.2,
+        emissiveIntensity:.7,
 
-        metalness:.5,
+        metalness:.65,
 
         roughness:.25
 
@@ -544,13 +947,17 @@ function selectedMaterial(){
 function createPart(
     name,
     geometry,
-    position
+    position,
+    rotation={x:0,y:0,z:0}
 ){
 
     const mesh =
         new THREE.Mesh(
+
             geometry,
-            partMaterial()
+
+            normalMaterial()
+
         );
 
 
@@ -559,15 +966,44 @@ function createPart(
     );
 
 
-    mesh.userData.name =
-        name;
+    mesh.rotation.set(
 
-    mesh.userData.originalPosition =
-        position.clone();
+        rotation.x,
+        rotation.y,
+        rotation.z
 
-    mesh.userData.attached=true;
+    );
 
-    mesh.userData.type="mechanical part";
+
+    mesh.userData = {
+
+        name:name,
+
+        type:"mechanical component",
+
+        attached:true,
+
+        originalPosition:
+            position.clone(),
+
+        originalRotation:
+            new THREE.Euler(
+                rotation.x,
+                rotation.y,
+                rotation.z
+            ),
+
+        velocity:
+            new THREE.Vector3(),
+
+        angularVelocity:
+            new THREE.Vector3(),
+
+        detached:false,
+
+        description:"Mechanical component"
+
+    };
 
 
     scene.add(mesh);
@@ -581,212 +1017,64 @@ function createPart(
 
 
 /* =========================================================
-   CREATE ENGINE MODEL
+   SELECT OBJECT
 ========================================================= */
 
-function createEngine(){
+function selectObject(obj){
 
-    clearModel();
+    if(activeObject){
+
+        activeObject.material =
+            normalMaterial();
+
+    }
 
 
-    /*
-        ENGINE BLOCK
-    */
+    activeObject=obj;
 
-    const block =
-        createPart(
 
-            "engine block",
+    if(activeObject){
 
-            new THREE.BoxGeometry(
-                2.5,
-                1.7,
-                1.5
-            ),
+        activeObject.material =
+            activeMaterial();
 
-            new THREE.Vector3(
-                0,
-                0,
-                0
-            )
 
+        showPartLabel(
+            activeObject.userData.name
         );
 
+    }
 
-    /*
-        CYLINDER
-    */
-
-    const cylinder =
-        createPart(
-
-            "cylinder",
-
-            new THREE.CylinderGeometry(
-                .55,
-                .55,
-                1.8,
-                32
-            ),
-
-            new THREE.Vector3(
-                0,
-                1.6,
-                0
-            )
-
-        );
+}
 
 
-    cylinder.rotation.z =
-        Math.PI/2;
+/* =========================================================
+   PART LABEL
+========================================================= */
+
+function showPartLabel(text){
+
+    partLabel.textContent =
+        text.toUpperCase();
+
+    partLabel.classList.add(
+        "visible"
+    );
+
+}
 
 
-    /*
-        PISTON
-    */
+function hidePartLabel(){
 
-    const piston =
-        createPart(
-
-            "piston",
-
-            new THREE.CylinderGeometry(
-                .4,
-                .4,
-                .65,
-                32
-            ),
-
-            new THREE.Vector3(
-                0,
-                2.45,
-                0
-            )
-
-        );
-
-
-    piston.rotation.z =
-        Math.PI/2;
-
-
-    /*
-        FLYWHEEL
-    */
-
-    const flywheel =
-        createPart(
-
-            "flywheel",
-
-            new THREE.CylinderGeometry(
-                .9,
-                .9,
-                .25,
-                40
-            ),
-
-            new THREE.Vector3(
-                1.55,
-                0,
-                0
-            )
-
-        );
-
-
-    flywheel.rotation.z =
-        Math.PI/2;
-
-
-    /*
-        INTAKE
-    */
-
-    const intake =
-        createPart(
-
-            "intake",
-
-            new THREE.BoxGeometry(
-                .7,
-                .55,
-                1.1
-            ),
-
-            new THREE.Vector3(
-                -.8,
-                1.15,
-                0
-            )
-
-        );
-
-
-    /*
-        EXHAUST
-    */
-
-    const exhaust =
-        createPart(
-
-            "exhaust",
-
-            new THREE.CylinderGeometry(
-                .18,
-                .18,
-                1.7,
-                24
-            ),
-
-            new THREE.Vector3(
-                .9,
-                1.1,
-                0
-            )
-
-        );
-
-
-    exhaust.rotation.z =
-        Math.PI/2;
-
-
-    /*
-        SPARK PLUG
-    */
-
-    const sparkPlug =
-        createPart(
-
-            "spark plug",
-
-            new THREE.CylinderGeometry(
-                .12,
-                .12,
-                .8,
-                16
-            ),
-
-            new THREE.Vector3(
-                0,
-                2.65,
-                0
-            )
-
-        );
-
-
-    jarvisSpeak(
-        "Engine model created. You can pull individual parts away from the assembly and inspect them."
+    partLabel.classList.remove(
+        "visible"
     );
 
 }
 
 
 /* =========================================================
-   CLEAR MODEL
+   CLEAR EVERYTHING
 ========================================================= */
 
 function clearModel(){
@@ -810,46 +1098,357 @@ function clearModel(){
 
     activeObject=null;
 
+    hidePartLabel();
+
 }
 
 
 /* =========================================================
-   BASIC SHAPES
+   ENGINE MODEL
+========================================================= */
+
+function createEngine(){
+
+    clearModel();
+
+
+    /*
+        ENGINE BLOCK
+    */
+
+    createPart(
+
+        "engine block",
+
+        new THREE.BoxGeometry(
+            2.8,
+            1.8,
+            1.7
+        ),
+
+        new THREE.Vector3(
+            0,
+            0,
+            0
+        )
+
+    );
+
+
+    /*
+        CYLINDER
+    */
+
+    createPart(
+
+        "cylinder",
+
+        new THREE.CylinderGeometry(
+            .62,
+            .62,
+            1.8,
+            32
+        ),
+
+        new THREE.Vector3(
+            0,
+            1.65,
+            0
+        ),
+
+        {
+            x:Math.PI/2,
+            y:0,
+            z:0
+        }
+
+    );
+
+
+    /*
+        PISTON
+    */
+
+    createPart(
+
+        "piston",
+
+        new THREE.CylinderGeometry(
+            .42,
+            .42,
+            .65,
+            32
+        ),
+
+        new THREE.Vector3(
+            0,
+            2.45,
+            0
+        ),
+
+        {
+            x:Math.PI/2,
+            y:0,
+            z:0
+        }
+
+    );
+
+
+    /*
+        FLYWHEEL
+    */
+
+    createPart(
+
+        "flywheel",
+
+        new THREE.CylinderGeometry(
+            .95,
+            .95,
+            .28,
+            40
+        ),
+
+        new THREE.Vector3(
+            1.7,
+            0,
+            0
+        ),
+
+        {
+            x:Math.PI/2,
+            y:0,
+            z:0
+        }
+
+    );
+
+
+    /*
+        INTAKE
+    */
+
+    createPart(
+
+        "intake manifold",
+
+        new THREE.BoxGeometry(
+            .85,
+            .55,
+            1.15
+        ),
+
+        new THREE.Vector3(
+            -.9,
+            1.05,
+            0
+        )
+
+    );
+
+
+    /*
+        EXHAUST
+    */
+
+    createPart(
+
+        "exhaust",
+
+        new THREE.CylinderGeometry(
+            .2,
+            .2,
+            1.7,
+            24
+        ),
+
+        new THREE.Vector3(
+            .95,
+            1.05,
+            0
+        ),
+
+        {
+            x:0,
+            y:0,
+            z:Math.PI/2
+        }
+
+    );
+
+
+    /*
+        SPARK PLUG
+    */
+
+    createPart(
+
+        "spark plug",
+
+        new THREE.CylinderGeometry(
+            .12,
+            .12,
+            .8,
+            16
+        ),
+
+        new THREE.Vector3(
+            0,
+            2.7,
+            0
+        )
+
+    );
+
+
+    /*
+        CRANKSHAFT
+    */
+
+    createPart(
+
+        "crankshaft",
+
+        new THREE.CylinderGeometry(
+            .16,
+            .16,
+            2.5,
+            20
+        ),
+
+        new THREE.Vector3(
+            0,
+            -.55,
+            0
+        ),
+
+        {
+            x:0,
+            y:0,
+            z:Math.PI/2
+        }
+
+    );
+
+
+    jarvisSpeak(
+        "Engine assembly created. Each component can be selected and removed independently."
+    );
+
+}
+
+
+/* =========================================================
+   BASIC PARTS
 ========================================================= */
 
 function createCube(){
 
     clearModel();
 
+
     createPart(
+
         "cube",
+
         new THREE.BoxGeometry(
             1.5,
             1.5,
             1.5
         ),
+
         new THREE.Vector3(
             0,0,0
         )
+
+    );
+
+
+    jarvisSpeak(
+        "Cube created."
     );
 
 }
 
 
-function createSphere(){
+function createCylinder(){
 
     clearModel();
 
+
     createPart(
-        "sphere",
-        new THREE.SphereGeometry(
-            .9,
-            32,
+
+        "cylinder",
+
+        new THREE.CylinderGeometry(
+            .7,
+            .7,
+            1.8,
             32
         ),
+
         new THREE.Vector3(
             0,0,0
         )
+
+    );
+
+
+    jarvisSpeak(
+        "Cylinder created."
+    );
+
+}
+
+
+function createGear(){
+
+    clearModel();
+
+
+    const group =
+        new THREE.Group();
+
+
+    const gear =
+        new THREE.CylinderGeometry(
+            .9,
+            .9,
+            .3,
+            16
+        );
+
+
+    const mesh =
+        new THREE.Mesh(
+            gear,
+            normalMaterial()
+        );
+
+
+    group.add(mesh);
+
+
+    group.userData={
+
+        name:"gear",
+
+        attached:true,
+
+        originalPosition:
+            new THREE.Vector3()
+
+    };
+
+
+    scene.add(group);
+
+    objects.push(group);
+
+
+    jarvisSpeak(
+        "Gear created."
     );
 
 }
@@ -872,10 +1471,14 @@ function handToWorld(
 
 
     const ny =
-        -(y /
-        window.innerHeight *
-        2 -
-        1);
+        -(
+
+            y /
+            window.innerHeight *
+            2 -
+            1
+
+        );
 
 
     const vector =
@@ -907,7 +1510,7 @@ function handToWorld(
 
 
 /* =========================================================
-   SCREEN PROJECTION
+   WORLD TO SCREEN
 ========================================================= */
 
 function worldToScreen(
@@ -944,23 +1547,34 @@ function worldToScreen(
 function distance2D(a,b){
 
     return Math.hypot(
+
         a.x-b.x,
+
         a.y-b.y
+
     );
 
 }
 
 
 /* =========================================================
-   PINCH
+   PINCH DETECTION
 ========================================================= */
 
 function isPinching(hand){
 
-    return distance2D(
-        hand[4],
-        hand[8]
-    ) < .055;
+    return (
+
+        distance2D(
+            hand[4],
+            hand[8]
+        )
+
+        <
+
+        .055
+
+    );
 
 }
 
@@ -999,7 +1613,7 @@ function findObject(position){
             closestDistance
         ){
 
-            closestDistance =
+            closestDistance=
                 distance;
 
             closest=obj;
@@ -1010,7 +1624,7 @@ function findObject(position){
 
 
     if(
-        closestDistance<140
+        closestDistance<130
     ){
 
         return closest;
@@ -1024,93 +1638,37 @@ function findObject(position){
 
 
 /* =========================================================
-   SELECT PART
+   GRAB STATE
 ========================================================= */
 
-function selectObject(obj){
+let grabbing=false;
 
-    if(activeObject){
+let grabOffset =
+    new THREE.Vector3();
 
-        activeObject.material =
-            partMaterial();
+let previousFinger=null;
 
-    }
-
-
-    activeObject=obj;
-
-
-    if(activeObject){
-
-        activeObject.material =
-            selectedMaterial();
-
-    }
-
-}
+let grabVelocity =
+    new THREE.Vector3();
 
 
 /* =========================================================
-   PULL PART OFF MODEL
+   TWO HAND STATE
 ========================================================= */
 
-function detachPart(obj){
+let twoHand=false;
 
-    if(!obj)
-        return;
+let twoStartDistance=1;
 
+let twoStartScale=1;
 
-    obj.userData.attached=false;
+let twoStartAngle=0;
 
-
-    jarvisSpeak(
-        `${obj.userData.name} detached.`
-    );
-
-}
+let twoStartRotation=0;
 
 
 /* =========================================================
-   REATTACH PART
-========================================================= */
-
-function reattachPart(obj){
-
-    if(!obj)
-        return;
-
-
-    obj.position.copy(
-        obj.userData.originalPosition
-    );
-
-
-    obj.rotation.set(
-        0,
-        0,
-        0
-    );
-
-
-    obj.scale.set(
-        1,
-        1,
-        1
-    );
-
-
-    obj.userData.attached=true;
-
-
-    jarvisSpeak(
-        `${obj.userData.name} reattached.`
-    );
-
-}
-
-
-/* =========================================================
-   HAND TRACKING
+   HAND RESULTS
 ========================================================= */
 
 hands.onResults(
@@ -1121,21 +1679,18 @@ results => {
 
 
     handCtx.clearRect(
+
         0,
         0,
+
         handCanvas.width,
         handCanvas.height
+
     );
 
 
     const detected =
         results.multiHandLandmarks || [];
-
-
-    /*
-        We intentionally don't draw the hands.
-        This keeps the experience clean.
-    */
 
 
     const pinching=[];
@@ -1192,6 +1747,16 @@ results => {
             );
 
 
+        const angle =
+            Math.atan2(
+
+                p2.y-p1.y,
+
+                p2.x-p1.x
+
+            );
+
+
         const centerX =
             (p1.x+p2.x)/2;
 
@@ -1200,41 +1765,46 @@ results => {
             (p1.y+p2.y)/2;
 
 
-        const angle =
-            Math.atan2(
-                p2.y-p1.y,
-                p2.x-p1.x
-            );
-
-
         if(!twoHand){
 
             twoHand=true;
 
-            activeObject.userData.startDistance =
-                Math.max(distance,10);
 
-            activeObject.userData.startScale =
+            twoStartDistance =
+                Math.max(
+                    distance,
+                    10
+                );
+
+
+            twoStartScale =
                 activeObject.scale.x;
 
-            activeObject.userData.startAngle =
+
+            twoStartAngle =
                 angle;
 
-            activeObject.userData.startRotation =
+
+            twoStartRotation =
                 activeObject.rotation.z;
 
         }
 
 
+        /*
+            SCALE
+        */
+
         const scale =
             THREE.MathUtils.clamp(
 
-                activeObject.userData.startScale *
+                twoStartScale *
                 distance /
-                activeObject.userData.startDistance,
+                twoStartDistance,
 
                 .15,
-                8
+
+                7
 
             );
 
@@ -1244,19 +1814,29 @@ results => {
         );
 
 
+        /*
+            ROTATE
+        */
+
         activeObject.rotation.z =
-            activeObject.userData.startRotation +
+            twoStartRotation +
             (
                 angle -
-                activeObject.userData.startAngle
+                twoStartAngle
             );
 
 
+        /*
+            MOVE
+        */
+
         activeObject.position.copy(
+
             handToWorld(
                 centerX,
                 centerY
             )
+
         );
 
 
@@ -1276,21 +1856,33 @@ results => {
         pinching.length>0
     ){
 
-        const hand =
-            detected[
-                pinching[0]
-            ];
+        const index =
+            pinching[0];
 
 
         const finger =
             screenPosition(
-                hand[8]
+
+                detected[index][8]
+
             );
 
 
-        /*
-            CONTINUE GRABBING
-        */
+        reticle.style.display =
+            "block";
+
+
+        reticle.style.left =
+            finger.x+"px";
+
+
+        reticle.style.top =
+            finger.y+"px";
+
+
+        /* =================================================
+           CONTINUE GRAB
+        ================================================= */
 
         if(
             grabbing &&
@@ -1299,8 +1891,10 @@ results => {
 
             const target =
                 handToWorld(
+
                     finger.x,
                     finger.y
+
                 );
 
 
@@ -1310,8 +1904,11 @@ results => {
 
 
             activeObject.position.lerp(
+
                 target,
-                .75
+
+                .72
+
             );
 
 
@@ -1319,10 +1916,10 @@ results => {
 
                 grabVelocity.set(
 
-                    finger.x -
+                    finger.x-
                     previousFinger.x,
 
-                    previousFinger.y -
+                    previousFinger.y-
                     finger.y,
 
                     0
@@ -1337,21 +1934,25 @@ results => {
 
 
             /*
-                If the part is pulled far enough
-                from its original position,
-                it becomes detached.
+                DETACH WHEN PULLED
+                FAR ENOUGH FROM
+                ORIGINAL ASSEMBLY
             */
 
-            const distanceFromOriginal =
-                activeObject.position.distanceTo(
-                    activeObject.userData.originalPosition
-                );
-
-
             if(
-                distanceFromOriginal >
-                1.5 &&
-                activeObject.userData.attached
+
+                activeObject.userData
+                    .attached &&
+
+                activeObject.position
+                    .distanceTo(
+
+                        activeObject
+                            .userData
+                            .originalPosition
+
+                    ) > 1.25
+
             ){
 
                 detachPart(
@@ -1366,9 +1967,9 @@ results => {
         }
 
 
-        /*
-            FIND PART
-        */
+        /* =================================================
+           SELECT PART
+        ================================================= */
 
         const found =
             findObject(
@@ -1378,21 +1979,29 @@ results => {
 
         if(found){
 
-            selectObject(found);
+            selectObject(
+                found
+            );
+
 
             grabbing=true;
 
+
             const target =
                 handToWorld(
+
                     finger.x,
                     finger.y
+
                 );
 
 
             grabOffset =
                 found.position
                     .clone()
-                    .sub(target);
+                    .sub(
+                        target
+                    );
 
 
             previousFinger =
@@ -1416,86 +2025,253 @@ results => {
 
         previousFinger=null;
 
+
         if(activeObject){
 
             activeObject.userData.velocity =
-                new THREE.Vector3(
-                    grabVelocity.x*.01,
-                    grabVelocity.y*.01,
-                    0
-                );
+                grabVelocity
+                    .clone()
+                    .multiplyScalar(.006);
 
         }
 
+
+        grabVelocity.set(
+            0,
+            0,
+            0
+        );
+
     }
+
+
+    reticle.style.display =
+        "none";
 
 });
 
 
 /* =========================================================
-   PHYSICS
+   DETACH PART
 ========================================================= */
 
-/*
-    IMPORTANT:
+function detachPart(obj){
 
-    THERE IS NO GRAVITY.
-
-    Parts stay exactly where the user leaves them.
-*/
-
-function physics(){
-
-    for(
-        const obj of objects
-    ){
-
-        if(!obj.userData.velocity)
-            continue;
+    if(!obj)
+        return;
 
 
-        if(
-            obj===activeObject &&
-            grabbing
-        ){
+    obj.userData.attached=false;
 
-            continue;
-
-        }
+    obj.userData.detached=true;
 
 
-        obj.position.add(
-            obj.userData.velocity
-        );
+    jarvisSpeak(
 
+        `${obj.userData.name} removed.`
 
-        /*
-            Strong damping.
-            No gravity.
-        */
-
-        obj.userData.velocity.multiplyScalar(
-            .90
-        );
-
-
-        if(
-            obj.userData.velocity.length()<.001
-        ){
-
-            obj.userData.velocity.set(
-                0,0,0
-            );
-
-        }
-
-    }
+    );
 
 }
 
 
 /* =========================================================
-   VOICE ASSISTANT
+   REATTACH PART
+========================================================= */
+
+function reattachPart(obj){
+
+    if(!obj)
+        return;
+
+
+    obj.position.copy(
+
+        obj.userData
+            .originalPosition
+
+    );
+
+
+    const rotation =
+        obj.userData
+            .originalRotation;
+
+
+    obj.rotation.set(
+
+        rotation.x,
+        rotation.y,
+        rotation.z
+
+    );
+
+
+    obj.scale.set(
+        1,
+        1,
+        1
+    );
+
+
+    obj.userData.attached=true;
+
+    obj.userData.detached=false;
+
+
+    jarvisSpeak(
+
+        `${obj.userData.name} reattached.`
+
+    );
+
+}
+
+
+/* =========================================================
+   INSPECT PART
+========================================================= */
+
+function inspectPart(){
+
+    if(!activeObject){
+
+        jarvisSpeak(
+            "Select a component first."
+        );
+
+        return;
+
+    }
+
+
+    const name =
+        activeObject.userData.name;
+
+
+    const status =
+        activeObject.userData.attached
+        ?
+        "attached to the assembly"
+        :
+        "detached from the assembly";
+
+
+    jarvisSpeak(
+
+        `${name}. ` +
+        `This component is currently ${status}. ` +
+        `You can move, rotate, resize, or reattach it.`
+
+    );
+
+}
+
+
+/* =========================================================
+   SHOW PARTS
+========================================================= */
+
+function listParts(){
+
+    if(objects.length===0){
+
+        jarvisSpeak(
+            "There are no components in the workspace."
+        );
+
+        return;
+
+    }
+
+
+    const names =
+        objects.map(
+
+            object =>
+                object.userData.name
+
+        );
+
+
+    jarvisSpeak(
+
+        "Current components are " +
+        names.join(", ") +
+        "."
+
+    );
+
+}
+
+
+/* =========================================================
+   RESET ASSEMBLY
+========================================================= */
+
+function resetAssembly(){
+
+    for(
+        const obj of objects
+    ){
+
+        if(
+            !obj.userData.originalPosition
+        )
+            continue;
+
+
+        obj.position.copy(
+
+            obj.userData
+                .originalPosition
+
+        );
+
+
+        if(
+            obj.userData.originalRotation
+        ){
+
+            const r =
+                obj.userData
+                    .originalRotation;
+
+
+            obj.rotation.set(
+
+                r.x,
+                r.y,
+                r.z
+
+            );
+
+        }
+
+
+        obj.scale.set(
+            1,
+            1,
+            1
+        );
+
+
+        obj.userData.attached=true;
+
+        obj.userData.detached=false;
+
+    }
+
+
+    jarvisSpeak(
+        "Assembly restored."
+    );
+
+}
+
+
+/* =========================================================
+   VOICE SYSTEM
 ========================================================= */
 
 const SpeechRecognition =
@@ -1525,7 +2301,7 @@ if(SpeechRecognition){
 
         listening=true;
 
-        voiceButton.classList.add(
+        jarvisCore.classList.add(
             "listening"
         );
 
@@ -1536,36 +2312,38 @@ if(SpeechRecognition){
 
         listening=false;
 
-        voiceButton.classList.remove(
+        jarvisCore.classList.remove(
             "listening"
         );
 
     };
 
 
-    recognition.onerror=error=>{
+    recognition.onerror=
+        error=>{
 
-        console.log(
-            "Voice error:",
-            error
-        );
+            console.log(
+                "Voice error:",
+                error
+            );
 
-    };
-
-
-    recognition.onresult=event=>{
-
-        const result =
-            event.results[
-                event.results.length-1
-            ][0].transcript;
+        };
 
 
-        processCommand(
-            result.toLowerCase()
-        );
+    recognition.onresult=
+        event=>{
 
-    };
+            const result =
+                event.results[
+                    event.results.length-1
+                ][0].transcript;
+
+
+            processVoiceCommand(
+                result.toLowerCase()
+            );
+
+        };
 
 }
 
@@ -1591,28 +2369,28 @@ function jarvisSpeak(text){
     speechSynthesis.cancel();
 
 
-    const speech =
+    const utterance =
         new SpeechSynthesisUtterance(
             text
         );
 
 
-    speech.rate=.95;
+    utterance.rate=.92;
 
-    speech.pitch=.85;
+    utterance.pitch=.82;
 
-    speech.volume=1;
+    utterance.volume=1;
 
 
     speechSynthesis.speak(
-        speech
+        utterance
     );
 
 }
 
 
 /* =========================================================
-   START LISTENING
+   START VOICE
 ========================================================= */
 
 function startListening(){
@@ -1620,7 +2398,9 @@ function startListening(){
     if(!recognition){
 
         jarvisSpeak(
-            "Voice recognition is not supported by this browser."
+
+            "Voice recognition is not supported in this browser."
+
         );
 
         return;
@@ -1644,15 +2424,13 @@ function startListening(){
 
 
 /* =========================================================
-   VOICE BUTTON
+   JARVIS CORE CLICK
 ========================================================= */
 
-voiceButton.onclick =
+jarvisCore.onclick =
 ()=>{
 
-    if(
-        listening
-    ){
+    if(listening){
 
         recognition.stop();
 
@@ -1668,25 +2446,52 @@ voiceButton.onclick =
 
 
 /* =========================================================
-   AI COMMAND PROCESSOR
+   VOICE COMMAND SYSTEM
 ========================================================= */
 
-function processCommand(command){
+function processVoiceCommand(command){
 
     console.log(
-        "USER:",
+        "COMMAND:",
         command
     );
 
 
     /*
-        MODEL CREATION
+        REMOVE "JARVIS"
     */
 
+    command =
+        command
+            .replace(
+                /\bjarvis\b/g,
+                ""
+            )
+            .trim();
+
+
+    /* =====================================================
+       BUILD
+    ===================================================== */
+
     if(
-        command.includes("create engine") ||
-        command.includes("build engine") ||
-        command.includes("make engine")
+
+        command.includes(
+            "build an engine"
+        ) ||
+
+        command.includes(
+            "build engine"
+        ) ||
+
+        command.includes(
+            "create an engine"
+        ) ||
+
+        command.includes(
+            "create engine"
+        )
+
     ){
 
         createEngine();
@@ -1696,50 +2501,81 @@ function processCommand(command){
     }
 
 
+    /* =====================================================
+       CUBE
+    ===================================================== */
+
     if(
-        command.includes("create cube")
+        command.includes(
+            "create cube"
+        )
     ){
 
         createCube();
 
-        jarvisSpeak(
-            "Cube created."
-        );
-
         return;
 
     }
 
 
+    /* =====================================================
+       CYLINDER
+    ===================================================== */
+
     if(
-        command.includes("create sphere")
+        command.includes(
+            "create cylinder"
+        )
     ){
 
-        createSphere();
-
-        jarvisSpeak(
-            "Sphere created."
-        );
+        createCylinder();
 
         return;
 
     }
 
 
-    /*
-        CLEAR
-    */
+    /* =====================================================
+       GEAR
+    ===================================================== */
 
     if(
-        command.includes("clear model") ||
-        command.includes("delete model") ||
-        command.includes("remove model")
+        command.includes(
+            "create gear"
+        )
+    ){
+
+        createGear();
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       CLEAR
+    ===================================================== */
+
+    if(
+
+        command.includes(
+            "clear model"
+        ) ||
+
+        command.includes(
+            "delete model"
+        ) ||
+
+        command.includes(
+            "clear everything"
+        )
+
     ){
 
         clearModel();
 
         jarvisSpeak(
-            "Model cleared."
+            "Workspace cleared."
         );
 
         return;
@@ -1747,14 +2583,82 @@ function processCommand(command){
     }
 
 
-    /*
-        REATTACH
-    */
+    /* =====================================================
+       INSPECT
+    ===================================================== */
 
     if(
-        command.includes("put it back") ||
-        command.includes("reattach") ||
-        command.includes("attach it")
+
+        command.includes(
+            "inspect"
+        ) ||
+
+        command.includes(
+            "what is this"
+        ) ||
+
+        command.includes(
+            "identify this"
+        ) ||
+
+        command.includes(
+            "tell me about this"
+        )
+
+    ){
+
+        inspectPart();
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       LIST
+    ===================================================== */
+
+    if(
+
+        command.includes(
+            "list the parts"
+        ) ||
+
+        command.includes(
+            "list parts"
+        ) ||
+
+        command.includes(
+            "what parts are there"
+        )
+
+    ){
+
+        listParts();
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       REATTACH
+    ===================================================== */
+
+    if(
+
+        command.includes(
+            "put it back"
+        ) ||
+
+        command.includes(
+            "reattach"
+        ) ||
+
+        command.includes(
+            "attach it"
+        )
+
     ){
 
         if(activeObject){
@@ -1768,7 +2672,7 @@ function processCommand(command){
         else{
 
             jarvisSpeak(
-                "No part is currently selected."
+                "Select a component first."
             );
 
         }
@@ -1778,114 +2682,31 @@ function processCommand(command){
     }
 
 
-    /*
-        REMOVE SELECTED PART
-    */
+    /* =====================================================
+       RESET
+    ===================================================== */
 
     if(
-        command.includes("remove this") ||
-        command.includes("detach this") ||
-        command.includes("take this off")
+        command.includes(
+            "reset"
+        )
     ){
 
-        if(activeObject){
-
-            detachPart(
-                activeObject
-            );
-
-        }
-
-        else{
-
-            jarvisSpeak(
-                "Select a part first."
-            );
-
-        }
+        resetAssembly();
 
         return;
 
     }
 
 
-    /*
-        INSPECTION
-    */
+    /* =====================================================
+       CAMERA
+    ===================================================== */
 
     if(
-        command.includes("inspect") ||
-        command.includes("what is this") ||
-        command.includes("identify this")
-    ){
-
-        inspectActivePart();
-
-        return;
-
-    }
-
-
-    /*
-        LIST PARTS
-    */
-
-    if(
-        command.includes("list parts") ||
-        command.includes("what parts")
-    ){
-
-        listParts();
-
-        return;
-
-    }
-
-
-    /*
-        RESET
-    */
-
-    if(
-        command.includes("reset")
-    ){
-
-        for(
-            const obj of objects
-        ){
-
-            obj.position.copy(
-                obj.userData.originalPosition
-            );
-
-            obj.rotation.set(
-                0,0,0
-            );
-
-            obj.scale.set(
-                1,1,1
-            );
-
-            obj.userData.attached=true;
-
-        }
-
-
-        jarvisSpeak(
-            "Assembly reset."
-        );
-
-        return;
-
-    }
-
-
-    /*
-        CAMERA
-    */
-
-    if(
-        command.includes("switch camera")
+        command.includes(
+            "switch camera"
+        )
     ){
 
         usingFrontCamera =
@@ -1898,66 +2719,25 @@ function processCommand(command){
     }
 
 
-    /*
-        GENERAL RESPONSE
-    */
+    /* =====================================================
+       HELP
+    ===================================================== */
 
-    jarvisSpeak(
-        "I heard you. I can create models, identify parts, manipulate assemblies, detach components, reattach components, and answer engineering questions."
-    );
+    if(
+        command.includes(
+            "what can you do"
+        ) ||
 
-}
-
-
-/* =========================================================
-   INSPECT PART
-========================================================= */
-
-function inspectActivePart(){
-
-    if(!activeObject){
-
-        jarvisSpeak(
-            "Please select a part first."
-        );
-
-        return;
-
-    }
-
-
-    const name =
-        activeObject.userData.name;
-
-
-    const attached =
-        activeObject.userData.attached;
-
-
-    jarvisSpeak(
-
-        `${name}. ` +
-        (
-            attached
-            ? "The part is currently attached to the assembly."
-            : "The part is currently detached and available for independent inspection."
+        command.includes(
+            "help"
         )
 
-    );
-
-}
-
-
-/* =========================================================
-   LIST PARTS
-========================================================= */
-
-function listParts(){
-
-    if(objects.length===0){
+    ){
 
         jarvisSpeak(
-            "There are currently no parts in the workspace."
+
+            "I can build and disassemble models, select individual components, remove parts, inspect them, move them, rotate them, resize them, and answer questions."
+
         );
 
         return;
@@ -1965,108 +2745,355 @@ function listParts(){
     }
 
 
-    const names =
-        objects.map(
-            obj =>
-                obj.userData.name
-        );
+    /* =====================================================
+       GENERAL QUESTION
+    ===================================================== */
 
-
-    jarvisSpeak(
-        "The model contains " +
-        names.join(", ") +
-        "."
+    askJARVIS(
+        command
     );
 
 }
 
 
 /* =========================================================
-   FUTURE AI CONNECTION
+   AI BACKEND
 ========================================================= */
 
 /*
-    This is where a real AI API can be connected.
 
-    Example architecture:
+    THIS FUNCTION IS THE CONNECTION POINT
+    FOR YOUR REAL AI.
 
-    User speaks
-          ↓
-    Speech Recognition
-          ↓
-    JARVIS command processor
-          ↓
-    AI model
-          ↓
-    Answer / model instructions
-          ↓
-    Three.js
-          ↓
-    AR assembly
+    The browser should NOT contain your
+    private API key.
 
-    A real AI backend should be used rather than
-    placing an API key directly in this HTML file.
+    Instead:
+
+        Browser
+           ↓
+        Your server
+           ↓
+        AI model
+           ↓
+        JARVIS
+           ↓
+        Browser
+
 */
-
 
 async function askJARVIS(question){
 
+    jarvisCore.classList.add(
+        "thinking"
+    );
+
+
     /*
-        Replace this with your secure backend.
+        TEMPORARY LOCAL RESPONSE
 
-        Example:
-
-        const response =
-            await fetch("/api/jarvis",{
-                method:"POST",
-                headers:{
-                    "Content-Type":
-                        "application/json"
-                },
-                body:JSON.stringify({
-                    question
-                })
-            });
-
-        const data =
-            await response.json();
-
-        jarvisSpeak(data.answer);
+        Replace this section with
+        your own secure backend.
     */
 
 
+    let answer =
+        localEngineeringAnswer(
+            question
+        );
+
+
+    /*
+        If the local system doesn't know
+        the answer, give the user a clear
+        response.
+    */
+
+
+    if(!answer){
+
+        answer =
+            "I understand the question, but my advanced AI reasoning system has not been connected yet.";
+
+    }
+
+
     jarvisSpeak(
-        "I can answer that once my AI reasoning service is connected."
+        answer
+    );
+
+
+    setTimeout(
+        ()=>{
+
+            jarvisCore.classList.remove(
+                "thinking"
+            );
+
+        },
+        500
     );
 
 }
 
 
 /* =========================================================
-   KEYBOARD TEST COMMANDS
+   LOCAL ENGINEERING KNOWLEDGE
+========================================================= */
+
+function localEngineeringAnswer(
+    question
+){
+
+    question =
+        question.toLowerCase();
+
+
+    if(
+        question.includes(
+            "what is a piston"
+        )
+    ){
+
+        return:
+
+        "A piston is a moving component inside a cylinder. It transfers pressure from combustion into mechanical motion.";
+
+    }
+
+
+    if(
+        question.includes(
+            "what is a cylinder"
+        )
+    ){
+
+        return:
+
+        "A cylinder is the chamber in which a piston moves. In an engine, it contains the combustion process.";
+
+    }
+
+
+    if(
+        question.includes(
+            "what is a crankshaft"
+        )
+    ){
+
+        return:
+
+        "A crankshaft converts the piston's linear motion into rotational motion.";
+
+    }
+
+
+    if(
+        question.includes(
+            "what is a flywheel"
+        )
+    ){
+
+        return:
+
+        "A flywheel stores rotational energy and helps smooth changes in engine speed.";
+
+    }
+
+
+    if(
+        question.includes(
+            "what is a spark plug"
+        )
+    ){
+
+        return:
+
+        "A spark plug creates the electrical spark that ignites the air and fuel mixture in a gasoline engine.";
+
+    }
+
+
+    if(
+        question.includes(
+            "why no gravity"
+        )
+    ){
+
+        return:
+
+        "The workspace uses zero gravity so detached components remain suspended while you inspect and manipulate them.";
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   KEYBOARD FALLBACK
 ========================================================= */
 
 document.addEventListener(
     "keydown",
     event => {
 
-        if(event.key==="1")
+        /*
+            1 = engine
+            2 = cube
+            3 = cylinder
+            4 = gear
+            R = reset
+            C = clear
+            SPACE = voice
+        */
+
+
+        if(
+            event.key==="1"
+        ){
+
             createEngine();
 
-        if(event.key==="2")
+        }
+
+
+        if(
+            event.key==="2"
+        ){
+
             createCube();
 
-        if(event.key==="3")
-            createSphere();
+        }
 
-        if(event.key==="Escape")
+
+        if(
+            event.key==="3"
+        ){
+
+            createCylinder();
+
+        }
+
+
+        if(
+            event.key==="4"
+        ){
+
+            createGear();
+
+        }
+
+
+        if(
+            event.key.toLowerCase()==="r"
+        ){
+
+            resetAssembly();
+
+        }
+
+
+        if(
+            event.key.toLowerCase()==="c"
+        ){
+
             clearModel();
 
-        if(event.key===" ")
+        }
+
+
+        if(
+            event.code==="Space"
+        ){
+
             startListening();
+
+        }
 
     }
 );
+
+
+/* =========================================================
+   PHYSICS
+========================================================= */
+
+/*
+
+    IMPORTANT:
+
+    THERE IS NO GRAVITY.
+
+    Components do NOT fall.
+
+    They stay where the user places them.
+
+    A small amount of velocity is retained
+    after releasing a part, but it quickly
+    stops.
+
+*/
+
+function physics(){
+
+    for(
+        const obj of objects
+    ){
+
+        if(
+            obj === activeObject &&
+            grabbing
+        ){
+
+            continue;
+
+        }
+
+
+        if(
+            !obj.userData.velocity
+        )
+            continue;
+
+
+        obj.position.add(
+            obj.userData.velocity
+        );
+
+
+        /*
+            NO GRAVITY.
+
+            Only damping.
+        */
+
+        obj.userData.velocity
+            .multiplyScalar(
+                .88
+            );
+
+
+        if(
+            obj.userData.velocity
+                .length()
+                <
+                .0005
+        ){
+
+            obj.userData.velocity.set(
+                0,
+                0,
+                0
+            );
+
+        }
+
+    }
+
+}
 
 
 /* =========================================================
@@ -2076,17 +3103,24 @@ document.addEventListener(
 async function trackingLoop(){
 
     if(
+
         cameraReady &&
+
         video.readyState>=2 &&
+
         !processing
+
     ){
 
         processing=true;
 
+
         try{
 
             await hands.send({
+
                 image:video
+
             });
 
         }
@@ -2096,6 +3130,7 @@ async function trackingLoop(){
             console.log(error);
 
         }
+
 
         processing=false;
 
@@ -2139,17 +3174,21 @@ async function boot(){
 
     resize();
 
+
     await startCamera();
 
+
     trackingLoop();
+
 
     animate();
 
 
     /*
-        Start voice assistant after
-        user interaction when required
-        by browser permissions.
+        Start listening after the user
+        interacts with the page because
+        browsers may block automatic
+        microphone access.
     */
 
 }
