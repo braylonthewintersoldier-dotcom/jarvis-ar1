@@ -1,240 +1,441 @@
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta charset="UTF-8">
 
-<title>JARVIS AR</title>
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<title>JARVIS AR ULTIMATE</title>
+
+<!-- ================================
+     MEDIAPIPE
+================================ -->
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
+<!-- ================================
+     THREE.JS
+================================ -->
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+
 <style>
 
-html,body{
+html,
+body{
+
   margin:0;
+
   width:100%;
   height:100%;
+
   overflow:hidden;
+
   background:#000;
-  font-family:Arial,sans-serif;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  color:#00eaff;
+
 }
 
+
+/* =================================
+   CAMERA
+================================= */
+
 #camera{
+
   position:fixed;
+
   inset:0;
+
   width:100%;
   height:100%;
+
   object-fit:cover;
+
   z-index:1;
+
 }
 
 #camera.front{
-  transform:scaleX(-1);
+
+  transform:
+    scaleX(-1);
+
 }
 
 #camera.back{
-  transform:none;
+
+  transform:
+    scaleX(1);
+
 }
 
-#output{
+
+/* =================================
+   THREE.JS
+================================= */
+
+#threeCanvas{
+
   position:fixed;
+
   inset:0;
+
   width:100%;
   height:100%;
+
+  z-index:5;
+
   pointer-events:none;
-  z-index:2;
+
 }
+
+
+/* =================================
+   MEDIAPIPE CANVAS
+================================= */
+
+#handCanvas{
+
+  position:fixed;
+
+  inset:0;
+
+  width:100%;
+  height:100%;
+
+  z-index:10;
+
+  pointer-events:none;
+
+}
+
+
+/* =================================
+   HUD
+================================= */
 
 #hud{
+
   position:fixed;
+
   top:15px;
+
   left:15px;
-  z-index:50;
 
-  color:#00eaff;
+  z-index:100;
 
-  background:rgba(0,0,0,.78);
+  min-width:220px;
 
-  border:1px solid #00eaff;
+  padding:14px 17px;
 
-  border-radius:10px;
+  background:
+    rgba(0,10,20,.78);
 
-  padding:12px 16px;
+  border:
+    1px solid #00eaff;
 
-  line-height:1.5;
+  border-radius:12px;
 
-  font-size:15px;
+  box-shadow:
+    0 0 20px rgba(0,234,255,.25);
+
+  backdrop-filter:
+    blur(8px);
+
 }
 
-#cameraButton{
-  position:fixed;
+#title{
 
-  top:15px;
-  right:15px;
-
-  z-index:60;
-
-  padding:12px 16px;
-
-  color:#00eaff;
-
-  background:rgba(0,0,0,.8);
-
-  border:1px solid #00eaff;
-
-  border-radius:10px;
+  font-size:19px;
 
   font-weight:bold;
 
-  font-size:14px;
+  letter-spacing:3px;
+
+  margin-bottom:5px;
+
+}
+
+.line{
+
+  margin-top:4px;
+
+  font-size:13px;
+
+}
+
+.online{
+
+  color:#00ff88;
+
+}
+
+.warning{
+
+  color:#ffaa00;
+
+}
+
+
+/* =================================
+   CAMERA BUTTON
+================================= */
+
+#cameraButton{
+
+  position:fixed;
+
+  right:15px;
+
+  top:15px;
+
+  z-index:110;
+
+  padding:11px 15px;
+
+  border:
+
+    1px solid
+    #00eaff;
+
+  border-radius:10px;
+
+  background:
+    rgba(0,10,20,.85);
+
+  color:#00eaff;
+
+  font-weight:bold;
 
   cursor:pointer;
+
 }
 
-#cameraButton:disabled{
-  opacity:.5;
-}
 
-#cube-container{
+/* =================================
+   CROSSHAIR
+================================= */
+
+#crosshair{
 
   position:fixed;
 
   left:50%;
   top:50%;
 
-  width:0;
-  height:0;
+  width:18px;
+  height:18px;
+
+  margin-left:-9px;
+  margin-top:-9px;
+
+  border:
+    1px solid
+    rgba(0,234,255,.5);
+
+  border-radius:50%;
+
+  z-index:20;
+
+  pointer-events:none;
+
+}
+
+
+/* =================================
+   RETICLE
+================================= */
+
+#reticle{
+
+  position:fixed;
+
+  width:35px;
+  height:35px;
+
+  margin-left:-17.5px;
+  margin-top:-17.5px;
+
+  border:
+    2px solid
+    #00eaff;
+
+  border-radius:50%;
+
+  z-index:30;
 
   display:none;
 
-  z-index:10;
-
-  perspective:900px;
-
-  transform-style:preserve-3d;
-
   pointer-events:none;
-}
-
-#cube{
-
-  position:absolute;
-
-  width:120px;
-  height:120px;
-
-  left:-60px;
-  top:-60px;
-
-  transform-style:preserve-3d;
-
-  will-change:transform;
-}
-
-.face{
-
-  position:absolute;
-
-  width:120px;
-  height:120px;
-
-  box-sizing:border-box;
-
-  border:3px solid #00eaff;
-
-  background:rgba(0,220,255,.18);
 
   box-shadow:
-    inset 0 0 25px rgba(0,240,255,.7),
-    0 0 15px rgba(0,240,255,.8);
+    0 0 15px #00eaff;
 
-  backface-visibility:visible;
 }
 
-.frontFace{
-  transform:translateZ(60px);
-}
 
-.backFace{
-  transform:
-    rotateY(180deg)
-    translateZ(60px);
-}
+/* =================================
+   BOTTOM STATUS
+================================= */
 
-.rightFace{
-  transform:
-    rotateY(90deg)
-    translateZ(60px);
-}
-
-.leftFace{
-  transform:
-    rotateY(-90deg)
-    translateZ(60px);
-}
-
-.topFace{
-  transform:
-    rotateX(90deg)
-    translateZ(60px);
-}
-
-.bottomFace{
-  transform:
-    rotateX(-90deg)
-    translateZ(60px);
-}
-
-#centerDot{
+#bottom{
 
   position:fixed;
 
-  width:7px;
-  height:7px;
+  left:50%;
 
-  margin-left:-3.5px;
-  margin-top:-3.5px;
+  bottom:20px;
 
-  border-radius:50%;
+  transform:
+    translateX(-50%);
 
-  background:#00eaff;
+  z-index:100;
 
-  box-shadow:0 0 12px #00eaff;
+  padding:10px 22px;
 
-  display:none;
+  background:
+    rgba(0,10,20,.8);
+
+  border:
+    1px solid
+    #00eaff;
+
+  border-radius:20px;
+
+  font-size:13px;
+
+  letter-spacing:1px;
+
+}
+
+
+/* =================================
+   SCAN LINES
+================================= */
+
+.scanline{
+
+  position:fixed;
+
+  left:0;
+  right:0;
+
+  height:1px;
+
+  background:
+    rgba(0,234,255,.12);
 
   z-index:15;
-}
-
-#grabRing{
-
-  position:fixed;
-
-  width:30px;
-  height:30px;
-
-  margin-left:-15px;
-  margin-top:-15px;
-
-  border:2px solid #00eaff;
-
-  border-radius:50%;
-
-  display:none;
-
-  z-index:14;
 
   pointer-events:none;
 
-  box-shadow:0 0 12px #00eaff;
+  animation:
+    scan 5s linear infinite;
+
+}
+
+@keyframes scan{
+
+  from{
+
+    top:0;
+
+  }
+
+  to{
+
+    top:100%;
+
+  }
+
+}
+
+
+/* =================================
+   VIGNETTE
+================================= */
+
+#vignette{
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:18;
+
+  pointer-events:none;
+
+  box-shadow:
+    inset 0 0 180px
+    rgba(0,0,0,.75);
+
+}
+
+
+/* =================================
+   MOBILE
+================================= */
+
+@media(max-width:600px){
+
+  #hud{
+
+    min-width:170px;
+
+    padding:10px 12px;
+
+  }
+
+  #title{
+
+    font-size:15px;
+
+  }
+
+  .line{
+
+    font-size:11px;
+
+  }
+
+  #bottom{
+
+    bottom:12px;
+
+    font-size:11px;
+
+    white-space:nowrap;
+
+  }
+
 }
 
 </style>
+
 </head>
 
+
 <body>
+
+
+<!-- =================================
+     CAMERA
+================================= -->
 
 <video
   id="camera"
@@ -243,140 +444,390 @@ html,body{
   playsinline>
 </video>
 
-<canvas id="output"></canvas>
+
+<!-- =================================
+     HAND TRACKING
+================================= -->
+
+<canvas id="handCanvas"></canvas>
+
+
+<!-- =================================
+     THREE.JS CANVAS
+================================= -->
+
+<canvas id="threeCanvas"></canvas>
+
+
+<!-- =================================
+     HUD
+================================= -->
 
 <div id="hud">
 
-  <b>JARVIS AR</b>
-
-  <div id="status">
-    Starting...
+  <div id="title">
+    JARVIS AR
   </div>
 
-  <div id="hands">
-    Hands: 0
+  <div class="line">
+    SYSTEM:
+    <span
+      id="system"
+      class="online">
+      ONLINE
+    </span>
   </div>
 
-  <div id="mode">
-    Mode: STANDBY
+  <div class="line">
+    TRACKING:
+    <span id="tracking">
+      INITIALIZING
+    </span>
   </div>
 
-  <div id="cameraMode">
-    Camera: FRONT
+  <div class="line">
+    HANDS:
+    <span id="hands">
+      0
+    </span>
+  </div>
+
+  <div class="line">
+    OBJECTS:
+    <span id="objects">
+      0
+    </span>
+  </div>
+
+  <div class="line">
+    MODE:
+    <span id="mode">
+      STANDBY
+    </span>
+  </div>
+
+  <div class="line">
+    ACTIVE:
+    <span id="active">
+      NONE
+    </span>
   </div>
 
 </div>
+
+
+<!-- =================================
+     CAMERA BUTTON
+================================= -->
 
 <button id="cameraButton">
-  SWITCH TO BACK
+  SWITCH CAMERA
 </button>
 
-<div id="grabRing"></div>
 
-<div id="centerDot"></div>
+<!-- =================================
+     CROSSHAIR
+================================= -->
 
-<div id="cube-container">
+<div id="crosshair"></div>
 
-  <div id="cube">
+<div id="reticle"></div>
 
-    <div class="face frontFace"></div>
-    <div class="face backFace"></div>
-    <div class="face rightFace"></div>
-    <div class="face leftFace"></div>
-    <div class="face topFace"></div>
-    <div class="face bottomFace"></div>
 
-  </div>
+<!-- =================================
+     EFFECTS
+================================= -->
+
+<div class="scanline"></div>
+
+<div id="vignette"></div>
+
+
+<!-- =================================
+     BOTTOM
+================================= -->
+
+<div id="bottom">
+
+  PINCH • GRAB • MOVE • ROTATE • RESIZE
 
 </div>
+
 
 <script>
 
-/* =====================================================
+/* =================================================
    ELEMENTS
-===================================================== */
+================================================= */
 
 const video =
-  document.getElementById("camera");
+  document.getElementById(
+    "camera"
+  );
 
-const canvas =
-  document.getElementById("output");
+const handCanvas =
+  document.getElementById(
+    "handCanvas"
+  );
 
-const ctx =
-  canvas.getContext("2d");
+const handCtx =
+  handCanvas.getContext(
+    "2d"
+  );
 
-const status =
-  document.getElementById("status");
+const threeCanvas =
+  document.getElementById(
+    "threeCanvas"
+  );
+
+const systemText =
+  document.getElementById(
+    "system"
+  );
+
+const trackingText =
+  document.getElementById(
+    "tracking"
+  );
 
 const handsText =
-  document.getElementById("hands");
+  document.getElementById(
+    "hands"
+  );
+
+const objectsText =
+  document.getElementById(
+    "objects"
+  );
 
 const modeText =
-  document.getElementById("mode");
+  document.getElementById(
+    "mode"
+  );
 
-const cameraModeText =
-  document.getElementById("cameraMode");
+const activeText =
+  document.getElementById(
+    "active"
+  );
 
 const cameraButton =
-  document.getElementById("cameraButton");
+  document.getElementById(
+    "cameraButton"
+  );
 
-const cubeContainer =
-  document.getElementById("cube-container");
-
-const cube =
-  document.getElementById("cube");
-
-const centerDot =
-  document.getElementById("centerDot");
-
-const grabRing =
-  document.getElementById("grabRing");
+const reticle =
+  document.getElementById(
+    "reticle"
+  );
 
 
-/* =====================================================
-   CAMERA STATE
-===================================================== */
+/* =================================================
+   CAMERA
+================================================= */
 
-/*
-  FRONT CAMERA IS THE PRIORITY.
-*/
+let usingFrontCamera =
+  true;
 
-let usingFrontCamera = true;
+let currentStream =
+  null;
 
-let currentStream = null;
+let cameraReady =
+  false;
 
-let cameraReady = false;
+let processing =
+  false;
 
-let processing = false;
+
+/* =================================================
+   CAMERA START
+================================================= */
+
+async function startCamera(){
+
+  cameraReady=false;
+
+  if(currentStream){
+
+    currentStream
+      .getTracks()
+      .forEach(
+        track =>
+        track.stop()
+      );
+
+  }
+
+  currentStream=null;
 
 
-/* =====================================================
-   CANVAS
-===================================================== */
+  try{
 
-function resizeCanvas(){
+    systemText.textContent =
+      "STARTING";
 
-  canvas.width =
+
+    let stream;
+
+
+    try{
+
+      stream =
+        await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video:{
+
+            facingMode:
+              usingFrontCamera
+              ?
+              "user"
+              :
+              "environment",
+
+            width:{
+              ideal:1280
+            },
+
+            height:{
+              ideal:720
+            },
+
+            frameRate:{
+              ideal:30,
+              max:30
+            }
+
+          },
+
+          audio:false
+
+        });
+
+    }
+
+    catch(error){
+
+      console.log(
+        "Requested camera unavailable."
+      );
+
+
+      stream =
+        await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video:true,
+
+          audio:false
+
+        });
+
+    }
+
+
+    currentStream =
+      stream;
+
+
+    video.srcObject =
+      stream;
+
+
+    video.classList.remove(
+      "front",
+      "back"
+    );
+
+
+    video.classList.add(
+      usingFrontCamera
+      ?
+      "front"
+      :
+      "back"
+    );
+
+
+    await video.play();
+
+
+    cameraReady=true;
+
+
+    systemText.textContent =
+      "ONLINE";
+
+
+    trackingText.textContent =
+      "ACTIVE";
+
+
+  }
+
+  catch(error){
+
+    console.error(
+      error
+    );
+
+
+    systemText.textContent =
+      "CAMERA ERROR";
+
+    trackingText.textContent =
+      error.message;
+
+  }
+
+}
+
+
+/* =================================================
+   CAMERA BUTTON
+================================================= */
+
+cameraButton.onclick =
+async function(){
+
+  usingFrontCamera =
+    !usingFrontCamera;
+
+  await startCamera();
+
+};
+
+
+/* =================================================
+   RESIZE
+================================================= */
+
+function resize(){
+
+  handCanvas.width =
     window.innerWidth;
 
-  canvas.height =
+  handCanvas.height =
     window.innerHeight;
 
 }
 
-resizeCanvas();
+resize();
 
 window.addEventListener(
   "resize",
-  resizeCanvas
+  resize
 );
 
 
-/* =====================================================
+/* =================================================
    SCREEN POSITION
-===================================================== */
+================================================= */
 
-function screenPosition(point){
+function screenPosition(
+  point
+){
 
   const vw =
     video.videoWidth;
@@ -415,7 +866,10 @@ function screenPosition(point){
   let offsetY=0;
 
 
-  if(screenRatio>videoRatio){
+  if(
+    screenRatio >
+    videoRatio
+  ){
 
     width=sw;
 
@@ -449,12 +903,6 @@ function screenPosition(point){
     offsetY;
 
 
-  /*
-    MediaPipe is not affected by CSS.
-
-    Mirror only the front camera.
-  */
-
   if(usingFrontCamera){
 
     x=
@@ -464,25 +912,23 @@ function screenPosition(point){
 
 
   return{
-    x:x,
-    y:y
+    x,
+    y
   };
 
 }
 
 
-/* =====================================================
+/* =================================================
    MEDIAPIPE
-===================================================== */
+================================================= */
 
 const hands =
   new Hands({
 
-    locateFile:(file)=>{
-
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-
-    }
+    locateFile:
+    file =>
+      `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 
   });
 
@@ -500,47 +946,479 @@ hands.setOptions({
 });
 
 
-/* =====================================================
-   CUBE STATE
-===================================================== */
+/* =================================================
+   THREE.JS
+================================================= */
 
-let cubeExists=false;
+const renderer =
+  new THREE.WebGLRenderer({
 
-let cubeX=
-  window.innerWidth/2;
+    canvas:threeCanvas,
 
-let cubeY=
-  window.innerHeight/2;
+    alpha:true,
 
-let cubeScale=1;
+    antialias:true
 
-let rotX=-20;
-
-let rotY=30;
-
-let rotZ=0;
+  });
 
 
-/* =====================================================
+renderer.setPixelRatio(
+  Math.min(
+    window.devicePixelRatio,
+    2
+  )
+);
+
+
+renderer.setSize(
+  window.innerWidth,
+  window.innerHeight
+);
+
+
+const scene =
+  new THREE.Scene();
+
+
+const camera =
+  new THREE.PerspectiveCamera(
+
+    55,
+
+    window.innerWidth /
+    window.innerHeight,
+
+    .1,
+
+    100
+
+  );
+
+
+camera.position.z=8;
+
+
+/* =================================================
+   LIGHTING
+================================================= */
+
+const ambient =
+  new THREE.AmbientLight(
+    0xffffff,
+    1.5
+  );
+
+scene.add(
+  ambient
+);
+
+
+const pointLight =
+  new THREE.PointLight(
+    0x00eaff,
+    5,
+    20
+  );
+
+pointLight.position.set(
+  0,
+  2,
+  4
+);
+
+scene.add(
+  pointLight
+);
+
+
+/* =================================================
+   OBJECTS
+================================================= */
+
+const objects=[];
+
+let activeObject=null;
+
+
+/* =================================================
+   SHAPE TYPES
+================================================= */
+
+const shapeNames=[
+
+  "CUBE",
+  "SPHERE",
+  "PYRAMID",
+  "TORUS",
+  "CYLINDER",
+  "STAR"
+
+];
+
+
+let nextShape=0;
+
+
+/* =================================================
+   MATERIAL
+================================================= */
+
+function hologramMaterial(){
+
+  return new THREE.MeshStandardMaterial({
+
+    color:
+      new THREE.Color(
+        `hsl(${Math.random()*360},100%,60%)`
+      ),
+
+    emissive:
+      new THREE.Color(
+        `hsl(${Math.random()*360},100%,45%)`
+      ),
+
+    emissiveIntensity:2,
+
+    transparent:true,
+
+    opacity:.75,
+
+    wireframe:true
+
+  });
+
+}
+
+
+/* =================================================
+   CREATE SHAPE
+================================================= */
+
+function createShape(
+  type
+){
+
+  let geometry;
+
+
+  if(type==="CUBE"){
+
+    geometry =
+      new THREE.BoxGeometry(
+        1.4,
+        1.4,
+        1.4
+      );
+
+  }
+
+
+  else if(
+    type==="SPHERE"
+  ){
+
+    geometry =
+      new THREE.SphereGeometry(
+        .8,
+        32,
+        32
+      );
+
+  }
+
+
+  else if(
+    type==="PYRAMID"
+  ){
+
+    geometry =
+      new THREE.ConeGeometry(
+        .9,
+        1.6,
+        4
+      );
+
+  }
+
+
+  else if(
+    type==="TORUS"
+  ){
+
+    geometry =
+      new THREE.TorusGeometry(
+        .65,
+        .22,
+        16,
+        40
+      );
+
+  }
+
+
+  else if(
+    type==="CYLINDER"
+  ){
+
+    geometry =
+      new THREE.CylinderGeometry(
+        .65,
+        .65,
+        1.5,
+        32
+      );
+
+  }
+
+
+  else{
+
+    geometry =
+      new THREE.IcosahedronGeometry(
+        .9,
+        1
+      );
+
+  }
+
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      hologramMaterial()
+    );
+
+
+  mesh.userData.type =
+    type;
+
+  mesh.userData.velocity =
+    new THREE.Vector3();
+
+  mesh.userData.angularVelocity =
+    new THREE.Vector3();
+
+  mesh.userData.mass =
+    1;
+
+
+  scene.add(
+    mesh
+  );
+
+  objects.push(
+    mesh
+  );
+
+
+  objectsText.textContent =
+    objects.length;
+
+
+  return mesh;
+
+}
+
+
+/* =================================================
+   WORLD POSITION
+================================================= */
+
+function handToWorld(
+  x,
+  y
+){
+
+  const nx =
+    (x /
+    window.innerWidth)*2-1;
+
+  const ny =
+    -(y /
+    window.innerHeight)*2+1;
+
+
+  const vector =
+    new THREE.Vector3(
+      nx,
+      ny,
+      0
+    );
+
+
+  vector.unproject(
+    camera
+  );
+
+
+  const direction =
+    vector
+      .sub(camera.position)
+      .normalize();
+
+
+  const distance =
+    6;
+
+
+  return camera.position
+    .clone()
+    .add(
+      direction.multiplyScalar(
+        distance
+      )
+    );
+
+}
+
+
+/* =================================================
+   DISTANCE
+================================================= */
+
+function distance2D(
+  a,
+  b
+){
+
+  return Math.hypot(
+    a.x-b.x,
+    a.y-b.y
+  );
+
+}
+
+
+/* =================================================
+   PINCH
+================================================= */
+
+function isPinching(
+  hand
+){
+
+  return (
+    distance2D(
+      hand[4],
+      hand[8]
+    ) < .055
+  );
+
+}
+
+
+/* =================================================
+   OPEN PALM
+================================================= */
+
+function isOpenPalm(
+  hand
+){
+
+  const wrist =
+    hand[0];
+
+  const tips=[
+    hand[8],
+    hand[12],
+    hand[16],
+    hand[20]
+  ];
+
+
+  let count=0;
+
+
+  for(
+    const tip of tips
+  ){
+
+    if(
+      tip.y <
+      wrist.y
+    ){
+
+      count++;
+
+    }
+
+  }
+
+
+  return count>=3;
+
+}
+
+
+/* =================================================
+   FIST
+================================================= */
+
+function isFist(
+  hand
+){
+
+  const wrist =
+    hand[0];
+
+
+  const tips=[
+    hand[8],
+    hand[12],
+    hand[16],
+    hand[20]
+  ];
+
+
+  let count=0;
+
+
+  for(
+    const tip of tips
+  ){
+
+    if(
+      distance2D(
+        tip,
+        wrist
+      ) < .25
+    ){
+
+      count++;
+
+    }
+
+  }
+
+
+  return count>=3;
+
+}
+
+
+/* =================================================
    GRAB STATE
-===================================================== */
+================================================= */
 
-let grabbed=false;
+let grabbing=false;
 
-let grabX=0;
+let grabHand=-1;
 
-let grabY=0;
+let grabOffset =
+  new THREE.Vector3();
 
-let grabOffsetX=0;
+let previousFinger =
+  null;
 
-let grabOffsetY=0;
+let grabVelocity =
+  new THREE.Vector3();
 
 
-/* =====================================================
+/* =================================================
    TWO HAND STATE
-===================================================== */
+================================================= */
 
-let twoHandMode=false;
+let twoHand=false;
 
 let twoStartDistance=1;
 
@@ -548,114 +1426,360 @@ let twoStartScale=1;
 
 let twoStartAngle=0;
 
-let twoStartRotZ=0;
+let twoStartRotation=0;
 
-let twoStartCenterY=0;
-
-let twoStartRotX=0;
+let twoStartTilt=0;
 
 
-/* =====================================================
-   PINCH DETECTION
-===================================================== */
+/* =================================================
+   FIND CLOSEST OBJECT
+================================================= */
 
-function isPinching(hand){
+function findObject(
+  position
+){
 
-  const thumb=
-    hand[4];
+  let closest=null;
 
-  const index=
-    hand[8];
+  let closestDistance=
+    Infinity;
 
 
-  const distance=
-    Math.hypot(
+  for(
+    const obj of objects
+  ){
 
-      thumb.x-index.x,
+    const screen =
+      worldToScreen(
+        obj.position
+      );
 
-      thumb.y-index.y
 
+    const d =
+      distance2D(
+        position,
+        screen
+      );
+
+
+    if(
+      d<closestDistance
+    ){
+
+      closestDistance=d;
+
+      closest=obj;
+
+    }
+
+  }
+
+
+  if(
+    closestDistance <
+    130
+  ){
+
+    return closest;
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =================================================
+   WORLD TO SCREEN
+================================================= */
+
+function worldToScreen(
+  position
+){
+
+  const vector =
+    position
+      .clone()
+      .project(
+        camera
+      );
+
+
+  return{
+
+    x:
+      (vector.x+1) /
+      2 *
+      window.innerWidth,
+
+    y:
+      (-vector.y+1) /
+      2 *
+      window.innerHeight
+
+  };
+
+}
+
+
+/* =================================================
+   CREATE PARTICLES
+================================================= */
+
+const particleGeometry =
+  new THREE.BufferGeometry();
+
+
+const particleCount=800;
+
+
+const positions =
+  new Float32Array(
+    particleCount*3
+  );
+
+
+for(
+  let i=0;
+  i<particleCount;
+  i++
+){
+
+  positions[i*3]=
+    (Math.random()-.5)*16;
+
+  positions[i*3+1]=
+    (Math.random()-.5)*10;
+
+  positions[i*3+2]=
+    (Math.random()-.5)*8;
+
+}
+
+
+particleGeometry.setAttribute(
+
+  "position",
+
+  new THREE.BufferAttribute(
+    positions,
+    3
+  )
+
+);
+
+
+const particleMaterial =
+  new THREE.PointsMaterial({
+
+    color:0x00eaff,
+
+    size:.035,
+
+    transparent:true,
+
+    opacity:.7
+
+  });
+
+
+const particles =
+  new THREE.Points(
+    particleGeometry,
+    particleMaterial
+  );
+
+
+scene.add(
+  particles
+);
+
+
+/* =================================================
+   ENERGY RINGS
+================================================= */
+
+const rings=[];
+
+
+for(
+  let i=0;
+  i<5;
+  i++
+){
+
+  const geometry =
+    new THREE.TorusGeometry(
+      1.5+i*.4,
+      .008,
+      8,
+      100
     );
 
 
-  return distance<.055;
+  const material =
+    new THREE.MeshBasicMaterial({
+
+      color:
+        0x00eaff,
+
+      transparent:true,
+
+      opacity:
+        .4-i*.05
+
+    });
+
+
+  const ring =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+
+  ring.rotation.x=
+    Math.PI/2;
+
+
+  ring.position.y=
+    -2;
+
+
+  scene.add(
+    ring
+  );
+
+
+  rings.push(
+    ring
+  );
 
 }
 
 
-/* =====================================================
-   UPDATE CUBE
-===================================================== */
+/* =================================================
+   HAND RESULTS
+================================================= */
 
-function updateCube(){
+hands.onResults(
+(results)=>{
 
-  cubeContainer.style.left=
-    cubeX+"px";
+  if(!cameraReady){
 
-  cubeContainer.style.top=
-    cubeY+"px";
+    return;
 
-
-  cube.style.transform=
-  `
-    scale(${cubeScale})
-    rotateX(${rotX}deg)
-    rotateY(${rotY}deg)
-    rotateZ(${rotZ}deg)
-  `;
+  }
 
 
-  cubeContainer.style.display=
-    "block";
+  handCtx.clearRect(
+    0,
+    0,
+    handCanvas.width,
+    handCanvas.height
+  );
 
 
-  centerDot.style.display=
-    "block";
-
-  centerDot.style.left=
-    cubeX+"px";
-
-  centerDot.style.top=
-    cubeY+"px";
-
-}
+  const detected =
+    results.multiHandLandmarks || [];
 
 
-/* =====================================================
-   GRAB RING
-===================================================== */
-
-function showRing(x,y){
-
-  grabRing.style.display=
-    "block";
-
-  grabRing.style.left=
-    x+"px";
-
-  grabRing.style.top=
-    y+"px";
-
-}
+  handsText.textContent =
+    detected.length;
 
 
-function hideRing(){
+  trackingText.textContent =
+    detected.length
+    ?
+    "ACTIVE"
+    :
+    "SEARCHING";
 
-  grabRing.style.display=
-    "none";
 
-}
+  /* ===============================================
+     DRAW HANDS
+  =============================================== */
+
+  for(
+    const hand of detected
+  ){
+
+    const points =
+      hand.map(
+        screenPosition
+      );
 
 
-/* =====================================================
-   PINCHING HANDS
-===================================================== */
+    handCtx.strokeStyle =
+      "#00eaff";
 
-function getPinchingHands(
-  detected
-){
+    handCtx.lineWidth=2;
 
-  const list=[];
+
+    for(
+      const connection
+      of HAND_CONNECTIONS
+    ){
+
+      const a =
+        points[
+          connection[0]
+        ];
+
+      const b =
+        points[
+          connection[1]
+        ];
+
+
+      handCtx.beginPath();
+
+      handCtx.moveTo(
+        a.x,
+        a.y
+      );
+
+      handCtx.lineTo(
+        b.x,
+        b.y
+      );
+
+      handCtx.stroke();
+
+    }
+
+
+    handCtx.fillStyle =
+      "#00eaff";
+
+
+    for(
+      const p of points
+    ){
+
+      handCtx.beginPath();
+
+      handCtx.arc(
+        p.x,
+        p.y,
+        3,
+        0,
+        Math.PI*2
+      );
+
+      handCtx.fill();
+
+    }
+
+  }
+
+
+  /* ===============================================
+     PINCHING HANDS
+  =============================================== */
+
+  const pinching=[];
 
 
   for(
@@ -670,151 +1794,29 @@ function getPinchingHands(
       )
     ){
 
-      list.push(i);
+      pinching.push(i);
 
     }
 
   }
 
 
-  return list;
-
-}
-
-
-/* =====================================================
-   HAND RESULTS
-===================================================== */
-
-hands.onResults(
-(results)=>{
-
-  if(!cameraReady){
-
-    return;
-
-  }
-
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  const detected=
-    results.multiHandLandmarks || [];
-
-
-  handsText.textContent=
-    "Hands: "+
-    detected.length;
-
-
-  /* =================================================
-     DRAW HANDS
-  ================================================= */
-
-  for(
-    const hand of detected
-  ){
-
-    const points=
-      hand.map(
-        screenPosition
-      );
-
-
-    ctx.strokeStyle=
-      "#00eaff";
-
-    ctx.lineWidth=2.5;
-
-
-    for(
-      const connection
-      of HAND_CONNECTIONS
-    ){
-
-      const a=
-        points[
-          connection[0]
-        ];
-
-      const b=
-        points[
-          connection[1]
-        ];
-
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        a.x,
-        a.y
-      );
-
-      ctx.lineTo(
-        b.x,
-        b.y
-      );
-
-      ctx.stroke();
-
-    }
-
-
-    ctx.fillStyle=
-      "#00eaff";
-
-
-    for(
-      const p of points
-    ){
-
-      ctx.beginPath();
-
-      ctx.arc(
-        p.x,
-        p.y,
-        4,
-        0,
-        Math.PI*2
-      );
-
-      ctx.fill();
-
-    }
-
-  }
-
-
-  const pinching=
-    getPinchingHands(
-      detected
-    );
-
-
-  /* =================================================
-     TWO HAND CONTROL
-  ================================================= */
+  /* ===============================================
+     TWO HAND MODE
+  =============================================== */
 
   if(
-    cubeExists &&
     pinching.length===2
   ){
 
-    const p1=
+    const p1 =
       screenPosition(
         detected[
           pinching[0]
         ][8]
       );
 
-
-    const p2=
+    const p2 =
       screenPosition(
         detected[
           pinching[1]
@@ -822,314 +1824,134 @@ hands.onResults(
       );
 
 
-    const dx=
-      p2.x-p1.x;
-
-    const dy=
-      p2.y-p1.y;
-
-
-    const distance=
-      Math.hypot(
-        dx,
-        dy
+    const d =
+      distance2D(
+        p1,
+        p2
       );
 
 
-    const angle=
+    const angle =
       Math.atan2(
-        dy,
-        dx
+        p2.y-p1.y,
+        p2.x-p1.x
       );
 
 
-    const centerX=
+    const centerX =
       (p1.x+p2.x)/2;
 
-    const centerY=
+    const centerY =
       (p1.y+p2.y)/2;
 
 
-    if(!twoHandMode){
+    if(
+      !twoHand &&
+      activeObject
+    ){
 
-      twoHandMode=true;
+      twoHand=true;
 
-      grabbed=true;
+      grabbing=true;
 
 
-      twoStartDistance=
+      twoStartDistance =
         Math.max(
-          distance,
+          d,
           10
         );
 
 
-      twoStartScale=
-        cubeScale;
+      twoStartScale =
+        activeObject.scale.x;
 
 
-      twoStartAngle=
+      twoStartAngle =
         angle;
 
 
-      twoStartRotZ=
-        rotZ;
+      twoStartRotation =
+        activeObject.rotation.z;
 
 
-      twoStartCenterY=
-        centerY;
-
-
-      twoStartRotX=
-        rotX;
+      twoStartTilt =
+        activeObject.rotation.x;
 
     }
 
 
-    /* SCALE */
+    if(activeObject){
 
-    let targetScale=
-      twoStartScale*
-      (
-        distance/
-        twoStartDistance
+      /* SCALE */
+
+      let scale =
+        twoStartScale *
+        d /
+        twoStartDistance;
+
+
+      scale =
+        Math.max(
+          .35,
+          Math.min(
+            4,
+            scale
+          )
+        );
+
+
+      activeObject.scale.setScalar(
+        scale
       );
 
 
-    targetScale=
-      Math.max(
-        .4,
-        Math.min(
-          3.5,
-          targetScale
+      /* ROTATE */
+
+      let change =
+        (
+          angle-
+          twoStartAngle
+        ) *
+        180/Math.PI;
+
+
+      activeObject.rotation.z =
+        twoStartRotation+
+        change;
+
+
+      /* TILT */
+
+      const tilt =
+        (
+          centerY -
+          window.innerHeight/2
+        )*.008;
+
+
+      activeObject.rotation.x =
+        twoStartTilt+
+        tilt;
+
+
+      /* MOVE */
+
+      activeObject.position.copy(
+        handToWorld(
+          centerX,
+          centerY
         )
       );
 
 
-    cubeScale+=
-      (
-        targetScale-
-        cubeScale
-      )*.25;
+      modeText.textContent =
+        "TWO HAND MANIPULATION";
 
 
-    /* ROTATE Z */
-
-    let angleChange=
-      (
-        angle-
-        twoStartAngle
-      )*
-      180/Math.PI;
-
-
-    while(
-      angleChange>180
-    ){
-
-      angleChange-=360;
+      activeText.textContent =
+        activeObject.userData.type;
 
     }
-
-
-    while(
-      angleChange<-180
-    ){
-
-      angleChange+=360;
-
-    }
-
-
-    const targetRotZ=
-      twoStartRotZ+
-      angleChange;
-
-
-    rotZ+=
-      (
-        targetRotZ-
-        rotZ
-      )*.25;
-
-
-    /* TILT FORWARD / BACK */
-
-    const vertical=
-      centerY-
-      twoStartCenterY;
-
-
-    let targetRotX=
-      twoStartRotX+
-      vertical*.8;
-
-
-    targetRotX=
-      Math.max(
-        -80,
-        Math.min(
-          80,
-          targetRotX
-        )
-      );
-
-
-    rotX+=
-      (
-        targetRotX-
-        rotX
-      )*.25;
-
-
-    /* MOVE */
-
-    cubeX=
-      centerX;
-
-    cubeY=
-      centerY;
-
-
-    modeText.textContent=
-      "Mode: TWO HAND";
-
-    status.textContent=
-      "MOVE • TWIST • TILT • RESIZE";
-
-
-    updateCube();
-
-    return;
-
-  }
-
-
-  /* =================================================
-     EXIT TWO HAND
-  ================================================= */
-
-  twoHandMode=false;
-
-
-  /* =================================================
-     CURRENT GRAB
-  ================================================= */
-
-  if(grabbed){
-
-    let best=-1;
-
-    let bestDistance=
-      Infinity;
-
-
-    for(
-      let i=0;
-      i<detected.length;
-      i++
-    ){
-
-      if(
-        !isPinching(
-          detected[i]
-        )
-      ){
-
-        continue;
-
-      }
-
-
-      const fingertip=
-        screenPosition(
-          detected[i][8]
-        );
-
-
-      const d=
-        Math.hypot(
-
-          fingertip.x-grabX,
-
-          fingertip.y-grabY
-
-        );
-
-
-      if(
-        d<bestDistance
-      ){
-
-        bestDistance=d;
-
-        best=i;
-
-      }
-
-    }
-
-
-    if(
-      best>=0 &&
-      bestDistance<180
-    ){
-
-      const fingertip=
-        screenPosition(
-          detected[best][8]
-        );
-
-
-      cubeX=
-        fingertip.x+
-        grabOffsetX;
-
-
-      cubeY=
-        fingertip.y+
-        grabOffsetY;
-
-
-      grabX=
-        fingertip.x;
-
-      grabY=
-        fingertip.y;
-
-
-      showRing(
-        fingertip.x,
-        fingertip.y
-      );
-
-
-      modeText.textContent=
-        "Mode: GRABBED";
-
-      status.textContent=
-        "CUBE IN HAND 🤏";
-
-
-      updateCube();
-
-      return;
-
-    }
-
-
-    /* RELEASE */
-
-    grabbed=false;
-
-    hideRing();
-
-
-    modeText.textContent=
-      "Mode: PLACED";
-
-    status.textContent=
-      "CUBE RELEASED";
 
 
     return;
@@ -1137,442 +1959,515 @@ hands.onResults(
   }
 
 
-  /* =================================================
-     GRAB EXISTING CUBE
-  ================================================= */
+  twoHand=false;
+
+
+  /* ===============================================
+     NORMAL PINCH GRAB
+  =============================================== */
 
   if(
-    cubeExists &&
     pinching.length>0
   ){
 
-    let closest=-1;
-
-    let closestDistance=
-      Infinity;
+    const index =
+      pinching[0];
 
 
-    for(
-      const i of pinching
-    ){
-
-      const fingertip=
-        screenPosition(
-          detected[i][8]
-        );
-
-
-      const d=
-        Math.hypot(
-
-          fingertip.x-cubeX,
-
-          fingertip.y-cubeY
-
-        );
-
-
-      if(
-        d<closestDistance
-      ){
-
-        closestDistance=d;
-
-        closest=i;
-
-      }
-
-    }
-
-
-    if(
-      closest>=0 &&
-      closestDistance<
-      110*cubeScale
-    ){
-
-      const fingertip=
-        screenPosition(
-          detected[closest][8]
-        );
-
-
-      grabbed=true;
-
-
-      grabX=
-        fingertip.x;
-
-      grabY=
-        fingertip.y;
-
-
-      grabOffsetX=
-        cubeX-
-        fingertip.x;
-
-      grabOffsetY=
-        cubeY-
-        fingertip.y;
-
-
-      showRing(
-        fingertip.x,
-        fingertip.y
-      );
-
-
-      modeText.textContent=
-        "Mode: GRABBED";
-
-      status.textContent=
-        "CUBE GRABBED 🤏";
-
-
-      updateCube();
-
-      return;
-
-    }
-
-  }
-
-
-  /* =================================================
-     CREATE CUBE
-  ================================================= */
-
-  if(
-    !cubeExists &&
-    pinching.length>0
-  ){
-
-    const fingertip=
+    const fingertip =
       screenPosition(
-        detected[
-          pinching[0]
-        ][8]
+        detected[index][8]
       );
 
 
-    cubeX=
-      fingertip.x;
+    reticle.style.display =
+      "block";
 
-    cubeY=
-      fingertip.y;
+    reticle.style.left =
+      fingertip.x+"px";
 
-
-    cubeScale=1;
-
-    rotX=-20;
-
-    rotY=30;
-
-    rotZ=0;
+    reticle.style.top =
+      fingertip.y+"px";
 
 
-    cubeExists=true;
+    /* =============================================
+       CONTINUE GRAB
+    ============================================= */
 
-    grabbed=true;
+    if(grabbing){
+
+      if(
+        activeObject
+      ){
+
+        const target =
+          handToWorld(
+            fingertip.x,
+            fingertip.y
+          );
 
 
-    grabX=
-      fingertip.x;
+        if(
+          grabOffset
+        ){
 
-    grabY=
-      fingertip.y;
+          target.add(
+            grabOffset
+          );
+
+        }
 
 
-    grabOffsetX=0;
+        /* SMOOTH FOLLOW */
 
-    grabOffsetY=0;
+        activeObject.position.lerp(
+          target,
+          .75
+        );
 
 
-    showRing(
-      fingertip.x,
-      fingertip.y
+        /* VELOCITY */
+
+        if(
+          previousFinger
+        ){
+
+          grabVelocity.set(
+
+            fingertip.x-
+            previousFinger.x,
+
+            previousFinger.y-
+            fingertip.y,
+
+            0
+
+          );
+
+        }
+
+
+        previousFinger =
+          fingertip;
+
+
+        modeText.textContent =
+          "GRABBING";
+
+        activeText.textContent =
+          activeObject.userData.type;
+
+
+        return;
+
+      }
+
+    }
+
+
+    /* =============================================
+       FIND EXISTING OBJECT
+    ============================================= */
+
+    const found =
+      findObject(
+        fingertip
+      );
+
+
+    if(found){
+
+      activeObject =
+        found;
+
+      grabbing=true;
+
+      grabHand=index;
+
+      previousFinger =
+        fingertip;
+
+
+      const target =
+        handToWorld(
+          fingertip.x,
+          fingertip.y
+        );
+
+
+      grabOffset =
+        activeObject.position
+          .clone()
+          .sub(
+            target
+          );
+
+
+      modeText.textContent =
+        "GRABBED";
+
+      activeText.textContent =
+        activeObject.userData.type;
+
+
+      return;
+
+    }
+
+
+    /* =============================================
+       CREATE NEW OBJECT
+    ============================================= */
+
+    if(!grabbing){
+
+      const type =
+        shapeNames[
+          nextShape
+        ];
+
+
+      nextShape =
+        (
+          nextShape+1
+        ) %
+        shapeNames.length;
+
+
+      activeObject =
+        createShape(
+          type
+        );
+
+
+      activeObject.position.copy(
+        handToWorld(
+          fingertip.x,
+          fingertip.y
+        )
+      );
+
+
+      activeObject.scale.setScalar(
+        1
+      );
+
+
+      grabbing=true;
+
+      grabHand=index;
+
+      previousFinger =
+        fingertip;
+
+      grabOffset.set(
+        0,0,0
+      );
+
+
+      modeText.textContent =
+        "CREATED";
+
+      activeText.textContent =
+        type;
+
+
+      return;
+
+    }
+
+  }
+
+
+  /* ===============================================
+     RELEASE
+  =============================================== */
+
+  if(grabbing){
+
+    grabbing=false;
+
+    grabHand=-1;
+
+
+    if(activeObject){
+
+      /*
+        THROW MOMENTUM
+      */
+
+      activeObject.userData.velocity.x =
+        grabVelocity.x*.045;
+
+      activeObject.userData.velocity.y =
+        grabVelocity.y*.045;
+
+
+      activeObject.userData.angularVelocity.z =
+        grabVelocity.x*.002;
+
+
+      modeText.textContent =
+        "RELEASED";
+
+    }
+
+
+    previousFinger=null;
+
+    grabVelocity.set(
+      0,0,0
     );
 
-
-    modeText.textContent=
-      "Mode: GRABBED";
-
-    status.textContent=
-      "CUBE CREATED 🤏";
+  }
 
 
-    updateCube();
+  reticle.style.display =
+    "none";
 
-    return;
+
+  /* ===============================================
+     OPEN PALM
+  =============================================== */
+
+  if(
+    detected.length>0 &&
+    isOpenPalm(
+      detected[0]
+    )
+  ){
+
+    modeText.textContent =
+      "PALM DETECTED";
 
   }
 
 
-  /* =================================================
-     NORMAL
-  ================================================= */
+  /* ===============================================
+     FIST
+  =============================================== */
 
-  if(cubeExists){
+  if(
+    detected.length>0 &&
+    isFist(
+      detected[0]
+    )
+  ){
 
-    updateCube();
-
-    modeText.textContent=
-      "Mode: PLACED";
-
-    status.textContent=
-      "PINCH THE CUBE TO GRAB";
-
-  }
-
-  else{
-
-    status.textContent=
-      detected.length
-      ?
-      "PINCH TO CREATE CUBE"
-      :
-      "SHOW YOUR HANDS";
+    modeText.textContent =
+      "FIST / PHYSICS";
 
   }
+
 
 });
 
 
-/* =====================================================
-   STOP CAMERA
-===================================================== */
+/* =================================================
+   PHYSICS
+================================================= */
 
-function stopCamera(){
-
-  if(currentStream){
-
-    currentStream
-      .getTracks()
-      .forEach(
-        track =>
-        track.stop()
-      );
-
-    currentStream=null;
-
-  }
+const clock =
+  new THREE.Clock();
 
 
-  video.pause();
+function physics(){
 
-  video.srcObject=null;
-
-}
-
-
-/* =====================================================
-   START CAMERA
-===================================================== */
-
-async function startCamera(){
-
-  cameraReady=false;
+  const dt =
+    Math.min(
+      clock.getDelta(),
+      .033
+    );
 
 
-  stopCamera();
+  for(
+    const obj of objects
+  ){
 
+    if(
+      obj===activeObject &&
+      grabbing
+    ){
 
-  try{
-
-    status.textContent=
-      usingFrontCamera
-      ?
-      "Starting FRONT camera..."
-      :
-      "Starting BACK camera...";
-
-
-    let stream;
-
-
-    /*
-      FIRST ATTEMPT
-
-      Ask for the camera we actually want.
-    */
-
-    try{
-
-      stream=
-        await navigator
-        .mediaDevices
-        .getUserMedia({
-
-          video:{
-
-            facingMode:
-              usingFrontCamera
-              ? "user"
-              : "environment",
-
-            width:{
-              ideal:1280
-            },
-
-            height:{
-              ideal:720
-            },
-
-            frameRate:{
-              ideal:30,
-              max:30
-            }
-
-          },
-
-          audio:false
-
-        });
-
-    }
-
-    catch(firstError){
-
-      console.log(
-        "Requested camera unavailable.",
-        firstError
-      );
-
-
-      /*
-        SAFE FALLBACK
-
-        If the requested camera doesn't
-        exist, use any available webcam.
-
-        This prevents the computer from
-        failing just because it doesn't
-        have a front/rear camera matching
-        the request.
-      */
-
-      stream=
-        await navigator
-        .mediaDevices
-        .getUserMedia({
-
-          video:true,
-
-          audio:false
-
-        });
+      continue;
 
     }
 
 
-    currentStream=
-      stream;
+    const velocity =
+      obj.userData.velocity;
 
 
-    video.srcObject=
-      stream;
+    /* GRAVITY */
+
+    velocity.y -=
+      1.2*dt;
 
 
-    /*
-      Mirror only the front camera.
-    */
-
-    video.classList.remove(
-      "front",
-      "back"
+    obj.position.add(
+      velocity
+        .clone()
+        .multiplyScalar(
+          dt
+        )
     );
 
 
-    if(usingFrontCamera){
+    /* FRICTION */
 
-      video.classList.add(
-        "front"
+    velocity.multiplyScalar(
+      .985
+    );
+
+
+    /* ROTATION */
+
+    obj.rotation.x +=
+      obj.userData
+        .angularVelocity.x;
+
+    obj.rotation.y +=
+      obj.userData
+        .angularVelocity.y;
+
+    obj.rotation.z +=
+      obj.userData
+        .angularVelocity.z;
+
+
+    obj.userData
+      .angularVelocity
+      .multiplyScalar(
+        .99
       );
+
+
+    /* FLOOR */
+
+    if(
+      obj.position.y < -2.8
+    ){
+
+      obj.position.y =
+        -2.8;
+
+      velocity.y *=
+        -.65;
 
     }
 
-    else{
 
-      video.classList.add(
-        "back"
-      );
+    /* SIDES */
+
+    if(
+      obj.position.x < -6
+    ){
+
+      obj.position.x=-6;
+
+      velocity.x *=
+        -.7;
 
     }
 
 
-    await video.play();
+    if(
+      obj.position.x > 6
+    ){
 
+      obj.position.x=6;
 
-    cameraReady=true;
+      velocity.x *=
+        -.7;
 
-
-    /*
-      Show actual camera information
-      in the browser console.
-    */
-
-    const track=
-      stream
-      .getVideoTracks()[0];
-
-
-    console.log(
-      "ACTIVE CAMERA:",
-      track.getSettings()
-    );
-
-
-    cameraModeText.textContent=
-      usingFrontCamera
-      ?
-      "Camera: FRONT"
-      :
-      "Camera: BACK";
-
-
-    cameraButton.textContent=
-      usingFrontCamera
-      ?
-      "SWITCH TO BACK"
-      :
-      "SWITCH TO FRONT";
-
-
-    status.textContent=
-      "Hand tracking active";
-
-
-    requestAnimationFrame(
-      processFrame
-    );
-
-  }
-
-  catch(error){
-
-    console.error(
-      "CAMERA ERROR:",
-      error
-    );
-
-
-    cameraReady=false;
-
-
-    status.textContent=
-      "Camera error: "+
-      error.message;
+    }
 
   }
 
 }
 
 
-/* =====================================================
-   PROCESS FRAMES
-===================================================== */
+/* =================================================
+   ANIMATION
+================================================= */
 
-async function processFrame(){
+function animate(){
+
+  requestAnimationFrame(
+    animate
+  );
+
+
+  physics();
+
+
+  /* PARTICLES */
+
+  particles.rotation.y +=
+    .0008;
+
+
+  particles.rotation.x +=
+    .0002;
+
+
+  /* RINGS */
+
+  for(
+    let i=0;
+    i<rings.length;
+    i++
+  ){
+
+    rings[i].rotation.z +=
+      .002+
+      i*.0005;
+
+  }
+
+
+  /* OBJECT GLOW PULSE */
+
+  for(
+    const obj of objects
+  ){
+
+    if(
+      obj.material &&
+      obj.material.emissive
+    ){
+
+      obj.material.emissiveIntensity =
+        obj===activeObject
+        ?
+        3+
+        Math.sin(
+          performance.now()*.005
+        )
+        :
+        1.5;
+
+    }
+
+  }
+
+
+  renderer.render(
+    scene,
+    camera
+  );
+
+}
+
+
+animate();
+
+
+/* =================================================
+   MEDIAPIPE LOOP
+================================================= */
+
+async function trackingLoop(){
 
   if(
 
@@ -1591,7 +2486,8 @@ async function processFrame(){
 
       await hands.send({
 
-        image:video
+        image:
+          video
 
       });
 
@@ -1599,8 +2495,7 @@ async function processFrame(){
 
     catch(error){
 
-      console.error(
-        "Tracking error:",
+      console.log(
         error
       );
 
@@ -1613,58 +2508,80 @@ async function processFrame(){
 
 
   requestAnimationFrame(
-    processFrame
+    trackingLoop
   );
 
 }
 
 
-/* =====================================================
-   SWITCH CAMERA
-===================================================== */
+/* =================================================
+   THREE RESIZE
+================================================= */
 
-cameraButton.addEventListener(
-  "click",
-  async()=>{
+window.addEventListener(
+  "resize",
+  ()=>{
 
-    if(!cameraReady){
+    camera.aspect =
+      window.innerWidth /
+      window.innerHeight;
 
-      return;
-
-    }
-
-
-    cameraButton.disabled=true;
+    camera.updateProjectionMatrix();
 
 
-    usingFrontCamera=
-      !usingFrontCamera;
+    renderer.setSize(
+      window.innerWidth,
+      window.innerHeight
+    );
 
 
-    await startCamera();
-
-
-    cameraButton.disabled=false;
+    renderer.setPixelRatio(
+      Math.min(
+        window.devicePixelRatio,
+        2
+      )
+    );
 
   }
 );
 
 
-/* =====================================================
+/* =================================================
    START
-===================================================== */
+================================================= */
 
-/*
-  FRONT CAMERA IS THE DEFAULT.
+async function boot(){
 
-  If the device doesn't support it,
-  the fallback automatically uses
-  an available camera.
-*/
+  statusSafe();
 
-usingFrontCamera=true;
 
-startCamera();
+  /*
+    FRONT CAMERA FIRST.
+  */
+
+  usingFrontCamera=true;
+
+
+  await startCamera();
+
+
+  trackingLoop();
+
+}
+
+
+function statusSafe(){
+
+  systemText.textContent =
+    "BOOTING";
+
+  trackingText.textContent =
+    "LOADING";
+
+}
+
+
+boot();
 
 </script>
 
