@@ -1,441 +1,800 @@
 ```html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
->
-
-<title>JARVIS AR ULTIMATE</title>
-
-<!-- ================================
-     MEDIAPIPE
-================================ -->
+<title>JARVIS AR — Engineering Workspace</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-
-<!-- ================================
-     THREE.JS
-================================ -->
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-
 
 <style>
 
-html,
-body{
-
-  margin:0;
-
-  width:100%;
-  height:100%;
-
-  overflow:hidden;
-
-  background:#000;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
-  color:#00eaff;
-
+:root{
+  --cyan:#68d9e8;
+  --cyan-soft:rgba(104,217,232,.18);
+  --green:#72d6a0;
+  --amber:#e5b96c;
+  --red:#df7777;
+  --bg:rgba(7,12,16,.90);
+  --bg2:rgba(10,17,22,.96);
+  --border:rgba(104,217,232,.22);
+  --text:#dce7eb;
+  --muted:#7e9098;
 }
 
+*{
+  box-sizing:border-box;
+}
 
-/* =================================
-   CAMERA
-================================= */
-
-#camera{
-
-  position:fixed;
-
-  inset:0;
-
+html,body{
+  margin:0;
   width:100%;
   height:100%;
+  overflow:hidden;
+  background:#05080a;
+  color:var(--text);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
 
+/* =================================================
+   CAMERA
+================================================= */
+
+#camera{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
   object-fit:cover;
-
   z-index:1;
-
+  background:#000;
 }
 
 #camera.front{
-
-  transform:
-    scaleX(-1);
-
+  transform:scaleX(-1);
 }
 
 #camera.back{
-
-  transform:
-    scaleX(1);
-
+  transform:scaleX(1);
 }
 
+/* =================================================
+   CANVASES
+================================================= */
 
-/* =================================
-   THREE.JS
-================================= */
+#threeCanvas,
+#handCanvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
 
 #threeCanvas{
-
-  position:fixed;
-
-  inset:0;
-
-  width:100%;
-  height:100%;
-
   z-index:5;
-
-  pointer-events:none;
-
 }
-
-
-/* =================================
-   MEDIAPIPE CANVAS
-================================= */
 
 #handCanvas{
-
-  position:fixed;
-
-  inset:0;
-
-  width:100%;
-  height:100%;
-
   z-index:10;
-
-  pointer-events:none;
-
 }
 
+/* =================================================
+   TOP BAR
+================================================= */
 
-/* =================================
-   HUD
-================================= */
-
-#hud{
-
+#topbar{
   position:fixed;
-
-  top:15px;
-
-  left:15px;
-
+  top:0;
+  left:0;
+  right:0;
+  height:58px;
   z-index:100;
 
-  min-width:220px;
+  display:flex;
+  align-items:center;
 
-  padding:14px 17px;
+  padding:0 18px;
 
-  background:
-    rgba(0,10,20,.78);
+  background:rgba(5,10,13,.92);
+  border-bottom:1px solid var(--border);
 
-  border:
-    1px solid #00eaff;
+  backdrop-filter:blur(18px);
+}
 
-  border-radius:12px;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:235px;
+}
+
+.brandIcon{
+  width:25px;
+  height:25px;
+  border:1px solid var(--cyan);
+  border-radius:50%;
+  position:relative;
+}
+
+.brandIcon:before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px solid rgba(104,217,232,.55);
+  border-radius:50%;
+}
+
+.brandIcon:after{
+  content:"";
+  position:absolute;
+  width:5px;
+  height:5px;
+  left:9px;
+  top:9px;
+  border-radius:50%;
+  background:var(--cyan);
+}
+
+.brandName{
+  font-size:13px;
+  font-weight:650;
+  letter-spacing:2px;
+}
+
+.brandSub{
+  margin-top:2px;
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:1px;
+}
+
+.workspaceName{
+  font-size:12px;
+  color:#aebbc0;
+}
+
+.topRight{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.connection{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-right:7px;
+  font-size:9px;
+  color:var(--muted);
+}
+
+.connectionDot{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px rgba(114,214,160,.5);
+}
+
+.topButton{
+  padding:7px 11px;
+
+  border:1px solid var(--border);
+  border-radius:6px;
+
+  background:rgba(10,18,23,.75);
+
+  color:#b9c8cd;
+
+  font-size:10px;
+
+  cursor:pointer;
+}
+
+.topButton:hover{
+  border-color:rgba(104,217,232,.55);
+  color:var(--cyan);
+}
+
+/* =================================================
+   SIDE PANELS
+================================================= */
+
+.panel{
+  position:fixed;
+  top:72px;
+  bottom:68px;
+  z-index:80;
+
+  background:var(--bg);
+
+  border:1px solid var(--border);
+  border-radius:9px;
+
+  backdrop-filter:blur(17px);
 
   box-shadow:
-    0 0 20px rgba(0,234,255,.25);
+    0 18px 60px rgba(0,0,0,.32);
 
-  backdrop-filter:
-    blur(8px);
-
+  overflow:hidden;
 }
 
-#title{
-
-  font-size:19px;
-
-  font-weight:bold;
-
-  letter-spacing:3px;
-
-  margin-bottom:5px;
-
+#leftPanel{
+  left:14px;
+  width:278px;
 }
 
-.line{
-
-  margin-top:4px;
-
-  font-size:13px;
-
+#rightPanel{
+  right:14px;
+  width:320px;
 }
 
-.online{
+.panelHeader{
+  height:46px;
 
-  color:#00ff88;
+  padding:0 13px;
 
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  border-bottom:1px solid rgba(104,217,232,.12);
 }
 
-.warning{
-
-  color:#ffaa00;
-
+.panelTitle{
+  font-size:10px;
+  font-weight:650;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
 }
 
+.panelSub{
+  font-size:9px;
+  color:var(--muted);
+}
 
-/* =================================
-   CAMERA BUTTON
-================================= */
+.panelContent{
+  height:calc(100% - 46px);
+  overflow:auto;
+  padding:12px;
+}
 
-#cameraButton{
+.section{
+  margin-bottom:17px;
+}
 
-  position:fixed;
+.sectionTitle{
+  margin-bottom:8px;
 
-  right:15px;
+  font-size:9px;
+  color:#74858d;
 
-  top:15px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+}
 
-  z-index:110;
+/* =================================================
+   TOOL BUTTONS
+================================================= */
 
-  padding:11px 15px;
+.buttonGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+}
 
-  border:
+.toolButton{
+  padding:9px;
 
-    1px solid
-    #00eaff;
+  border:1px solid var(--border);
+  border-radius:6px;
 
-  border-radius:10px;
+  background:rgba(255,255,255,.025);
 
-  background:
-    rgba(0,10,20,.85);
+  color:#b8c6ca;
 
-  color:#00eaff;
+  font-size:10px;
+  text-align:left;
 
-  font-weight:bold;
+  cursor:pointer;
+}
+
+.toolButton:hover{
+  background:rgba(104,217,232,.07);
+  border-color:rgba(104,217,232,.5);
+}
+
+.toolButton.active{
+  color:var(--cyan);
+  background:rgba(104,217,232,.10);
+  border-color:rgba(104,217,232,.5);
+}
+
+/* =================================================
+   MODEL LIBRARY
+================================================= */
+
+.modelList{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.model{
+  display:flex;
+  align-items:center;
+  gap:9px;
+
+  padding:9px;
+
+  border:1px solid transparent;
+  border-radius:6px;
+
+  background:rgba(255,255,255,.025);
+
+  cursor:pointer;
+}
+
+.model:hover{
+  border-color:rgba(104,217,232,.25);
+}
+
+.model.active{
+  border-color:rgba(104,217,232,.42);
+  background:rgba(104,217,232,.07);
+}
+
+.modelIcon{
+  width:29px;
+  height:29px;
+
+  display:grid;
+  place-items:center;
+
+  border:1px solid rgba(104,217,232,.25);
+  border-radius:5px;
+
+  color:var(--cyan);
+
+  font-size:11px;
+}
+
+.modelText strong{
+  display:block;
+  font-size:10px;
+  font-weight:550;
+}
+
+.modelText span{
+  display:block;
+  margin-top:2px;
+  color:var(--muted);
+  font-size:8px;
+}
+
+/* =================================================
+   PART TREE
+================================================= */
+
+.parts{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.part{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:7px 8px;
+
+  background:rgba(255,255,255,.025);
+  border-radius:5px;
 
   cursor:pointer;
 
+  font-size:10px;
 }
 
+.part:hover{
+  background:rgba(104,217,232,.06);
+}
 
-/* =================================
+.part.selected{
+  background:rgba(104,217,232,.10);
+  outline:1px solid rgba(104,217,232,.3);
+}
+
+.partLeft{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.partBullet{
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:var(--cyan);
+}
+
+.part small{
+  color:var(--muted);
+}
+
+/* =================================================
+   PROPERTIES
+================================================= */
+
+.property{
+  display:flex;
+  justify-content:space-between;
+
+  padding:6px 0;
+
+  border-bottom:1px solid rgba(255,255,255,.045);
+
+  font-size:9px;
+}
+
+.property span:first-child{
+  color:var(--muted);
+}
+
+.property span:last-child{
+  color:#cbd7db;
+}
+
+/* =================================================
+   AI PANEL
+================================================= */
+
+#aiPanel{
+  position:fixed;
+
+  right:14px;
+  bottom:68px;
+
+  width:320px;
+
+  z-index:90;
+
+  background:var(--bg2);
+
+  border:1px solid rgba(104,217,232,.28);
+  border-radius:9px;
+
+  box-shadow:0 20px 70px rgba(0,0,0,.4);
+
+  overflow:hidden;
+}
+
+.aiHeader{
+  height:45px;
+
+  display:flex;
+  align-items:center;
+
+  padding:0 12px;
+
+  border-bottom:1px solid rgba(104,217,232,.12);
+}
+
+.aiOrb{
+  width:23px;
+  height:23px;
+
+  margin-right:9px;
+
+  border:1px solid var(--cyan);
+  border-radius:50%;
+
+  display:grid;
+  place-items:center;
+
+  font-size:8px;
+  color:var(--cyan);
+}
+
+.aiTitle{
+  font-size:10px;
+  font-weight:650;
+  letter-spacing:1px;
+}
+
+.aiStatus{
+  margin-left:auto;
+  font-size:8px;
+  color:var(--green);
+}
+
+#chat{
+  height:210px;
+  overflow:auto;
+  padding:11px 12px;
+}
+
+.message{
+  margin-bottom:10px;
+
+  font-size:10px;
+  line-height:1.45;
+}
+
+.message.user{
+  color:#a9d9e0;
+}
+
+.message.ai{
+  color:#d0dadd;
+}
+
+.messageLabel{
+  margin-bottom:3px;
+
+  font-size:8px;
+  color:var(--muted);
+
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+
+.aiInput{
+  display:flex;
+  gap:6px;
+
+  padding:9px;
+
+  border-top:1px solid rgba(104,217,232,.12);
+}
+
+#aiInput{
+  flex:1;
+
+  min-width:0;
+
+  padding:8px;
+
+  border:1px solid rgba(104,217,232,.18);
+  border-radius:5px;
+
+  outline:none;
+
+  background:#071015;
+
+  color:#dce7eb;
+
+  font-size:10px;
+}
+
+#aiInput:focus{
+  border-color:rgba(104,217,232,.5);
+}
+
+#askAI{
+  width:55px;
+
+  border:1px solid var(--border);
+  border-radius:5px;
+
+  background:rgba(104,217,232,.08);
+
+  color:var(--cyan);
+
+  cursor:pointer;
+
+  font-size:9px;
+}
+
+/* =================================================
+   BOTTOM BAR
+================================================= */
+
+#bottomBar{
+  position:fixed;
+
+  left:14px;
+  right:14px;
+  bottom:12px;
+
+  height:43px;
+
+  z-index:100;
+
+  display:flex;
+  align-items:center;
+
+  padding:0 12px;
+
+  background:rgba(5,10,13,.9);
+
+  border:1px solid var(--border);
+  border-radius:8px;
+
+  backdrop-filter:blur(15px);
+}
+
+.bottomMode{
+  font-size:9px;
+  color:var(--cyan);
+  letter-spacing:1px;
+}
+
+.bottomHint{
+  margin-left:20px;
+  color:var(--muted);
+  font-size:9px;
+}
+
+.bottomStats{
+  margin-left:auto;
+
+  display:flex;
+  gap:18px;
+
+  color:var(--muted);
+
+  font-size:9px;
+}
+
+.bottomStats strong{
+  color:#c7d3d7;
+  font-weight:500;
+}
+
+/* =================================================
    CROSSHAIR
-================================= */
+================================================= */
 
 #crosshair{
-
   position:fixed;
 
   left:50%;
   top:50%;
 
-  width:18px;
-  height:18px;
+  width:20px;
+  height:20px;
 
-  margin-left:-9px;
-  margin-top:-9px;
+  transform:translate(-50%,-50%);
 
-  border:
-    1px solid
-    rgba(0,234,255,.5);
-
+  border:1px solid rgba(104,217,232,.35);
   border-radius:50%;
 
   z-index:20;
 
   pointer-events:none;
-
 }
 
-
-/* =================================
-   RETICLE
-================================= */
-
 #reticle{
-
   position:fixed;
 
   width:35px;
   height:35px;
 
-  margin-left:-17.5px;
-  margin-top:-17.5px;
+  transform:translate(-50%,-50%);
 
-  border:
-    2px solid
-    #00eaff;
-
+  border:1px solid var(--cyan);
   border-radius:50%;
-
-  z-index:30;
 
   display:none;
 
+  z-index:30;
+
   pointer-events:none;
 
-  box-shadow:
-    0 0 15px #00eaff;
-
+  box-shadow:0 0 14px rgba(104,217,232,.35);
 }
 
+/* =================================================
+   MODEL BUILD INDICATOR
+================================================= */
 
-/* =================================
-   BOTTOM STATUS
-================================= */
-
-#bottom{
-
+#buildIndicator{
   position:fixed;
 
   left:50%;
+  top:78px;
 
-  bottom:20px;
+  transform:translateX(-50%);
 
-  transform:
-    translateX(-50%);
+  z-index:70;
 
-  z-index:100;
+  padding:7px 12px;
 
-  padding:10px 22px;
+  background:rgba(5,10,13,.8);
 
-  background:
-    rgba(0,10,20,.8);
+  border:1px solid rgba(104,217,232,.22);
+  border-radius:5px;
 
-  border:
-    1px solid
-    #00eaff;
+  color:#9eb0b6;
 
-  border-radius:20px;
+  font-size:9px;
 
-  font-size:13px;
-
-  letter-spacing:1px;
-
+  letter-spacing:.8px;
 }
 
-
-/* =================================
-   SCAN LINES
-================================= */
-
-.scanline{
-
-  position:fixed;
-
-  left:0;
-  right:0;
-
-  height:1px;
-
-  background:
-    rgba(0,234,255,.12);
-
-  z-index:15;
-
-  pointer-events:none;
-
-  animation:
-    scan 5s linear infinite;
-
-}
-
-@keyframes scan{
-
-  from{
-
-    top:0;
-
-  }
-
-  to{
-
-    top:100%;
-
-  }
-
-}
-
-
-/* =================================
-   VIGNETTE
-================================= */
-
-#vignette{
-
-  position:fixed;
-
-  inset:0;
-
-  z-index:18;
-
-  pointer-events:none;
-
-  box-shadow:
-    inset 0 0 180px
-    rgba(0,0,0,.75);
-
-}
-
-
-/* =================================
+/* =================================================
    MOBILE
-================================= */
+================================================= */
+
+@media(max-width:800px){
+
+  #leftPanel{
+    width:225px;
+  }
+
+  #rightPanel,
+  #aiPanel{
+    width:270px;
+  }
+
+}
 
 @media(max-width:600px){
 
-  #hud{
-
-    min-width:170px;
-
-    padding:10px 12px;
-
+  #leftPanel{
+    display:none;
   }
 
-  #title{
-
-    font-size:15px;
-
+  #rightPanel{
+    right:8px;
+    width:250px;
+    top:auto;
+    bottom:65px;
+    height:230px;
   }
 
-  .line{
-
-    font-size:11px;
-
+  #aiPanel{
+    left:8px;
+    right:8px;
+    width:auto;
+    bottom:305px;
   }
 
-  #bottom{
+  #topbar{
+    padding:0 10px;
+  }
 
-    bottom:12px;
+  .brand{
+    min-width:auto;
+  }
 
-    font-size:11px;
+  .workspaceName{
+    display:none;
+  }
 
-    white-space:nowrap;
+  .connection{
+    display:none;
+  }
 
+  .bottomHint{
+    display:none;
   }
 
 }
 
 </style>
-
 </head>
-
 
 <body>
 
-
-<!-- =================================
+<!-- =================================================
      CAMERA
-================================= -->
+================================================= -->
 
 <video
   id="camera"
@@ -444,115 +803,475 @@ body{
   playsinline>
 </video>
 
-
-<!-- =================================
-     HAND TRACKING
-================================= -->
-
+<canvas id="threeCanvas"></canvas>
 <canvas id="handCanvas"></canvas>
 
+<!-- =================================================
+     TOP BAR
+================================================= -->
 
-<!-- =================================
-     THREE.JS CANVAS
-================================= -->
+<header id="topbar">
 
-<canvas id="threeCanvas"></canvas>
+  <div class="brand">
 
+    <div class="brandIcon"></div>
 
-<!-- =================================
-     HUD
-================================= -->
+    <div>
+      <div class="brandName">JARVIS AR</div>
+      <div class="brandSub">ENGINEERING WORKSPACE</div>
+    </div>
 
-<div id="hud">
-
-  <div id="title">
-    JARVIS AR
   </div>
 
-  <div class="line">
-    SYSTEM:
-    <span
-      id="system"
-      class="online">
-      ONLINE
-    </span>
+  <div class="workspaceName">
+    Interactive Model Environment
   </div>
 
-  <div class="line">
-    TRACKING:
-    <span id="tracking">
-      INITIALIZING
-    </span>
+  <div class="topRight">
+
+    <div class="connection">
+      <span class="connectionDot"></span>
+      SYSTEM READY
+    </div>
+
+    <button
+      class="topButton"
+      id="cameraButton">
+      CAMERA
+    </button>
+
+    <button
+      class="topButton"
+      id="resetButton">
+      RESET
+    </button>
+
   </div>
 
-  <div class="line">
-    HANDS:
-    <span id="hands">
-      0
-    </span>
+</header>
+
+<!-- =================================================
+     BUILD INDICATOR
+================================================= -->
+
+<div id="buildIndicator">
+  SELECT A MODEL OR ASK JARVIS TO CREATE ONE
+</div>
+
+<!-- =================================================
+     LEFT PANEL
+================================================= -->
+
+<section
+  id="leftPanel"
+  class="panel">
+
+  <div class="panelHeader">
+
+    <div class="panelTitle">
+      Workspace
+    </div>
+
+    <div
+      class="panelSub"
+      id="modeLabel">
+      BUILD
+    </div>
+
   </div>
 
-  <div class="line">
-    OBJECTS:
-    <span id="objects">
-      0
-    </span>
+  <div class="panelContent">
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Operations
+      </div>
+
+      <div class="buttonGrid">
+
+        <button
+          class="toolButton active"
+          data-mode="build">
+          Build
+        </button>
+
+        <button
+          class="toolButton"
+          data-mode="disassemble">
+          Disassemble
+        </button>
+
+        <button
+          class="toolButton"
+          id="addPart">
+          Add Part
+        </button>
+
+        <button
+          class="toolButton"
+          id="deletePart">
+          Remove
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Model Library
+      </div>
+
+      <div class="modelList">
+
+        <div
+          class="model active"
+          data-model="assembly">
+
+          <div class="modelIcon">
+            A
+          </div>
+
+          <div class="modelText">
+            <strong>Assembly</strong>
+            <span>Custom workspace</span>
+          </div>
+
+        </div>
+
+        <div
+          class="model"
+          data-model="car">
+
+          <div class="modelIcon">
+            C
+          </div>
+
+          <div class="modelText">
+            <strong>Vehicle</strong>
+            <span>Multi-part model</span>
+          </div>
+
+        </div>
+
+        <div
+          class="model"
+          data-model="engine">
+
+          <div class="modelIcon">
+            E
+          </div>
+
+          <div class="modelText">
+            <strong>Engine</strong>
+            <span>Mechanical assembly</span>
+          </div>
+
+        </div>
+
+        <div
+          class="model"
+          data-model="robot">
+
+          <div class="modelIcon">
+            R
+          </div>
+
+          <div class="modelText">
+            <strong>Robot Arm</strong>
+            <span>Jointed assembly</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Assembly
+      </div>
+
+      <div
+        class="parts"
+        id="parts">
+      </div>
+
+    </div>
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Hand Controls
+      </div>
+
+      <div style="
+        color:#7e9098;
+        font-size:9px;
+        line-height:1.6;
+      ">
+
+        Pinch:
+        select / move
+
+        <br>
+
+        Two pinches:
+        scale / rotate
+
+        <br>
+
+        Open palm:
+        inspect
+
+        <br>
+
+        Release:
+        place part
+
+      </div>
+
+    </div>
+
   </div>
 
-  <div class="line">
-    MODE:
-    <span id="mode">
-      STANDBY
-    </span>
-  </div>
+</section>
 
-  <div class="line">
-    ACTIVE:
-    <span id="active">
+<!-- =================================================
+     RIGHT PANEL
+================================================= -->
+
+<section
+  id="rightPanel"
+  class="panel">
+
+  <div class="panelHeader">
+
+    <div class="panelTitle">
+      Inspector
+    </div>
+
+    <div
+      class="panelSub"
+      id="selectedName">
       NONE
+    </div>
+
+  </div>
+
+  <div class="panelContent">
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Selected Part
+      </div>
+
+      <div id="properties">
+
+        <div class="property">
+          <span>Name</span>
+          <span>—</span>
+        </div>
+
+        <div class="property">
+          <span>Type</span>
+          <span>—</span>
+        </div>
+
+        <div class="property">
+          <span>Position</span>
+          <span>—</span>
+        </div>
+
+        <div class="property">
+          <span>Rotation</span>
+          <span>—</span>
+        </div>
+
+        <div class="property">
+          <span>Scale</span>
+          <span>—</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Build Progress
+      </div>
+
+      <div
+        style="
+          height:4px;
+          background:rgba(255,255,255,.07);
+          border-radius:4px;
+          overflow:hidden;
+        ">
+
+        <div
+          id="progress"
+          style="
+            width:0%;
+            height:100%;
+            background:#68d9e8;
+            transition:.3s;
+          ">
+        </div>
+
+      </div>
+
+      <div
+        id="progressText"
+        style="
+          margin-top:7px;
+          color:#7e9098;
+          font-size:9px;
+        ">
+        0 parts assembled
+      </div>
+
+    </div>
+
+    <div class="section">
+
+      <div class="sectionTitle">
+        Model Actions
+      </div>
+
+      <div class="buttonGrid">
+
+        <button
+          class="toolButton"
+          id="explodeButton">
+          Explode View
+        </button>
+
+        <button
+          class="toolButton"
+          id="assembleButton">
+          Assemble
+        </button>
+
+        <button
+          class="toolButton"
+          id="measureButton">
+          Measure
+        </button>
+
+        <button
+          class="toolButton"
+          id="focusButton">
+          Focus Part
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+<!-- =================================================
+     AI
+================================================= -->
+
+<section id="aiPanel">
+
+  <div class="aiHeader">
+
+    <div class="aiOrb">
+      AI
+    </div>
+
+    <div class="aiTitle">
+      JARVIS ENGINEERING AI
+    </div>
+
+    <div class="aiStatus">
+      READY
+    </div>
+
+  </div>
+
+  <div id="chat">
+
+    <div class="message ai">
+
+      <div class="messageLabel">
+        JARVIS
+      </div>
+
+      I'm ready. Ask me to create a model,
+      explain a part, help assemble something,
+      or answer an engineering question.
+
+    </div>
+
+  </div>
+
+  <div class="aiInput">
+
+    <input
+      id="aiInput"
+      autocomplete="off"
+      placeholder="Ask JARVIS...">
+
+    <button id="askAI">
+      ASK
+    </button>
+
+  </div>
+
+</section>
+
+<!-- =================================================
+     BOTTOM
+================================================= -->
+
+<div id="bottomBar">
+
+  <div
+    class="bottomMode"
+    id="bottomMode">
+    BUILD MODE
+  </div>
+
+  <div class="bottomHint">
+    PINCH TO SELECT • TWO HANDS TO TRANSFORM
+  </div>
+
+  <div class="bottomStats">
+
+    <span>
+      HANDS:
+      <strong id="hands">0</strong>
     </span>
+
+    <span>
+      PARTS:
+      <strong id="objects">0</strong>
+    </span>
+
+    <span>
+      TRACKING:
+      <strong id="tracking">SEARCHING</strong>
+    </span>
+
   </div>
 
 </div>
-
-
-<!-- =================================
-     CAMERA BUTTON
-================================= -->
-
-<button id="cameraButton">
-  SWITCH CAMERA
-</button>
-
-
-<!-- =================================
-     CROSSHAIR
-================================= -->
 
 <div id="crosshair"></div>
-
 <div id="reticle"></div>
-
-
-<!-- =================================
-     EFFECTS
-================================= -->
-
-<div class="scanline"></div>
-
-<div id="vignette"></div>
-
-
-<!-- =================================
-     BOTTOM
-================================= -->
-
-<div id="bottom">
-
-  PINCH • GRAB • MOVE • ROTATE • RESIZE
-
-</div>
-
 
 <script>
 
@@ -561,86 +1280,68 @@ body{
 ================================================= */
 
 const video =
-  document.getElementById(
-    "camera"
-  );
+  document.getElementById("camera");
 
 const handCanvas =
-  document.getElementById(
-    "handCanvas"
-  );
+  document.getElementById("handCanvas");
 
 const handCtx =
-  handCanvas.getContext(
-    "2d"
-  );
+  handCanvas.getContext("2d");
 
 const threeCanvas =
-  document.getElementById(
-    "threeCanvas"
-  );
-
-const systemText =
-  document.getElementById(
-    "system"
-  );
-
-const trackingText =
-  document.getElementById(
-    "tracking"
-  );
-
-const handsText =
-  document.getElementById(
-    "hands"
-  );
-
-const objectsText =
-  document.getElementById(
-    "objects"
-  );
-
-const modeText =
-  document.getElementById(
-    "mode"
-  );
-
-const activeText =
-  document.getElementById(
-    "active"
-  );
-
-const cameraButton =
-  document.getElementById(
-    "cameraButton"
-  );
+  document.getElementById("threeCanvas");
 
 const reticle =
-  document.getElementById(
-    "reticle"
-  );
+  document.getElementById("reticle");
+
+const handsText =
+  document.getElementById("hands");
+
+const objectsText =
+  document.getElementById("objects");
+
+const trackingText =
+  document.getElementById("tracking");
+
+const partsList =
+  document.getElementById("parts");
+
+const properties =
+  document.getElementById("properties");
+
+const selectedName =
+  document.getElementById("selectedName");
+
+const progress =
+  document.getElementById("progress");
+
+const progressText =
+  document.getElementById("progressText");
+
+const modeLabel =
+  document.getElementById("modeLabel");
+
+const bottomMode =
+  document.getElementById("bottomMode");
+
+const buildIndicator =
+  document.getElementById("buildIndicator");
+
+const chat =
+  document.getElementById("chat");
+
+const aiInput =
+  document.getElementById("aiInput");
 
 
 /* =================================================
    CAMERA
 ================================================= */
 
-let usingFrontCamera =
-  true;
-
-let currentStream =
-  null;
-
-let cameraReady =
-  false;
-
-let processing =
-  false;
-
-
-/* =================================================
-   CAMERA START
-================================================= */
+let usingFrontCamera=true;
+let currentStream=null;
+let cameraReady=false;
+let processing=false;
 
 async function startCamera(){
 
@@ -651,33 +1352,21 @@ async function startCamera(){
     currentStream
       .getTracks()
       .forEach(
-        track =>
-        track.stop()
+        track=>track.stop()
       );
 
   }
 
-  currentStream=null;
-
-
   try{
 
-    systemText.textContent =
-      "STARTING";
-
-
     let stream;
-
 
     try{
 
       stream =
-        await navigator
-        .mediaDevices
-        .getUserMedia({
+        await navigator.mediaDevices.getUserMedia({
 
           video:{
-
             facingMode:
               usingFrontCamera
               ?
@@ -685,18 +1374,9 @@ async function startCamera(){
               :
               "environment",
 
-            width:{
-              ideal:1280
-            },
-
-            height:{
-              ideal:720
-            },
-
-            frameRate:{
-              ideal:30,
-              max:30
-            }
+            width:{ideal:1280},
+            height:{ideal:720},
+            frameRate:{ideal:30,max:30}
 
           },
 
@@ -704,42 +1384,21 @@ async function startCamera(){
 
         });
 
-    }
-
-    catch(error){
-
-      console.log(
-        "Requested camera unavailable."
-      );
-
+    }catch(e){
 
       stream =
-        await navigator
-        .mediaDevices
-        .getUserMedia({
-
+        await navigator.mediaDevices.getUserMedia({
           video:true,
-
           audio:false
-
         });
 
     }
 
+    currentStream=stream;
 
-    currentStream =
-      stream;
+    video.srcObject=stream;
 
-
-    video.srcObject =
-      stream;
-
-
-    video.classList.remove(
-      "front",
-      "back"
-    );
-
+    video.classList.remove("front","back");
 
     video.classList.add(
       usingFrontCamera
@@ -749,54 +1408,30 @@ async function startCamera(){
       "back"
     );
 
-
     await video.play();
-
 
     cameraReady=true;
 
+  }catch(error){
 
-    systemText.textContent =
-      "ONLINE";
+    console.error(error);
 
-
-    trackingText.textContent =
-      "ACTIVE";
-
-
-  }
-
-  catch(error){
-
-    console.error(
-      error
-    );
-
-
-    systemText.textContent =
-      "CAMERA ERROR";
-
-    trackingText.textContent =
-      error.message;
+    buildIndicator.textContent =
+      "CAMERA ACCESS REQUIRED";
 
   }
 
 }
 
+document
+  .getElementById("cameraButton")
+  .onclick=async()=>{
 
-/* =================================================
-   CAMERA BUTTON
-================================================= */
+    usingFrontCamera=!usingFrontCamera;
 
-cameraButton.onclick =
-async function(){
+    await startCamera();
 
-  usingFrontCamera =
-    !usingFrontCamera;
-
-  await startCamera();
-
-};
+  };
 
 
 /* =================================================
@@ -805,15 +1440,24 @@ async function(){
 
 function resize(){
 
-  handCanvas.width =
-    window.innerWidth;
+  handCanvas.width=innerWidth;
+  handCanvas.height=innerHeight;
 
-  handCanvas.height =
-    window.innerHeight;
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
+
+  renderer.setPixelRatio(
+    Math.min(devicePixelRatio,2)
+  );
+
+  threeCamera.aspect=
+    innerWidth/innerHeight;
+
+  threeCamera.updateProjectionMatrix();
 
 }
-
-resize();
 
 window.addEventListener(
   "resize",
@@ -822,268 +1466,142 @@ window.addEventListener(
 
 
 /* =================================================
-   SCREEN POSITION
-================================================= */
-
-function screenPosition(
-  point
-){
-
-  const vw =
-    video.videoWidth;
-
-  const vh =
-    video.videoHeight;
-
-  const sw =
-    window.innerWidth;
-
-  const sh =
-    window.innerHeight;
-
-
-  if(!vw || !vh){
-
-    return{
-      x:sw/2,
-      y:sh/2
-    };
-
-  }
-
-
-  const videoRatio =
-    vw/vh;
-
-  const screenRatio =
-    sw/sh;
-
-
-  let width;
-  let height;
-
-  let offsetX=0;
-  let offsetY=0;
-
-
-  if(
-    screenRatio >
-    videoRatio
-  ){
-
-    width=sw;
-
-    height=
-      sw/videoRatio;
-
-    offsetY=
-      (sh-height)/2;
-
-  }
-
-  else{
-
-    height=sh;
-
-    width=
-      sh*videoRatio;
-
-    offsetX=
-      (sw-width)/2;
-
-  }
-
-
-  let x =
-    point.x*width+
-    offsetX;
-
-  let y =
-    point.y*height+
-    offsetY;
-
-
-  if(usingFrontCamera){
-
-    x=
-      sw-x;
-
-  }
-
-
-  return{
-    x,
-    y
-  };
-
-}
-
-
-/* =================================================
    MEDIAPIPE
 ================================================= */
 
-const hands =
+const handTracker =
   new Hands({
 
-    locateFile:
-    file =>
+    locateFile:file=>
       `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 
   });
 
-
-hands.setOptions({
+handTracker.setOptions({
 
   maxNumHands:2,
-
   modelComplexity:1,
 
   minDetectionConfidence:.65,
-
   minTrackingConfidence:.65
 
 });
 
 
 /* =================================================
-   THREE.JS
+   THREE
 ================================================= */
 
 const renderer =
   new THREE.WebGLRenderer({
 
     canvas:threeCanvas,
-
     alpha:true,
-
     antialias:true
 
   });
 
-
 renderer.setPixelRatio(
-  Math.min(
-    window.devicePixelRatio,
-    2
-  )
+  Math.min(devicePixelRatio,2)
 );
-
 
 renderer.setSize(
-  window.innerWidth,
-  window.innerHeight
+  innerWidth,
+  innerHeight
 );
-
 
 const scene =
   new THREE.Scene();
 
-
-const camera =
+const threeCamera =
   new THREE.PerspectiveCamera(
-
     55,
-
-    window.innerWidth /
-    window.innerHeight,
-
+    innerWidth/innerHeight,
     .1,
-
     100
-
   );
 
-
-camera.position.z=8;
+threeCamera.position.z=8;
 
 
 /* =================================================
    LIGHTING
 ================================================= */
 
-const ambient =
+scene.add(
   new THREE.AmbientLight(
     0xffffff,
-    1.5
+    1.7
+  )
+);
+
+const keyLight =
+  new THREE.DirectionalLight(
+    0xffffff,
+    2
   );
 
-scene.add(
-  ambient
+keyLight.position.set(
+  3,
+  5,
+  5
 );
 
-
-const pointLight =
-  new THREE.PointLight(
-    0x00eaff,
-    5,
-    20
-  );
-
-pointLight.position.set(
-  0,
-  2,
-  4
-);
-
-scene.add(
-  pointLight
-);
+scene.add(keyLight);
 
 
 /* =================================================
-   OBJECTS
+   MODEL SYSTEM
 ================================================= */
 
 const objects=[];
 
 let activeObject=null;
 
+let currentMode="build";
 
-/* =================================================
-   SHAPE TYPES
-================================================= */
-
-const shapeNames=[
-
-  "CUBE",
-  "SPHERE",
-  "PYRAMID",
-  "TORUS",
-  "CYLINDER",
-  "STAR"
-
-];
-
-
-let nextShape=0;
+let nextID=1;
 
 
 /* =================================================
-   MATERIAL
+   MATERIALS
 ================================================= */
 
-function hologramMaterial(){
+function material(){
 
   return new THREE.MeshStandardMaterial({
 
-    color:
-      new THREE.Color(
-        `hsl(${Math.random()*360},100%,60%)`
-      ),
+    color:0xb8c4c8,
 
-    emissive:
-      new THREE.Color(
-        `hsl(${Math.random()*360},100%,45%)`
-      ),
+    metalness:.65,
 
-    emissiveIntensity:2,
+    roughness:.3,
 
     transparent:true,
 
-    opacity:.75,
+    opacity:.88
 
-    wireframe:true
+  });
+
+}
+
+function selectedMaterial(){
+
+  return new THREE.MeshStandardMaterial({
+
+    color:0x72dce8,
+
+    emissive:0x163b40,
+
+    emissiveIntensity:.65,
+
+    metalness:.55,
+
+    roughness:.28,
+
+    transparent:true,
+
+    opacity:.92
 
   });
 
@@ -1091,131 +1609,788 @@ function hologramMaterial(){
 
 
 /* =================================================
-   CREATE SHAPE
+   GEOMETRY
 ================================================= */
 
-function createShape(
-  type
+function geometryFor(type){
+
+  switch(type){
+
+    case "box":
+      return new THREE.BoxGeometry(1.3,1.3,1.3);
+
+    case "sphere":
+      return new THREE.SphereGeometry(.75,32,20);
+
+    case "cylinder":
+      return new THREE.CylinderGeometry(
+        .55,.55,1.4,32
+      );
+
+    case "shaft":
+      return new THREE.CylinderGeometry(
+        .18,.18,1.8,20
+      );
+
+    case "gear":
+      return new THREE.CylinderGeometry(
+        .7,.7,.25,16
+      );
+
+    case "joint":
+      return new THREE.SphereGeometry(.38,24,16);
+
+    case "plate":
+      return new THREE.BoxGeometry(
+        1.7,.15,1.1
+      );
+
+    case "arm":
+      return new THREE.BoxGeometry(
+        .35,1.7,.35
+      );
+
+    case "wheel":
+      return new THREE.TorusGeometry(
+        .65,.18,16,32
+      );
+
+    case "piston":
+      return new THREE.CylinderGeometry(
+        .3,.3,.8,24
+      );
+
+    default:
+      return new THREE.BoxGeometry(1,1,1);
+
+  }
+
+}
+
+
+/* =================================================
+   CREATE PART
+================================================= */
+
+function createPart(
+  name,
+  type,
+  position,
+  options={}
 ){
-
-  let geometry;
-
-
-  if(type==="CUBE"){
-
-    geometry =
-      new THREE.BoxGeometry(
-        1.4,
-        1.4,
-        1.4
-      );
-
-  }
-
-
-  else if(
-    type==="SPHERE"
-  ){
-
-    geometry =
-      new THREE.SphereGeometry(
-        .8,
-        32,
-        32
-      );
-
-  }
-
-
-  else if(
-    type==="PYRAMID"
-  ){
-
-    geometry =
-      new THREE.ConeGeometry(
-        .9,
-        1.6,
-        4
-      );
-
-  }
-
-
-  else if(
-    type==="TORUS"
-  ){
-
-    geometry =
-      new THREE.TorusGeometry(
-        .65,
-        .22,
-        16,
-        40
-      );
-
-  }
-
-
-  else if(
-    type==="CYLINDER"
-  ){
-
-    geometry =
-      new THREE.CylinderGeometry(
-        .65,
-        .65,
-        1.5,
-        32
-      );
-
-  }
-
-
-  else{
-
-    geometry =
-      new THREE.IcosahedronGeometry(
-        .9,
-        1
-      );
-
-  }
-
 
   const mesh =
     new THREE.Mesh(
-      geometry,
-      hologramMaterial()
+      geometryFor(type),
+      material()
     );
 
-
-  mesh.userData.type =
-    type;
-
-  mesh.userData.velocity =
-    new THREE.Vector3();
-
-  mesh.userData.angularVelocity =
-    new THREE.Vector3();
-
-  mesh.userData.mass =
-    1;
-
-
-  scene.add(
-    mesh
+  mesh.position.copy(
+    position ||
+    new THREE.Vector3()
   );
 
-  objects.push(
-    mesh
-  );
+  mesh.userData.name=
+    name ||
+    `Part ${nextID}`;
 
+  mesh.userData.type=type;
 
-  objectsText.textContent =
-    objects.length;
+  mesh.userData.id=
+    nextID++;
 
+  mesh.userData.assembled=
+    options.assembled!==false;
+
+  mesh.userData.home=
+    mesh.position.clone();
+
+  mesh.userData.velocity=
+    new THREE.Vector3();
+
+  mesh.userData.explode=
+    options.explode ||
+    new THREE.Vector3();
+
+  scene.add(mesh);
+
+  objects.push(mesh);
+
+  refreshUI();
 
   return mesh;
+
+}
+
+
+/* =================================================
+   SELECT
+================================================= */
+
+function selectObject(obj){
+
+  if(activeObject){
+
+    activeObject.material.dispose();
+
+    activeObject.material=
+      material();
+
+  }
+
+  activeObject=obj;
+
+  if(activeObject){
+
+    activeObject.material.dispose();
+
+    activeObject.material=
+      selectedMaterial();
+
+    selectedName.textContent=
+      activeObject.userData.name;
+
+    updateProperties();
+
+  }else{
+
+    selectedName.textContent="NONE";
+
+  }
+
+  refreshParts();
+
+}
+
+
+/* =================================================
+   DELETE
+================================================= */
+
+function deleteSelected(){
+
+  if(!activeObject)
+    return;
+
+  const index=
+    objects.indexOf(activeObject);
+
+  if(index>=0)
+    objects.splice(index,1);
+
+  scene.remove(activeObject);
+
+  activeObject.geometry.dispose();
+  activeObject.material.dispose();
+
+  activeObject=null;
+
+  refreshUI();
+
+}
+
+
+/* =================================================
+   PART TREE
+================================================= */
+
+function refreshParts(){
+
+  partsList.innerHTML="";
+
+  objects.forEach(obj=>{
+
+    const row=
+      document.createElement("div");
+
+    row.className="part";
+
+    if(obj===activeObject)
+      row.classList.add("selected");
+
+    row.innerHTML=`
+
+      <div class="partLeft">
+
+        <span class="partBullet"></span>
+
+        <span>
+          ${obj.userData.name}
+        </span>
+
+      </div>
+
+      <small>
+        ${obj.userData.type}
+      </small>
+
+    `;
+
+    row.onclick=()=>{
+      selectObject(obj);
+    };
+
+    partsList.appendChild(row);
+
+  });
+
+}
+
+
+/* =================================================
+   PROPERTIES
+================================================= */
+
+function updateProperties(){
+
+  if(!activeObject){
+
+    properties.innerHTML=`
+      <div class="property">
+        <span>Name</span>
+        <span>—</span>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  const p=activeObject.position;
+  const r=activeObject.rotation;
+  const s=activeObject.scale;
+
+  properties.innerHTML=`
+
+    <div class="property">
+      <span>Name</span>
+      <span>${activeObject.userData.name}</span>
+    </div>
+
+    <div class="property">
+      <span>Type</span>
+      <span>${activeObject.userData.type}</span>
+    </div>
+
+    <div class="property">
+      <span>Position</span>
+      <span>
+        ${p.x.toFixed(2)},
+        ${p.y.toFixed(2)},
+        ${p.z.toFixed(2)}
+      </span>
+    </div>
+
+    <div class="property">
+      <span>Rotation</span>
+      <span>
+        ${(r.x*57.3).toFixed(0)}° /
+        ${(r.y*57.3).toFixed(0)}° /
+        ${(r.z*57.3).toFixed(0)}°
+      </span>
+    </div>
+
+    <div class="property">
+      <span>Scale</span>
+      <span>${s.x.toFixed(2)}</span>
+    </div>
+
+  `;
+
+}
+
+
+/* =================================================
+   UI
+================================================= */
+
+function refreshUI(){
+
+  objectsText.textContent=
+    objects.length;
+
+  refreshParts();
+
+  updateProperties();
+
+  const assembled=
+    objects.filter(
+      x=>x.userData.assembled
+    ).length;
+
+  const percent=
+    objects.length
+    ?
+    assembled/objects.length*100
+    :
+    0;
+
+  progress.style.width=
+    percent+"%";
+
+  progressText.textContent=
+    `${assembled} / ${objects.length} parts assembled`;
+
+}
+
+
+/* =================================================
+   MODES
+================================================= */
+
+document
+  .querySelectorAll("[data-mode]")
+  .forEach(button=>{
+
+    button.onclick=()=>{
+
+      document
+        .querySelectorAll("[data-mode]")
+        .forEach(
+          b=>b.classList.remove("active")
+        );
+
+      button.classList.add("active");
+
+      currentMode=
+        button.dataset.mode;
+
+      modeLabel.textContent=
+        currentMode.toUpperCase();
+
+      bottomMode.textContent=
+        currentMode.toUpperCase()+" MODE";
+
+      buildIndicator.textContent=
+        currentMode==="build"
+        ?
+        "BUILD MODE — SELECT AND PLACE PARTS"
+        :
+        "DISASSEMBLY MODE — SELECT A PART TO REMOVE";
+
+    };
+
+  });
+
+
+/* =================================================
+   ADD PART
+================================================= */
+
+document
+  .getElementById("addPart")
+  .onclick=()=>{
+
+    const part=
+      createPart(
+        `Part ${nextID}`,
+        "box",
+        new THREE.Vector3(
+          0,
+          0,
+          0
+        )
+      );
+
+    selectObject(part);
+
+  };
+
+
+/* =================================================
+   DELETE
+================================================= */
+
+document
+  .getElementById("deletePart")
+  .onclick=deleteSelected;
+
+
+/* =================================================
+   RESET
+================================================= */
+
+function clearModel(){
+
+  while(objects.length){
+
+    const obj=
+      objects.pop();
+
+    scene.remove(obj);
+
+    obj.geometry.dispose();
+    obj.material.dispose();
+
+  }
+
+  activeObject=null;
+
+  refreshUI();
+
+}
+
+document
+  .getElementById("resetButton")
+  .onclick=clearModel;
+
+
+/* =================================================
+   MODEL GENERATORS
+================================================= */
+
+function loadModel(model){
+
+  clearModel();
+
+  if(model==="car"){
+
+    createPart(
+      "Chassis",
+      "plate",
+      new THREE.Vector3(0,-.6,0)
+    );
+
+    createPart(
+      "Front Wheel",
+      "wheel",
+      new THREE.Vector3(-1.2,-.9,.55)
+    );
+
+    createPart(
+      "Rear Wheel",
+      "wheel",
+      new THREE.Vector3(1.2,-.9,.55)
+    );
+
+    createPart(
+      "Cabin",
+      "box",
+      new THREE.Vector3(0,.15,0)
+    ).scale.set(1.1,.55,.8);
+
+  }
+
+  else if(model==="engine"){
+
+    createPart(
+      "Engine Block",
+      "box",
+      new THREE.Vector3(0,0,0)
+    );
+
+    createPart(
+      "Crankshaft",
+      "shaft",
+      new THREE.Vector3(0,0,0)
+    );
+
+    createPart(
+      "Piston 1",
+      "piston",
+      new THREE.Vector3(-.4,.8,0)
+    );
+
+    createPart(
+      "Piston 2",
+      "piston",
+      new THREE.Vector3(.4,.8,0)
+    );
+
+    createPart(
+      "Flywheel",
+      "gear",
+      new THREE.Vector3(0,-.8,0)
+    );
+
+  }
+
+  else if(model==="robot"){
+
+    createPart(
+      "Base",
+      "plate",
+      new THREE.Vector3(0,-1.2,0)
+    );
+
+    createPart(
+      "Joint 1",
+      "joint",
+      new THREE.Vector3(0,-.65,0)
+    );
+
+    createPart(
+      "Lower Arm",
+      "arm",
+      new THREE.Vector3(0,.15,0)
+    );
+
+    createPart(
+      "Joint 2",
+      "joint",
+      new THREE.Vector3(0,1.05,0)
+    );
+
+    createPart(
+      "Upper Arm",
+      "arm",
+      new THREE.Vector3(0,1.65,0)
+    );
+
+  }
+
+  else{
+
+    createPart(
+      "Base",
+      "plate",
+      new THREE.Vector3(0,-1,0)
+    );
+
+    createPart(
+      "Main Body",
+      "box",
+      new THREE.Vector3(0,0,0)
+    );
+
+    createPart(
+      "Top Assembly",
+      "cylinder",
+      new THREE.Vector3(0,1,0)
+    );
+
+  }
+
+  objects.forEach(
+    (obj,i)=>{
+
+      obj.userData.home=
+        obj.position.clone();
+
+      obj.userData.assembled=true;
+
+    }
+  );
+
+  refreshUI();
+
+  buildIndicator.textContent=
+    "MODEL LOADED — SELECT A PART TO INSPECT";
+
+}
+
+
+/* =================================================
+   MODEL BUTTONS
+================================================= */
+
+document
+  .querySelectorAll("[data-model]")
+  .forEach(item=>{
+
+    item.onclick=()=>{
+
+      document
+        .querySelectorAll("[data-model]")
+        .forEach(
+          x=>x.classList.remove("active")
+        );
+
+      item.classList.add("active");
+
+      loadModel(
+        item.dataset.model
+      );
+
+    };
+
+  });
+
+
+/* =================================================
+   EXPLODE VIEW
+================================================= */
+
+let exploded=false;
+
+document
+  .getElementById("explodeButton")
+  .onclick=()=>{
+
+    exploded=!exploded;
+
+    objects.forEach((obj,i)=>{
+
+      if(exploded){
+
+        const direction=
+          new THREE.Vector3(
+            (i%3)-1,
+            Math.floor(i/3)-1,
+            ((i+1)%3)-1
+          ).normalize();
+
+        obj.position.copy(
+          obj.userData.home
+            .clone()
+            .add(
+              direction.multiplyScalar(1.5)
+            )
+        );
+
+        obj.userData.assembled=false;
+
+      }else{
+
+        obj.position.copy(
+          obj.userData.home
+        );
+
+        obj.userData.assembled=true;
+
+      }
+
+    });
+
+    refreshUI();
+
+  };
+
+
+/* =================================================
+   ASSEMBLE
+================================================= */
+
+document
+  .getElementById("assembleButton")
+  .onclick=()=>{
+
+    objects.forEach(obj=>{
+
+      obj.position.lerp(
+        obj.userData.home,
+        .25
+      );
+
+      obj.userData.assembled=true;
+
+    });
+
+    refreshUI();
+
+  };
+
+
+/* =================================================
+   FOCUS
+================================================= */
+
+document
+  .getElementById("focusButton")
+  .onclick=()=>{
+
+    if(!activeObject)
+      return;
+
+    threeCamera.position.set(
+      activeObject.position.x,
+      activeObject.position.y,
+      5
+    );
+
+    threeCamera.lookAt(
+      activeObject.position
+    );
+
+  };
+
+
+/* =================================================
+   MEASURE
+================================================= */
+
+document
+  .getElementById("measureButton")
+  .onclick=()=>{
+
+    if(!activeObject){
+
+      addAIMessage(
+        "Select a part first and I can inspect its dimensions."
+      );
+
+      return;
+
+    }
+
+    const box=
+      new THREE.Box3()
+        .setFromObject(
+          activeObject
+        );
+
+    const size=
+      new THREE.Vector3();
+
+    box.getSize(size);
+
+    addAIMessage(
+      `Estimated dimensions of ${activeObject.userData.name}: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} scene units.`
+    );
+
+  };
+
+
+/* =================================================
+   HAND POSITION
+================================================= */
+
+function screenPosition(point){
+
+  const vw=video.videoWidth;
+  const vh=video.videoHeight;
+
+  const sw=innerWidth;
+  const sh=innerHeight;
+
+  if(!vw || !vh)
+    return {
+      x:sw/2,
+      y:sh/2
+    };
+
+  const vr=vw/vh;
+  const sr=sw/sh;
+
+  let width;
+  let height;
+  let ox=0;
+  let oy=0;
+
+  if(sr>vr){
+
+    width=sw;
+    height=sw/vr;
+    oy=(sh-height)/2;
+
+  }else{
+
+    height=sh;
+    width=sh*vr;
+    ox=(sw-width)/2;
+
+  }
+
+  let x=
+    point.x*width+ox;
+
+  let y=
+    point.y*height+oy;
+
+  if(usingFrontCamera)
+    x=sw-x;
+
+  return{x,y};
 
 }
 
@@ -1224,49 +2399,34 @@ function createShape(
    WORLD POSITION
 ================================================= */
 
-function handToWorld(
-  x,
-  y
-){
+function handToWorld(x,y){
 
-  const nx =
-    (x /
-    window.innerWidth)*2-1;
+  const nx=
+    x/innerWidth*2-1;
 
-  const ny =
-    -(y /
-    window.innerHeight)*2+1;
+  const ny=
+    -(y/innerHeight)*2+1;
 
-
-  const vector =
+  const vector=
     new THREE.Vector3(
       nx,
       ny,
       0
     );
 
-
   vector.unproject(
-    camera
+    threeCamera
   );
 
-
-  const direction =
+  const direction=
     vector
-      .sub(camera.position)
+      .sub(threeCamera.position)
       .normalize();
 
-
-  const distance =
-    6;
-
-
-  return camera.position
+  return threeCamera.position
     .clone()
     .add(
-      direction.multiplyScalar(
-        distance
-      )
+      direction.multiplyScalar(6)
     );
 
 }
@@ -1276,10 +2436,7 @@ function handToWorld(
    DISTANCE
 ================================================= */
 
-function distance2D(
-  a,
-  b
-){
+function distance(a,b){
 
   return Math.hypot(
     a.x-b.x,
@@ -1288,110 +2445,12 @@ function distance2D(
 
 }
 
+function pinch(hand){
 
-/* =================================================
-   PINCH
-================================================= */
-
-function isPinching(
-  hand
-){
-
-  return (
-    distance2D(
-      hand[4],
-      hand[8]
-    ) < .055
-  );
-
-}
-
-
-/* =================================================
-   OPEN PALM
-================================================= */
-
-function isOpenPalm(
-  hand
-){
-
-  const wrist =
-    hand[0];
-
-  const tips=[
-    hand[8],
-    hand[12],
-    hand[16],
-    hand[20]
-  ];
-
-
-  let count=0;
-
-
-  for(
-    const tip of tips
-  ){
-
-    if(
-      tip.y <
-      wrist.y
-    ){
-
-      count++;
-
-    }
-
-  }
-
-
-  return count>=3;
-
-}
-
-
-/* =================================================
-   FIST
-================================================= */
-
-function isFist(
-  hand
-){
-
-  const wrist =
-    hand[0];
-
-
-  const tips=[
-    hand[8],
-    hand[12],
-    hand[16],
-    hand[20]
-  ];
-
-
-  let count=0;
-
-
-  for(
-    const tip of tips
-  ){
-
-    if(
-      distance2D(
-        tip,
-        wrist
-      ) < .25
-    ){
-
-      count++;
-
-    }
-
-  }
-
-
-  return count>=3;
+  return distance(
+    hand[4],
+    hand[8]
+  )<.055;
 
 }
 
@@ -1402,259 +2461,66 @@ function isFist(
 
 let grabbing=false;
 
-let grabHand=-1;
-
-let grabOffset =
+let grabOffset=
   new THREE.Vector3();
 
-let previousFinger =
-  null;
+let previousFinger=null;
 
-let grabVelocity =
+let grabVelocity=
   new THREE.Vector3();
-
-
-/* =================================================
-   TWO HAND STATE
-================================================= */
 
 let twoHand=false;
 
-let twoStartDistance=1;
+let twoDistance=1;
 
-let twoStartScale=1;
+let twoScale=1;
 
-let twoStartAngle=0;
+let twoAngle=0;
 
-let twoStartRotation=0;
-
-let twoStartTilt=0;
+let twoRotation=0;
 
 
 /* =================================================
-   FIND CLOSEST OBJECT
+   FIND OBJECT
 ================================================= */
 
-function findObject(
-  position
-){
+function findObject(point){
 
   let closest=null;
+  let closestDistance=Infinity;
 
-  let closestDistance=
-    Infinity;
+  objects.forEach(obj=>{
 
+    const vector=
+      obj.position
+        .clone()
+        .project(
+          threeCamera
+        );
 
-  for(
-    const obj of objects
-  ){
+    const screen={
+      x:(vector.x+1)/2*innerWidth,
+      y:(-vector.y+1)/2*innerHeight
+    };
 
-    const screen =
-      worldToScreen(
-        obj.position
-      );
-
-
-    const d =
-      distance2D(
-        position,
+    const d=
+      distance(
+        point,
         screen
       );
 
-
-    if(
-      d<closestDistance
-    ){
+    if(d<closestDistance){
 
       closestDistance=d;
-
       closest=obj;
 
     }
 
-  }
-
-
-  if(
-    closestDistance <
-    130
-  ){
-
-    return closest;
-
-  }
-
-
-  return null;
-
-}
-
-
-/* =================================================
-   WORLD TO SCREEN
-================================================= */
-
-function worldToScreen(
-  position
-){
-
-  const vector =
-    position
-      .clone()
-      .project(
-        camera
-      );
-
-
-  return{
-
-    x:
-      (vector.x+1) /
-      2 *
-      window.innerWidth,
-
-    y:
-      (-vector.y+1) /
-      2 *
-      window.innerHeight
-
-  };
-
-}
-
-
-/* =================================================
-   CREATE PARTICLES
-================================================= */
-
-const particleGeometry =
-  new THREE.BufferGeometry();
-
-
-const particleCount=800;
-
-
-const positions =
-  new Float32Array(
-    particleCount*3
-  );
-
-
-for(
-  let i=0;
-  i<particleCount;
-  i++
-){
-
-  positions[i*3]=
-    (Math.random()-.5)*16;
-
-  positions[i*3+1]=
-    (Math.random()-.5)*10;
-
-  positions[i*3+2]=
-    (Math.random()-.5)*8;
-
-}
-
-
-particleGeometry.setAttribute(
-
-  "position",
-
-  new THREE.BufferAttribute(
-    positions,
-    3
-  )
-
-);
-
-
-const particleMaterial =
-  new THREE.PointsMaterial({
-
-    color:0x00eaff,
-
-    size:.035,
-
-    transparent:true,
-
-    opacity:.7
-
   });
 
-
-const particles =
-  new THREE.Points(
-    particleGeometry,
-    particleMaterial
-  );
-
-
-scene.add(
-  particles
-);
-
-
-/* =================================================
-   ENERGY RINGS
-================================================= */
-
-const rings=[];
-
-
-for(
-  let i=0;
-  i<5;
-  i++
-){
-
-  const geometry =
-    new THREE.TorusGeometry(
-      1.5+i*.4,
-      .008,
-      8,
-      100
-    );
-
-
-  const material =
-    new THREE.MeshBasicMaterial({
-
-      color:
-        0x00eaff,
-
-      transparent:true,
-
-      opacity:
-        .4-i*.05
-
-    });
-
-
-  const ring =
-    new THREE.Mesh(
-      geometry,
-      material
-    );
-
-
-  ring.rotation.x=
-    Math.PI/2;
-
-
-  ring.position.y=
-    -2;
-
-
-  scene.add(
-    ring
-  );
-
-
-  rings.push(
-    ring
-  );
+  return closestDistance<140
+    ?closest
+    :null;
 
 }
 
@@ -1663,15 +2529,7 @@ for(
    HAND RESULTS
 ================================================= */
 
-hands.onResults(
-(results)=>{
-
-  if(!cameraReady){
-
-    return;
-
-  }
-
+handTracker.onResults(results=>{
 
   handCtx.clearRect(
     0,
@@ -1680,497 +2538,188 @@ hands.onResults(
     handCanvas.height
   );
 
-
-  const detected =
+  const detected=
     results.multiHandLandmarks || [];
 
-
-  handsText.textContent =
+  handsText.textContent=
     detected.length;
 
-
-  trackingText.textContent =
+  trackingText.textContent=
     detected.length
-    ?
-    "ACTIVE"
-    :
-    "SEARCHING";
+    ?"ACTIVE"
+    :"SEARCHING";
 
-
-  /* ===============================================
-     DRAW HANDS
-  =============================================== */
-
-  for(
-    const hand of detected
-  ){
-
-    const points =
-      hand.map(
-        screenPosition
-      );
-
-
-    handCtx.strokeStyle =
-      "#00eaff";
-
-    handCtx.lineWidth=2;
-
-
-    for(
-      const connection
-      of HAND_CONNECTIONS
-    ){
-
-      const a =
-        points[
-          connection[0]
-        ];
-
-      const b =
-        points[
-          connection[1]
-        ];
-
-
-      handCtx.beginPath();
-
-      handCtx.moveTo(
-        a.x,
-        a.y
-      );
-
-      handCtx.lineTo(
-        b.x,
-        b.y
-      );
-
-      handCtx.stroke();
-
-    }
-
-
-    handCtx.fillStyle =
-      "#00eaff";
-
-
-    for(
-      const p of points
-    ){
-
-      handCtx.beginPath();
-
-      handCtx.arc(
-        p.x,
-        p.y,
-        3,
-        0,
-        Math.PI*2
-      );
-
-      handCtx.fill();
-
-    }
-
-  }
-
-
-  /* ===============================================
-     PINCHING HANDS
-  =============================================== */
 
   const pinching=[];
 
+  detected.forEach((hand,i)=>{
 
-  for(
-    let i=0;
-    i<detected.length;
-    i++
-  ){
-
-    if(
-      isPinching(
-        detected[i]
-      )
-    ){
-
+    if(pinch(hand))
       pinching.push(i);
 
-    }
-
-  }
+  });
 
 
-  /* ===============================================
-     TWO HAND MODE
-  =============================================== */
+  /* -----------------------------------------------
+     TWO HAND
+  ------------------------------------------------ */
 
-  if(
-    pinching.length===2
-  ){
+  if(pinching.length===2 && activeObject){
 
-    const p1 =
+    const p1=
       screenPosition(
-        detected[
-          pinching[0]
-        ][8]
+        detected[pinching[0]][8]
       );
 
-    const p2 =
+    const p2=
       screenPosition(
-        detected[
-          pinching[1]
-        ][8]
+        detected[pinching[1]][8]
       );
 
+    const d=
+      distance(p1,p2);
 
-    const d =
-      distance2D(
-        p1,
-        p2
-      );
-
-
-    const angle =
+    const angle=
       Math.atan2(
         p2.y-p1.y,
         p2.x-p1.x
       );
 
-
-    const centerX =
+    const cx=
       (p1.x+p2.x)/2;
 
-    const centerY =
+    const cy=
       (p1.y+p2.y)/2;
 
-
-    if(
-      !twoHand &&
-      activeObject
-    ){
+    if(!twoHand){
 
       twoHand=true;
 
-      grabbing=true;
+      twoDistance=
+        Math.max(d,10);
 
-
-      twoStartDistance =
-        Math.max(
-          d,
-          10
-        );
-
-
-      twoStartScale =
+      twoScale=
         activeObject.scale.x;
 
+      twoAngle=angle;
 
-      twoStartAngle =
-        angle;
-
-
-      twoStartRotation =
+      twoRotation=
         activeObject.rotation.z;
-
-
-      twoStartTilt =
-        activeObject.rotation.x;
 
     }
 
-
-    if(activeObject){
-
-      /* SCALE */
-
-      let scale =
-        twoStartScale *
-        d /
-        twoStartDistance;
-
-
-      scale =
-        Math.max(
-          .35,
-          Math.min(
-            4,
-            scale
-          )
-        );
-
-
-      activeObject.scale.setScalar(
-        scale
-      );
-
-
-      /* ROTATE */
-
-      let change =
-        (
-          angle-
-          twoStartAngle
-        ) *
-        180/Math.PI;
-
-
-      activeObject.rotation.z =
-        twoStartRotation+
-        change;
-
-
-      /* TILT */
-
-      const tilt =
-        (
-          centerY -
-          window.innerHeight/2
-        )*.008;
-
-
-      activeObject.rotation.x =
-        twoStartTilt+
-        tilt;
-
-
-      /* MOVE */
-
-      activeObject.position.copy(
-        handToWorld(
-          centerX,
-          centerY
+    const scale=
+      Math.max(
+        .25,
+        Math.min(
+          4,
+          twoScale*d/twoDistance
         )
       );
 
+    activeObject.scale.setScalar(
+      scale
+    );
 
-      modeText.textContent =
-        "TWO HAND MANIPULATION";
+    activeObject.rotation.z=
+      twoRotation+
+      (angle-twoAngle);
 
+    activeObject.position.copy(
+      handToWorld(cx,cy)
+    );
 
-      activeText.textContent =
-        activeObject.userData.type;
-
-    }
-
+    updateProperties();
 
     return;
 
   }
 
-
   twoHand=false;
 
 
-  /* ===============================================
-     NORMAL PINCH GRAB
-  =============================================== */
+  /* -----------------------------------------------
+     SINGLE PINCH
+  ------------------------------------------------ */
 
-  if(
-    pinching.length>0
-  ){
+  if(pinching.length){
 
-    const index =
-      pinching[0];
+    const hand=
+      detected[
+        pinching[0]
+      ];
 
-
-    const fingertip =
+    const point=
       screenPosition(
-        detected[index][8]
+        hand[8]
       );
 
+    reticle.style.display="block";
 
-    reticle.style.display =
-      "block";
+    reticle.style.left=
+      point.x+"px";
 
-    reticle.style.left =
-      fingertip.x+"px";
-
-    reticle.style.top =
-      fingertip.y+"px";
+    reticle.style.top=
+      point.y+"px";
 
 
-    /* =============================================
-       CONTINUE GRAB
-    ============================================= */
+    if(grabbing && activeObject){
 
-    if(grabbing){
-
-      if(
-        activeObject
-      ){
-
-        const target =
-          handToWorld(
-            fingertip.x,
-            fingertip.y
-          );
-
-
-        if(
-          grabOffset
-        ){
-
-          target.add(
-            grabOffset
-          );
-
-        }
-
-
-        /* SMOOTH FOLLOW */
-
-        activeObject.position.lerp(
-          target,
-          .75
+      const target=
+        handToWorld(
+          point.x,
+          point.y
         );
 
+      target.add(
+        grabOffset
+      );
 
-        /* VELOCITY */
+      activeObject.position.lerp(
+        target,
+        .72
+      );
 
-        if(
-          previousFinger
-        ){
+      if(previousFinger){
 
-          grabVelocity.set(
-
-            fingertip.x-
-            previousFinger.x,
-
-            previousFinger.y-
-            fingertip.y,
-
-            0
-
-          );
-
-        }
-
-
-        previousFinger =
-          fingertip;
-
-
-        modeText.textContent =
-          "GRABBING";
-
-        activeText.textContent =
-          activeObject.userData.type;
-
-
-        return;
+        grabVelocity.set(
+          point.x-previousFinger.x,
+          previousFinger.y-point.y,
+          0
+        );
 
       }
 
-    }
+      previousFinger=point;
 
-
-    /* =============================================
-       FIND EXISTING OBJECT
-    ============================================= */
-
-    const found =
-      findObject(
-        fingertip
-      );
-
-
-    if(found){
-
-      activeObject =
-        found;
-
-      grabbing=true;
-
-      grabHand=index;
-
-      previousFinger =
-        fingertip;
-
-
-      const target =
-        handToWorld(
-          fingertip.x,
-          fingertip.y
-        );
-
-
-      grabOffset =
-        activeObject.position
-          .clone()
-          .sub(
-            target
-          );
-
-
-      modeText.textContent =
-        "GRABBED";
-
-      activeText.textContent =
-        activeObject.userData.type;
-
+      updateProperties();
 
       return;
 
     }
 
 
-    /* =============================================
-       CREATE NEW OBJECT
-    ============================================= */
+    const found=
+      findObject(point);
 
-    if(!grabbing){
+    if(found){
 
-      const type =
-        shapeNames[
-          nextShape
-        ];
-
-
-      nextShape =
-        (
-          nextShape+1
-        ) %
-        shapeNames.length;
-
-
-      activeObject =
-        createShape(
-          type
-        );
-
-
-      activeObject.position.copy(
-        handToWorld(
-          fingertip.x,
-          fingertip.y
-        )
-      );
-
-
-      activeObject.scale.setScalar(
-        1
-      );
-
+      selectObject(found);
 
       grabbing=true;
 
-      grabHand=index;
+      previousFinger=point;
 
-      previousFinger =
-        fingertip;
+      const target=
+        handToWorld(
+          point.x,
+          point.y
+        );
 
-      grabOffset.set(
-        0,0,0
-      );
-
-
-      modeText.textContent =
-        "CREATED";
-
-      activeText.textContent =
-        type;
-
+      grabOffset=
+        found.position
+          .clone()
+          .sub(target);
 
       return;
 
@@ -2179,86 +2728,31 @@ hands.onResults(
   }
 
 
-  /* ===============================================
+  /* -----------------------------------------------
      RELEASE
-  =============================================== */
+  ------------------------------------------------ */
 
   if(grabbing){
 
     grabbing=false;
 
-    grabHand=-1;
-
-
     if(activeObject){
 
-      /*
-        THROW MOMENTUM
-      */
+      activeObject.userData.velocity.x=
+        grabVelocity.x*.035;
 
-      activeObject.userData.velocity.x =
-        grabVelocity.x*.045;
-
-      activeObject.userData.velocity.y =
-        grabVelocity.y*.045;
-
-
-      activeObject.userData.angularVelocity.z =
-        grabVelocity.x*.002;
-
-
-      modeText.textContent =
-        "RELEASED";
+      activeObject.userData.velocity.y=
+        grabVelocity.y*.035;
 
     }
 
-
     previousFinger=null;
 
-    grabVelocity.set(
-      0,0,0
-    );
+    grabVelocity.set(0,0,0);
 
   }
 
-
-  reticle.style.display =
-    "none";
-
-
-  /* ===============================================
-     OPEN PALM
-  =============================================== */
-
-  if(
-    detected.length>0 &&
-    isOpenPalm(
-      detected[0]
-    )
-  ){
-
-    modeText.textContent =
-      "PALM DETECTED";
-
-  }
-
-
-  /* ===============================================
-     FIST
-  =============================================== */
-
-  if(
-    detected.length>0 &&
-    isFist(
-      detected[0]
-    )
-  ){
-
-    modeText.textContent =
-      "FIST / PHYSICS";
-
-  }
-
+  reticle.style.display="none";
 
 });
 
@@ -2267,124 +2761,360 @@ hands.onResults(
    PHYSICS
 ================================================= */
 
-const clock =
+const clock=
   new THREE.Clock();
-
 
 function physics(){
 
-  const dt =
+  const dt=
     Math.min(
       clock.getDelta(),
       .033
     );
 
+  objects.forEach(obj=>{
 
-  for(
-    const obj of objects
-  ){
+    if(obj===activeObject && grabbing)
+      return;
 
-    if(
-      obj===activeObject &&
-      grabbing
-    ){
-
-      continue;
-
-    }
-
-
-    const velocity =
+    const v=
       obj.userData.velocity;
 
-
-    /* GRAVITY */
-
-    velocity.y -=
-      1.2*dt;
-
+    v.y-=.7*dt;
 
     obj.position.add(
-      velocity
-        .clone()
-        .multiplyScalar(
-          dt
-        )
+      v.clone().multiplyScalar(dt)
+    );
+
+    v.multiplyScalar(.985);
+
+    if(obj.position.y<-3){
+
+      obj.position.y=-3;
+
+      v.y*=-.45;
+
+    }
+
+  });
+
+}
+
+
+/* =================================================
+   AI
+================================================= */
+
+function addAIMessage(text){
+
+  const div=
+    document.createElement("div");
+
+  div.className="message ai";
+
+  div.innerHTML=`
+
+    <div class="messageLabel">
+      JARVIS
+    </div>
+
+    ${text}
+
+  `;
+
+  chat.appendChild(div);
+
+  chat.scrollTop=
+    chat.scrollHeight;
+
+}
+
+
+function addUserMessage(text){
+
+  const div=
+    document.createElement("div");
+
+  div.className="message user";
+
+  div.innerHTML=`
+
+    <div class="messageLabel">
+      YOU
+    </div>
+
+    ${text}
+
+  `;
+
+  chat.appendChild(div);
+
+  chat.scrollTop=
+    chat.scrollHeight;
+
+}
+
+
+/* =================================================
+   LOCAL AI FALLBACK
+================================================= */
+
+function localAI(question){
+
+  const q=
+    question.toLowerCase();
+
+
+  /* MODEL CREATION */
+
+  if(
+    q.includes("make a car") ||
+    q.includes("create a car") ||
+    q.includes("build a car")
+  ){
+
+    loadModel("car");
+
+    return "I've created a basic vehicle assembly. You can select individual parts, move them with pinch control, explode the assembly, or ask me about a specific component.";
+
+  }
+
+
+  if(
+    q.includes("make an engine") ||
+    q.includes("create an engine") ||
+    q.includes("build an engine")
+  ){
+
+    loadModel("engine");
+
+    return "I've created a basic engine assembly with a block, crankshaft, pistons, and flywheel. Ask me to explain any of the components.";
+
+  }
+
+
+  if(
+    q.includes("make a robot") ||
+    q.includes("robot arm")
+  ){
+
+    loadModel("robot");
+
+    return "I've created a basic robotic arm assembly with joints and arm sections.";
+
+  }
+
+
+  if(
+    q.includes("disassemble") ||
+    q.includes("take it apart")
+  ){
+
+    exploded=false;
+
+    document
+      .getElementById("explodeButton")
+      .click();
+
+    return "The assembly has been placed into an exploded view. You can select individual parts and inspect them.";
+
+  }
+
+
+  if(
+    q.includes("assemble") ||
+    q.includes("put it together")
+  ){
+
+    document
+      .getElementById("assembleButton")
+      .click();
+
+    return "The parts have been returned toward their assembly positions.";
+
+  }
+
+
+  if(
+    q.includes("what is") ||
+    q.includes("explain") ||
+    q.includes("what does")
+  ){
+
+    if(activeObject){
+
+      return `${activeObject.userData.name} is a ${activeObject.userData.type} component in the current model. Select it and use Measure if you want its current dimensions.`;
+
+    }
+
+    return "Select a component first and I can explain its role in the current assembly.";
+
+  }
+
+
+  if(
+    q.includes("how") &&
+    q.includes("build")
+  ){
+
+    return "Start with the base or structural component, add the major assemblies, then install smaller moving components. I can guide you through the current model one part at a time.";
+
+  }
+
+
+  return "I can help create models, explain components, inspect the current assembly, guide disassembly, answer engineering questions, and organize build steps. Try asking me to make a car, engine, or robot arm.";
+
+}
+
+
+/* =================================================
+   AI API CONNECTION
+================================================= */
+
+/*
+   OPTIONAL REAL AI CONNECTION
+
+   Replace this URL with your own backend.
+
+   Your backend should accept:
+
+   POST /api/jarvis
+
+   {
+      message:"user question",
+      model:{
+         parts:[...]
+      }
+   
+   }
+
+   and return:
+
+   {
+      reply:"AI response"
+   }
+
+   Keeping the AI behind your own backend prevents
+   exposing a secret API key in this HTML file.
+*/
+
+async function askRealAI(question){
+
+  const modelData=
+    objects.map(obj=>({
+
+      name:obj.userData.name,
+      type:obj.userData.type,
+
+      position:{
+        x:obj.position.x,
+        y:obj.position.y,
+        z:obj.position.z
+      }
+
+    }));
+
+
+  const response=
+    await fetch(
+      "/api/jarvis",
+      {
+
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        body:JSON.stringify({
+
+          message:question,
+
+          model:{
+            parts:modelData
+          }
+
+        })
+
+      }
     );
 
 
-    /* FRICTION */
+  if(!response.ok)
+    throw new Error("AI unavailable");
 
-    velocity.multiplyScalar(
-      .985
-    );
+  const data=
+    await response.json();
 
+  return data.reply;
 
-    /* ROTATION */
-
-    obj.rotation.x +=
-      obj.userData
-        .angularVelocity.x;
-
-    obj.rotation.y +=
-      obj.userData
-        .angularVelocity.y;
-
-    obj.rotation.z +=
-      obj.userData
-        .angularVelocity.z;
+}
 
 
-    obj.userData
-      .angularVelocity
-      .multiplyScalar(
-        .99
+/* =================================================
+   ASK
+================================================= */
+
+async function askJarvis(){
+
+  const question=
+    aiInput.value.trim();
+
+  if(!question)
+    return;
+
+  aiInput.value="";
+
+  addUserMessage(question);
+
+
+  try{
+
+    /*
+      Use the real AI backend if available.
+    */
+
+    const answer=
+      await askRealAI(
+        question
       );
 
+    addAIMessage(answer);
 
-    /* FLOOR */
+  }
 
-    if(
-      obj.position.y < -2.8
-    ){
+  catch(error){
 
-      obj.position.y =
-        -2.8;
+    /*
+      If no backend exists, use
+      the built-in engineering assistant.
+    */
 
-      velocity.y *=
-        -.65;
+    const answer=
+      localAI(question);
 
-    }
-
-
-    /* SIDES */
-
-    if(
-      obj.position.x < -6
-    ){
-
-      obj.position.x=-6;
-
-      velocity.x *=
-        -.7;
-
-    }
-
-
-    if(
-      obj.position.x > 6
-    ){
-
-      obj.position.x=6;
-
-      velocity.x *=
-        -.7;
-
-    }
+    addAIMessage(answer);
 
   }
 
 }
+
+
+document
+  .getElementById("askAI")
+  .onclick=askJarvis;
+
+
+aiInput.addEventListener(
+  "keydown",
+  event=>{
+
+    if(event.key==="Enter")
+      askJarvis();
+
+  }
+);
 
 
 /* =================================================
@@ -2397,115 +3127,54 @@ function animate(){
     animate
   );
 
-
   physics();
 
+  if(activeObject){
 
-  /* PARTICLES */
-
-  particles.rotation.y +=
-    .0008;
-
-
-  particles.rotation.x +=
-    .0002;
-
-
-  /* RINGS */
-
-  for(
-    let i=0;
-    i<rings.length;
-    i++
-  ){
-
-    rings[i].rotation.z +=
-      .002+
-      i*.0005;
+    activeObject.rotation.y+=
+      .001;
 
   }
-
-
-  /* OBJECT GLOW PULSE */
-
-  for(
-    const obj of objects
-  ){
-
-    if(
-      obj.material &&
-      obj.material.emissive
-    ){
-
-      obj.material.emissiveIntensity =
-        obj===activeObject
-        ?
-        3+
-        Math.sin(
-          performance.now()*.005
-        )
-        :
-        1.5;
-
-    }
-
-  }
-
 
   renderer.render(
     scene,
-    camera
+    threeCamera
   );
 
 }
-
 
 animate();
 
 
 /* =================================================
-   MEDIAPIPE LOOP
+   TRACKING LOOP
 ================================================= */
 
 async function trackingLoop(){
 
   if(
-
     cameraReady &&
-
     video.readyState>=2 &&
-
     !processing
-
   ){
 
     processing=true;
 
-
     try{
 
-      await hands.send({
-
-        image:
-          video
-
+      await handTracker.send({
+        image:video
       });
 
-    }
+    }catch(error){
 
-    catch(error){
-
-      console.log(
-        error
-      );
+      console.log(error);
 
     }
-
 
     processing=false;
 
   }
-
 
   requestAnimationFrame(
     trackingLoop
@@ -2515,71 +3184,20 @@ async function trackingLoop(){
 
 
 /* =================================================
-   THREE RESIZE
-================================================= */
-
-window.addEventListener(
-  "resize",
-  ()=>{
-
-    camera.aspect =
-      window.innerWidth /
-      window.innerHeight;
-
-    camera.updateProjectionMatrix();
-
-
-    renderer.setSize(
-      window.innerWidth,
-      window.innerHeight
-    );
-
-
-    renderer.setPixelRatio(
-      Math.min(
-        window.devicePixelRatio,
-        2
-      )
-    );
-
-  }
-);
-
-
-/* =================================================
    START
 ================================================= */
 
 async function boot(){
 
-  statusSafe();
-
-
-  /*
-    FRONT CAMERA FIRST.
-  */
-
-  usingFrontCamera=true;
-
+  resize();
 
   await startCamera();
 
+  loadModel("assembly");
 
   trackingLoop();
 
 }
-
-
-function statusSafe(){
-
-  systemText.textContent =
-    "BOOTING";
-
-  trackingText.textContent =
-    "LOADING";
-
-}
-
 
 boot();
 
