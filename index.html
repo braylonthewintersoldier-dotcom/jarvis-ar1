@@ -2,21 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+
 <title>JARVIS AR</title>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
 <style>
+*{
+  box-sizing:border-box;
+}
+
 html,body{
   margin:0;
   width:100%;
   height:100%;
   overflow:hidden;
   background:#000;
+  color:#00eaff;
   font-family:Arial,Helvetica,sans-serif;
 }
+
+/* CAMERA */
+
 #camera{
   position:fixed;
   inset:0;
@@ -25,12 +35,17 @@ html,body{
   object-fit:cover;
   z-index:1;
 }
+
 #camera.front{
   transform:scaleX(-1);
 }
+
 #camera.back{
   transform:scaleX(1);
 }
+
+/* 3D */
+
 #threeCanvas{
   position:fixed;
   inset:0;
@@ -39,6 +54,9 @@ html,body{
   z-index:5;
   pointer-events:none;
 }
+
+/* HAND TRACKING */
+
 #handCanvas{
   position:fixed;
   inset:0;
@@ -47,1236 +65,2303 @@ html,body{
   z-index:10;
   pointer-events:none;
 }
-#jarvisStatus{
+
+/* PROFESSIONAL TOP BAR */
+
+#topBar{
   position:fixed;
   top:18px;
   left:50%;
   transform:translateX(-50%);
   z-index:100;
-  padding:8px 18px;
-  background:rgba(0,8,15,.65);
-  border:1px solid rgba(0,234,255,.5);
-  border-radius:20px;
-  color:#00eaff;
-  font-size:12px;
-  letter-spacing:2px;
-  backdrop-filter:blur(10px);
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:10px 16px;
+
+  background:rgba(4,10,16,.72);
+  border:1px solid rgba(0,234,255,.35);
+  border-radius:14px;
+
+  backdrop-filter:blur(14px);
+
+  box-shadow:
+    0 0 30px rgba(0,234,255,.08);
 }
-#listenDot{
-  display:inline-block;
+
+#jarvisName{
+  font-size:15px;
+  letter-spacing:4px;
+  font-weight:bold;
+}
+
+#systemDot{
   width:8px;
   height:8px;
-  margin-right:8px;
   border-radius:50%;
-  background:#444;
+  background:#00ff88;
+  box-shadow:0 0 12px #00ff88;
 }
-#listenDot.listening{
-  background:#00ffcc;
+
+#systemStatus{
+  font-size:11px;
+  letter-spacing:1px;
+  color:#9cefff;
+}
+
+/* VOICE BUTTON */
+
+#voiceButton{
+  position:fixed;
+
+  left:50%;
+  bottom:30px;
+
+  transform:translateX(-50%);
+
+  z-index:120;
+
+  width:72px;
+  height:72px;
+
+  border-radius:50%;
+
+  border:1px solid #00eaff;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(0,234,255,.18),
+      rgba(0,10,20,.9)
+    );
+
+  color:#00eaff;
+
+  cursor:pointer;
+
   box-shadow:
-    0 0 8px #00ffcc,
-    0 0 20px #00eaff;
-  animation:pulse 1s infinite;
+    0 0 25px rgba(0,234,255,.25);
+
+  transition:.2s;
 }
+
+#voiceButton:hover{
+  box-shadow:
+    0 0 35px rgba(0,234,255,.5);
+
+  transform:
+    translateX(-50%)
+    scale(1.05);
+}
+
+#voiceButton.listening{
+  border-color:#00ff88;
+  color:#00ff88;
+
+  box-shadow:
+    0 0 20px #00ff88,
+    0 0 60px rgba(0,255,136,.25);
+
+  animation:pulse 1.2s infinite;
+}
+
+#micIcon{
+  font-size:25px;
+}
+
 @keyframes pulse{
   0%,100%{
-    transform:scale(.8);
-    opacity:.5;
+    box-shadow:
+      0 0 20px #00ff88;
   }
+
   50%{
-    transform:scale(1.2);
-    opacity:1;
+    box-shadow:
+      0 0 45px #00ff88;
   }
 }
-#voiceText{
+
+/* LISTENING INDICATOR */
+
+#listening{
   position:fixed;
+
   left:50%;
-  bottom:24px;
+  bottom:112px;
+
   transform:translateX(-50%);
-  z-index:100;
-  max-width:80%;
-  padding:9px 18px;
-  background:rgba(0,8,15,.65);
-  border:1px solid rgba(0,234,255,.35);
-  border-radius:20px;
-  color:#00eaff;
-  font-size:13px;
-  text-align:center;
-  backdrop-filter:blur(10px);
+
+  z-index:120;
+
+  font-size:11px;
+  letter-spacing:2px;
+
+  opacity:0;
+
+  transition:.2s;
 }
+
+#listening.active{
+  opacity:1;
+  color:#00ff88;
+}
+
+/* JARVIS RESPONSE */
+
+#jarvisPanel{
+  position:fixed;
+
+  right:20px;
+  bottom:25px;
+
+  width:320px;
+  max-width:calc(100vw - 40px);
+
+  z-index:100;
+
+  background:rgba(3,8,14,.72);
+
+  border:
+    1px solid
+    rgba(0,234,255,.3);
+
+  border-radius:14px;
+
+  padding:14px;
+
+  backdrop-filter:blur(14px);
+
+  box-shadow:
+    0 0 30px
+    rgba(0,234,255,.08);
+}
+
+#jarvisHeader{
+  font-size:10px;
+  letter-spacing:2px;
+  opacity:.65;
+  margin-bottom:8px;
+}
+
+#jarvisResponse{
+  font-size:13px;
+  line-height:1.5;
+  color:#d9faff;
+
+  max-height:130px;
+  overflow:auto;
+}
+
+/* OBJECT INFO */
+
+#objectInfo{
+  position:fixed;
+
+  left:20px;
+  bottom:25px;
+
+  z-index:100;
+
+  min-width:180px;
+
+  padding:12px 14px;
+
+  background:rgba(3,8,14,.65);
+
+  border:
+    1px solid
+    rgba(0,234,255,.25);
+
+  border-radius:12px;
+
+  backdrop-filter:blur(12px);
+}
+
+.infoTitle{
+  font-size:10px;
+  letter-spacing:2px;
+  opacity:.6;
+  margin-bottom:7px;
+}
+
+.infoValue{
+  font-size:12px;
+  margin-top:4px;
+}
+
+/* CAMERA SWITCH */
+
 #cameraButton{
   position:fixed;
-  right:18px;
+
   top:18px;
-  z-index:110;
-  padding:10px 15px;
-  border:1px solid rgba(0,234,255,.6);
-  border-radius:8px;
-  background:rgba(0,8,15,.75);
+  right:18px;
+
+  z-index:120;
+
+  padding:9px 12px;
+
+  border:
+    1px solid
+    rgba(0,234,255,.35);
+
+  border-radius:9px;
+
+  background:rgba(3,8,14,.7);
+
   color:#00eaff;
+
   cursor:pointer;
+
+  font-size:10px;
+
+  letter-spacing:1px;
 }
+
+/* RETICLE */
+
 #reticle{
   position:fixed;
+
   width:34px;
   height:34px;
+
   margin-left:-17px;
   margin-top:-17px;
-  border:2px solid #00eaff;
+
+  border:
+    2px solid
+    #00eaff;
+
   border-radius:50%;
+
   z-index:30;
+
   display:none;
+
   pointer-events:none;
+
   box-shadow:
-    0 0 10px #00eaff,
-    0 0 25px #00eaff;
+    0 0 15px
+    rgba(0,234,255,.7);
 }
+
+/* CENTER CROSSHAIR */
+
+#crosshair{
+  position:fixed;
+
+  left:50%;
+  top:50%;
+
+  width:18px;
+  height:18px;
+
+  margin-left:-9px;
+  margin-top:-9px;
+
+  border:
+    1px solid
+    rgba(0,234,255,.35);
+
+  border-radius:50%;
+
+  z-index:20;
+
+  pointer-events:none;
+}
+
+/* CLEAN SCAN EFFECT */
+
+.scanline{
+  position:fixed;
+
+  left:0;
+  right:0;
+
+  height:1px;
+
+  background:
+    rgba(0,234,255,.08);
+
+  z-index:15;
+
+  pointer-events:none;
+
+  animation:scan 7s linear infinite;
+}
+
+@keyframes scan{
+  from{
+    top:0;
+  }
+
+  to{
+    top:100%;
+  }
+}
+
+/* VIGNETTE */
+
 #vignette{
   position:fixed;
   inset:0;
+
   z-index:18;
+
   pointer-events:none;
+
   box-shadow:
-    inset 0 0 160px rgba(0,0,0,.7);
+    inset 0 0 170px
+    rgba(0,0,0,.7);
+}
+
+/* MOBILE */
+
+@media(max-width:600px){
+
+  #topBar{
+    top:10px;
+  }
+
+  #cameraButton{
+    top:10px;
+    right:10px;
+  }
+
+  #jarvisPanel{
+    right:10px;
+    bottom:110px;
+    width:250px;
+  }
+
+  #objectInfo{
+    left:10px;
+    bottom:110px;
+  }
+
 }
 </style>
 </head>
+
 <body>
-<video id="camera" autoplay muted playsinline></video>
+
+<!-- CAMERA -->
+
+<video
+  id="camera"
+  autoplay
+  muted
+  playsinline>
+</video>
+
+<!-- HANDS -->
+
 <canvas id="handCanvas"></canvas>
+
+<!-- 3D -->
+
 <canvas id="threeCanvas"></canvas>
-<div id="jarvisStatus">
-  <span id="listenDot"></span>
-  <span id="statusText">JARVIS READY</span>
+
+<!-- TOP -->
+
+<div id="topBar">
+
+  <div id="systemDot"></div>
+
+  <div id="jarvisName">
+    JARVIS
+  </div>
+
+  <div id="systemStatus">
+    ONLINE
+  </div>
+
 </div>
+
+<!-- CAMERA -->
+
 <button id="cameraButton">
-  SWITCH CAMERA
+  CAMERA
 </button>
+
+<!-- CENTER -->
+
+<div id="crosshair"></div>
+
 <div id="reticle"></div>
-<div id="voiceText">
-  Say "JARVIS"
+
+<!-- JARVIS RESPONSE -->
+
+<div id="jarvisPanel">
+
+  <div id="jarvisHeader">
+    JARVIS
+  </div>
+
+  <div id="jarvisResponse">
+    Ready.
+  </div>
+
 </div>
+
+<!-- OBJECT INFO -->
+
+<div id="objectInfo">
+
+  <div class="infoTitle">
+    ACTIVE OBJECT
+  </div>
+
+  <div
+    class="infoValue"
+    id="activeObject">
+    NONE
+  </div>
+
+  <div
+    class="infoValue"
+    id="objectCount">
+    OBJECTS 0
+  </div>
+
+  <div
+    class="infoValue"
+    id="trackingStatus">
+    TRACKING SEARCHING
+  </div>
+
+</div>
+
+<!-- LISTENING -->
+
+<div id="listening">
+  LISTENING
+</div>
+
+<!-- VOICE -->
+
+<button id="voiceButton">
+
+  <div id="micIcon">
+    🎙
+  </div>
+
+</button>
+
+<div class="scanline"></div>
+
 <div id="vignette"></div>
+
+
 <script>
-/* =====================================================
+
+/* =========================================================
    ELEMENTS
-===================================================== */
+========================================================= */
+
 const video =
   document.getElementById("camera");
+
 const handCanvas =
   document.getElementById("handCanvas");
+
 const handCtx =
   handCanvas.getContext("2d");
+
 const threeCanvas =
   document.getElementById("threeCanvas");
-const statusText =
-  document.getElementById("statusText");
-const listenDot =
-  document.getElementById("listenDot");
-const voiceText =
-  document.getElementById("voiceText");
-const reticle =
-  document.getElementById("reticle");
+
+const voiceButton =
+  document.getElementById("voiceButton");
+
+const listeningIndicator =
+  document.getElementById("listening");
+
+const jarvisResponse =
+  document.getElementById("jarvisResponse");
+
+const activeObjectText =
+  document.getElementById("activeObject");
+
+const objectCountText =
+  document.getElementById("objectCount");
+
+const trackingStatus =
+  document.getElementById("trackingStatus");
+
 const cameraButton =
   document.getElementById("cameraButton");
-/* =====================================================
+
+const reticle =
+  document.getElementById("reticle");
+
+
+/* =========================================================
    CAMERA
-===================================================== */
+========================================================= */
+
 let usingFrontCamera=true;
 let currentStream=null;
 let cameraReady=false;
 let processing=false;
+
+
 async function startCamera(){
+
   cameraReady=false;
+
   if(currentStream){
+
     currentStream
       .getTracks()
       .forEach(
-        track=>track.stop()
+        track =>
+        track.stop()
       );
+
   }
+
   try{
+
     const stream =
-      await navigator.mediaDevices.getUserMedia({
+      await navigator
+      .mediaDevices
+      .getUserMedia({
+
         video:{
           facingMode:
             usingFrontCamera
-            ?"user"
-            :"environment",
-          width:{ideal:1280},
-          height:{ideal:720},
-          frameRate:{ideal:30,max:30}
+            ? "user"
+            : "environment",
+
+          width:{
+            ideal:1280
+          },
+
+          height:{
+            ideal:720
+          },
+
+          frameRate:{
+            ideal:30,
+            max:30
+          }
         },
+
         audio:false
+
       });
+
     currentStream=stream;
+
     video.srcObject=stream;
+
     video.classList.remove(
       "front",
       "back"
     );
+
     video.classList.add(
       usingFrontCamera
-      ?"front"
-      :"back"
+      ? "front"
+      : "back"
     );
+
     await video.play();
+
     cameraReady=true;
-    statusText.textContent=
-      "JARVIS READY";
+
   }
+
   catch(error){
+
     console.error(error);
-    statusText.textContent=
-      "CAMERA ERROR";
+
+    jarvisResponse.textContent =
+      "Camera access failed.";
+
   }
+
 }
-cameraButton.onclick=async()=>{
+
+
+cameraButton.onclick =
+async ()=>{
+
   usingFrontCamera=
     !usingFrontCamera;
+
   await startCamera();
+
 };
-/* =====================================================
+
+
+/* =========================================================
    RESIZE
-===================================================== */
+========================================================= */
+
 function resize(){
+
   handCanvas.width=
     window.innerWidth;
+
   handCanvas.height=
     window.innerHeight;
+
 }
+
 resize();
+
 window.addEventListener(
   "resize",
   resize
 );
-/* =====================================================
-   SCREEN POSITION
-===================================================== */
-function screenPosition(point){
-  const vw=video.videoWidth;
-  const vh=video.videoHeight;
-  const sw=window.innerWidth;
-  const sh=window.innerHeight;
-  if(!vw || !vh){
-    return{
-      x:sw/2,
-      y:sh/2
-    };
-  }
-  const videoRatio=vw/vh;
-  const screenRatio=sw/sh;
-  let width;
-  let height;
-  let offsetX=0;
-  let offsetY=0;
-  if(screenRatio>videoRatio){
-    width=sw;
-    height=sw/videoRatio;
-    offsetY=(sh-height)/2;
-  }
-  else{
-    height=sh;
-    width=sh*videoRatio;
-    offsetX=(sw-width)/2;
-  }
-  let x=
-    point.x*width+
-    offsetX;
-  let y=
-    point.y*height+
-    offsetY;
-  if(usingFrontCamera)
-    x=sw-x;
-  return{x,y};
-}
-/* =====================================================
+
+
+/* =========================================================
    MEDIAPIPE
-===================================================== */
+========================================================= */
+
 const hands=
   new Hands({
+
     locateFile:
-      file=>
+    file =>
       `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+
   });
+
+
 hands.setOptions({
+
   maxNumHands:2,
+
   modelComplexity:1,
+
   minDetectionConfidence:.65,
+
   minTrackingConfidence:.65
+
 });
-/* =====================================================
+
+
+/* =========================================================
    THREE
-===================================================== */
+========================================================= */
+
 const renderer=
   new THREE.WebGLRenderer({
+
     canvas:threeCanvas,
+
     alpha:true,
+
     antialias:true
+
   });
+
 renderer.setPixelRatio(
   Math.min(
     window.devicePixelRatio,
     2
   )
 );
+
 renderer.setSize(
   window.innerWidth,
   window.innerHeight
 );
+
+
 const scene=
   new THREE.Scene();
+
+
 const camera=
   new THREE.PerspectiveCamera(
+
     55,
-    window.innerWidth/
+
+    window.innerWidth /
     window.innerHeight,
+
     .1,
+
     100
+
   );
+
 camera.position.z=8;
+
+
+/* =========================================================
+   LIGHTING
+========================================================= */
+
 scene.add(
   new THREE.AmbientLight(
     0xffffff,
-    1.5
+    1.4
   )
 );
-const pointLight=
+
+
+const light=
   new THREE.PointLight(
     0x00eaff,
     5,
     20
   );
-pointLight.position.set(
+
+light.position.set(
   0,
   2,
   4
 );
-scene.add(pointLight);
-/* =====================================================
-   OBJECTS
-===================================================== */
+
+scene.add(light);
+
+
+/* =========================================================
+   OBJECT SYSTEM
+========================================================= */
+
 const objects=[];
+
 let activeObject=null;
-/* =====================================================
-   ORIGINAL CUBE SYSTEM
-===================================================== */
+
+let nextShape=0;
+
+
+/*
+  Original cube remains first.
+*/
+
 const shapeNames=[
+
   "CUBE",
   "SPHERE",
   "PYRAMID",
   "TORUS",
   "CYLINDER",
-  "STAR"
+  "ICOSAHEDRON"
+
 ];
-let nextShape=0;
-/* =====================================================
-   NEON MATERIAL
-===================================================== */
+
+
+/* =========================================================
+   MATERIAL
+========================================================= */
+
 function hologramMaterial(){
-  const colors=[
-    0x00eaff,
-    0x00ffff,
-    0x008cff,
-    0xff00ff,
-    0x7a00ff,
-    0x00ffcc
-  ];
-  const color=
-    colors[
-      Math.floor(
-        Math.random()*colors.length
-      )
-    ];
+
   return new THREE.MeshStandardMaterial({
-    color:color,
-    emissive:color,
-    emissiveIntensity:2.5,
+
+    color:0x00eaff,
+
+    emissive:0x00eaff,
+
+    emissiveIntensity:2.2,
+
     transparent:true,
+
     opacity:.82,
-    wireframe:true,
-    metalness:.15,
-    roughness:.25
+
+    wireframe:true
+
   });
+
 }
-/* =====================================================
-   CREATE ORIGINAL SHAPES
-===================================================== */
+
+
+/* =========================================================
+   CREATE SHAPE
+========================================================= */
+
 function createShape(type){
+
   let geometry;
-  if(type==="CUBE"){
-    geometry=
-      new THREE.BoxGeometry(
-        1.4,1.4,1.4
-      );
+
+
+  switch(type){
+
+    case "CUBE":
+
+      geometry=
+        new THREE.BoxGeometry(
+          1.4,
+          1.4,
+          1.4
+        );
+
+      break;
+
+
+    case "SPHERE":
+
+      geometry=
+        new THREE.SphereGeometry(
+          .8,
+          32,
+          32
+        );
+
+      break;
+
+
+    case "PYRAMID":
+
+      geometry=
+        new THREE.ConeGeometry(
+          .9,
+          1.6,
+          4
+        );
+
+      break;
+
+
+    case "TORUS":
+
+      geometry=
+        new THREE.TorusGeometry(
+          .65,
+          .22,
+          20,
+          50
+        );
+
+      break;
+
+
+    case "CYLINDER":
+
+      geometry=
+        new THREE.CylinderGeometry(
+          .65,
+          .65,
+          1.5,
+          32
+        );
+
+      break;
+
+
+    default:
+
+      geometry=
+        new THREE.IcosahedronGeometry(
+          .9,
+          2
+        );
+
   }
-  else if(type==="SPHERE"){
-    geometry=
-      new THREE.SphereGeometry(
-        .8,32,32
-      );
-  }
-  else if(type==="PYRAMID"){
-    geometry=
-      new THREE.ConeGeometry(
-        .9,1.6,4
-      );
-  }
-  else if(type==="TORUS"){
-    geometry=
-      new THREE.TorusGeometry(
-        .65,.22,20,48
-      );
-  }
-  else if(type==="CYLINDER"){
-    geometry=
-      new THREE.CylinderGeometry(
-        .65,.65,1.5,32
-      );
-  }
-  else{
-    geometry=
-      new THREE.IcosahedronGeometry(
-        .9,1
-      );
-  }
+
+
   const mesh=
     new THREE.Mesh(
       geometry,
       hologramMaterial()
     );
+
+
   mesh.userData.type=type;
+
   /*
-     NO GRAVITY.
+    NO GRAVITY.
   */
-  mesh.userData.generated=false;
+
+  mesh.userData.velocity=
+    new THREE.Vector3();
+
+  mesh.userData.angularVelocity=
+    new THREE.Vector3();
+
+  mesh.userData.mass=1;
+
+  mesh.userData.part=false;
+
+
   scene.add(mesh);
+
   objects.push(mesh);
-  activeObject=mesh;
+
+  objectCountText.textContent=
+    "OBJECTS "+objects.length;
+
+
   return mesh;
+
 }
-/* =====================================================
-   LOAD REAL GENERATED MODEL
-===================================================== */
-const loader=
-  new THREE.GLTFLoader();
-function loadRealModel(url,prompt){
-  statusText.textContent=
-    "LOADING MODEL";
-  voiceText.textContent=
-    "JARVIS: Loading "+prompt;
-  loader.load(
-    url,
-    gltf=>{
-      const model=
-        gltf.scene;
-      /*
-         Scale model to a useful AR size.
-      */
-      const box=
-        new THREE.Box3()
-          .setFromObject(model);
-      const size=
-        new THREE.Vector3();
-      box.getSize(size);
-      const largest=
-        Math.max(
-          size.x,
-          size.y,
-          size.z
-        );
-      if(largest>0){
-        const targetSize=3;
-        const scale=
-          targetSize/largest;
-        model.scale.setScalar(
-          scale
-        );
-      }
-      model.position.set(
-        0,
-        0,
-        0
-      );
-      model.userData.type=
-        prompt;
-      model.userData.generated=
-        true;
-      scene.add(model);
-      objects.push(model);
-      activeObject=model;
-      statusText.textContent=
-        "MODEL READY";
-      voiceText.textContent=
-        "JARVIS: Model ready.";
-    },
-    progress=>{
-      if(progress.total){
-        const percent=
-          Math.round(
-            progress.loaded/
-            progress.total*
-            100
-          );
-        voiceText.textContent=
-          "JARVIS: Loading "+percent+"%";
-      }
-    },
-    error=>{
-      console.error(error);
-      statusText.textContent=
-        "MODEL ERROR";
-      voiceText.textContent=
-        "JARVIS: I couldn't load that model.";
-    }
-  );
-}
-/* =====================================================
-   GENERATE REAL MODEL
-===================================================== */
-async function generateModel(prompt){
-  statusText.textContent=
-    "GENERATING MODEL";
-  voiceText.textContent=
-    "JARVIS: Generating "+prompt;
-  try{
-    const response=
-      await fetch(
-        "/api/generate",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          body:JSON.stringify({
-            prompt:prompt
-          })
-        }
-      );
-    const data=
-      await response.json();
-    if(!response.ok){
-      throw new Error(
-        data.error||
-        "Generation failed"
-      );
-    }
-    /*
-       Backend waits for Meshy
-       and returns the GLB URL.
-    */
-    loadRealModel(
-      data.glb,
-      prompt
-    );
-  }
-  catch(error){
-    console.error(error);
-    statusText.textContent=
-      "GENERATION ERROR";
-    voiceText.textContent=
-      "JARVIS: "+error.message;
-    speak(
-      "I wasn't able to generate that model."
-    );
-  }
-}
-/* =====================================================
-   HAND → WORLD
-===================================================== */
+
+
+/* =========================================================
+   WORLD POSITION
+========================================================= */
+
 function handToWorld(x,y){
+
   const nx=
-    (x/window.innerWidth)*2-1;
+    (x/
+    window.innerWidth)*2-1;
+
   const ny=
-    -(y/window.innerHeight)*2+1;
+    -(y/
+    window.innerHeight)*2+1;
+
+
   const vector=
     new THREE.Vector3(
-      nx,ny,0
+      nx,
+      ny,
+      0
     );
+
+
   vector.unproject(camera);
+
+
   const direction=
     vector
       .sub(camera.position)
       .normalize();
+
+
   return camera.position
     .clone()
     .add(
       direction.multiplyScalar(6)
     );
+
 }
-/* =====================================================
+
+
+/* =========================================================
+   SCREEN POSITION
+========================================================= */
+
+function screenPosition(point){
+
+  const vw=video.videoWidth;
+  const vh=video.videoHeight;
+
+  const sw=window.innerWidth;
+  const sh=window.innerHeight;
+
+
+  if(!vw || !vh){
+
+    return{
+      x:sw/2,
+      y:sh/2
+    };
+
+  }
+
+
+  const videoRatio=vw/vh;
+  const screenRatio=sw/sh;
+
+
+  let width;
+  let height;
+  let offsetX=0;
+  let offsetY=0;
+
+
+  if(screenRatio>videoRatio){
+
+    width=sw;
+
+    height=
+      sw/videoRatio;
+
+    offsetY=
+      (sh-height)/2;
+
+  }
+
+  else{
+
+    height=sh;
+
+    width=
+      sh*videoRatio;
+
+    offsetX=
+      (sw-width)/2;
+
+  }
+
+
+  let x=
+    point.x*width+
+    offsetX;
+
+  let y=
+    point.y*height+
+    offsetY;
+
+
+  if(usingFrontCamera){
+
+    x=sw-x;
+
+  }
+
+
+  return{x,y};
+
+}
+
+
+/* =========================================================
    DISTANCE
-===================================================== */
+========================================================= */
+
 function distance2D(a,b){
+
   return Math.hypot(
     a.x-b.x,
     a.y-b.y
   );
+
 }
-/* =====================================================
+
+
+/* =========================================================
    PINCH
-===================================================== */
+========================================================= */
+
 function isPinching(hand){
-  return(
-    distance2D(
-      hand[4],
-      hand[8]
-    )<.055
-  );
+
+  return distance2D(
+    hand[4],
+    hand[8]
+  ) < .055;
+
 }
-/* =====================================================
-   WORLD → SCREEN
-===================================================== */
-function worldToScreen(position){
-  const vector=
-    position
-      .clone()
-      .project(camera);
-  return{
-    x:
-      (vector.x+1)/2*
-      window.innerWidth,
-    y:
-      (-vector.y+1)/2*
-      window.innerHeight
-  };
-}
-/* =====================================================
+
+
+/* =========================================================
    FIND OBJECT
-===================================================== */
+========================================================= */
+
 function findObject(position){
+
   let closest=null;
+
   let closestDistance=Infinity;
-  for(const obj of objects){
+
+
+  for(
+    const obj of objects
+  ){
+
     const screen=
       worldToScreen(
         obj.position
       );
-    const d=
+
+
+    const distance=
       distance2D(
         position,
         screen
       );
-    if(d<closestDistance){
-      closestDistance=d;
+
+
+    if(
+      distance<
+      closestDistance
+    ){
+
+      closestDistance=
+        distance;
+
       closest=obj;
+
     }
+
   }
-  if(closestDistance<130)
+
+
+  if(
+    closestDistance<130
+  ){
+
     return closest;
+
+  }
+
+
   return null;
+
 }
-/* =====================================================
-   GRAB VARIABLES
-===================================================== */
+
+
+/* =========================================================
+   WORLD TO SCREEN
+========================================================= */
+
+function worldToScreen(position){
+
+  const vector=
+    position
+      .clone()
+      .project(camera);
+
+
+  return{
+
+    x:
+      (vector.x+1)/
+      2*
+      window.innerWidth,
+
+    y:
+      (-vector.y+1)/
+      2*
+      window.innerHeight
+
+  };
+
+}
+
+
+/* =========================================================
+   GRAB STATE
+========================================================= */
+
 let grabbing=false;
+
+let grabHand=-1;
+
 let grabOffset=
   new THREE.Vector3();
+
 let previousFinger=null;
+
 let grabVelocity=
   new THREE.Vector3();
+
+
+/* =========================================================
+   TWO HAND STATE
+========================================================= */
+
 let twoHand=false;
+
 let twoStartDistance=1;
+
 let twoStartScale=1;
+
 let twoStartAngle=0;
+
 let twoStartRotation=0;
+
 let twoStartTilt=0;
-/* =====================================================
+
+
+/* =========================================================
    HAND RESULTS
-===================================================== */
-hands.onResults(results=>{
-  if(!cameraReady)return;
+========================================================= */
+
+hands.onResults(
+results=>{
+
+  if(!cameraReady)
+    return;
+
+
   handCtx.clearRect(
     0,
     0,
     handCanvas.width,
     handCanvas.height
   );
+
+
   const detected=
-    results.multiHandLandmarks||[];
+    results.multiHandLandmarks || [];
+
+
+  trackingStatus.textContent=
+    detected.length
+    ? "TRACKING ACTIVE"
+    : "TRACKING SEARCHING";
+
+
   /*
-     HAND VISUALS
+    DRAW HANDS
   */
-  for(const hand of detected){
+
+  for(
+    const hand of detected
+  ){
+
     const points=
-      hand.map(screenPosition);
+      hand.map(
+        screenPosition
+      );
+
+
     handCtx.strokeStyle=
       "#00eaff";
+
     handCtx.lineWidth=2;
+
+
     for(
       const connection
       of HAND_CONNECTIONS
     ){
+
       const a=
-        points[connection[0]];
+        points[
+          connection[0]
+        ];
+
       const b=
-        points[connection[1]];
+        points[
+          connection[1]
+        ];
+
+
       handCtx.beginPath();
+
       handCtx.moveTo(
-        a.x,a.y
+        a.x,
+        a.y
       );
+
       handCtx.lineTo(
-        b.x,b.y
+        b.x,
+        b.y
       );
+
       handCtx.stroke();
+
     }
+
+
     handCtx.fillStyle=
       "#00eaff";
-    for(const p of points){
+
+
+    for(
+      const point
+      of points
+    ){
+
       handCtx.beginPath();
+
       handCtx.arc(
-        p.x,
-        p.y,
+        point.x,
+        point.y,
         3,
         0,
         Math.PI*2
       );
+
       handCtx.fill();
+
     }
+
   }
+
+
+  /*
+    FIND PINCHING HANDS
+  */
+
   const pinching=[];
+
+
   for(
     let i=0;
     i<detected.length;
     i++
   ){
+
     if(
       isPinching(
         detected[i]
       )
     ){
+
       pinching.push(i);
+
     }
+
   }
-  /* =================================================
-     TWO HAND
-  ================================================= */
-  if(pinching.length===2){
+
+
+  /* =====================================================
+     TWO HAND CONTROL
+  ===================================================== */
+
+  if(
+    pinching.length===2
+  ){
+
     const p1=
       screenPosition(
-        detected[pinching[0]][8]
+        detected[
+          pinching[0]
+        ][8]
       );
+
     const p2=
       screenPosition(
-        detected[pinching[1]][8]
+        detected[
+          pinching[1]
+        ][8]
       );
-    const d=
-      distance2D(p1,p2);
+
+
+    const distance=
+      distance2D(
+        p1,
+        p2
+      );
+
+
     const angle=
       Math.atan2(
         p2.y-p1.y,
         p2.x-p1.x
       );
+
+
     const centerX=
       (p1.x+p2.x)/2;
+
     const centerY=
       (p1.y+p2.y)/2;
+
+
     if(
       !twoHand &&
       activeObject
     ){
+
       twoHand=true;
+
       grabbing=true;
+
       twoStartDistance=
-        Math.max(d,10);
+        Math.max(
+          distance,
+          10
+        );
+
       twoStartScale=
         activeObject.scale.x;
+
       twoStartAngle=
         angle;
+
       twoStartRotation=
         activeObject.rotation.z;
+
       twoStartTilt=
         activeObject.rotation.x;
+
     }
+
+
     if(activeObject){
+
       let scale=
         twoStartScale*
-        d/
+        distance/
         twoStartDistance;
+
+
       scale=
         Math.max(
-          .25,
+          .2,
           Math.min(
             5,
             scale
           )
         );
+
+
       activeObject.scale.setScalar(
         scale
       );
+
+
       activeObject.rotation.z=
         twoStartRotation+
         (
           angle-
           twoStartAngle
         );
+
+
       activeObject.rotation.x=
         twoStartTilt+
         (
           centerY-
           window.innerHeight/2
         )*.008;
+
+
       activeObject.position.copy(
         handToWorld(
           centerX,
           centerY
         )
       );
+
+
+      activeObjectText.textContent=
+        activeObject.userData.type;
+
     }
+
+
     return;
+
   }
+
+
   twoHand=false;
-  /* =================================================
-     SINGLE PINCH
-  ================================================= */
+
+
+  /* =====================================================
+     NORMAL PINCH
+  ===================================================== */
+
   if(pinching.length>0){
+
     const index=
       pinching[0];
+
+
     const fingertip=
       screenPosition(
         detected[index][8]
       );
+
+
     reticle.style.display=
       "block";
+
     reticle.style.left=
       fingertip.x+"px";
+
     reticle.style.top=
       fingertip.y+"px";
-    /*
-       CONTINUE MOVING
-    */
+
+
+    /* CONTINUE GRAB */
+
     if(
       grabbing &&
       activeObject
     ){
+
       const target=
         handToWorld(
           fingertip.x,
           fingertip.y
         );
+
+
       target.add(
         grabOffset
       );
+
+
       activeObject.position.lerp(
         target,
         .75
       );
+
+
       if(previousFinger){
+
         grabVelocity.set(
+
           fingertip.x-
           previousFinger.x,
+
           previousFinger.y-
           fingertip.y,
+
           0
+
         );
+
       }
+
+
       previousFinger=
         fingertip;
+
+
+      activeObjectText.textContent=
+        activeObject.userData.type;
+
+
       return;
+
     }
-    /*
-       SELECT EXISTING
-    */
+
+
+    /* FIND EXISTING */
+
     const found=
       findObject(
         fingertip
       );
+
+
     if(found){
+
       activeObject=found;
+
       grabbing=true;
+
+      grabHand=index;
+
       previousFinger=
         fingertip;
+
+
       const target=
         handToWorld(
           fingertip.x,
           fingertip.y
         );
+
+
       grabOffset=
         activeObject.position
           .clone()
           .sub(target);
+
+
+      activeObjectText.textContent=
+        activeObject.userData.type;
+
+
       return;
+
     }
+
+
     /*
-       ORIGINAL CUBE / SHAPE
+      CREATE ORIGINAL CUBE
+      OR NEXT SHAPE
     */
-    const type=
-      shapeNames[nextShape];
-    nextShape=
-      (nextShape+1)%
-      shapeNames.length;
-    activeObject=
-      createShape(type);
-    activeObject.position.copy(
-      handToWorld(
-        fingertip.x,
-        fingertip.y
-      )
-    );
-    grabbing=true;
-    previousFinger=
-      fingertip;
-    grabOffset.set(0,0,0);
-    return;
-  }
-  /* =================================================
-     RELEASE
-  ================================================= */
-  if(grabbing){
-    grabbing=false;
-    previousFinger=null;
-    grabVelocity.set(
-      0,0,0
-    );
-  }
-  reticle.style.display=
-    "none";
-});
-/* =====================================================
-   VOICE ASSISTANT
-===================================================== */
-const SpeechRecognition=
-  window.SpeechRecognition||
-  window.webkitSpeechRecognition;
-let recognition=null;
-let jarvisActive=false;
-function speak(text){
-  if(!("speechSynthesis" in window))
-    return;
-  speechSynthesis.cancel();
-  const utterance=
-    new SpeechSynthesisUtterance(
-      text
-    );
-  utterance.rate=.95;
-  utterance.pitch=.85;
-  speechSynthesis.speak(
-    utterance
-  );
-  voiceText.textContent=
-    "JARVIS: "+text;
-}
-function setupVoice(){
-  if(!SpeechRecognition){
-    voiceText.textContent=
-      "Voice recognition unavailable.";
-    return;
-  }
-  recognition=
-    new SpeechRecognition();
-  recognition.continuous=true;
-  recognition.interimResults=false;
-  recognition.lang="en-US";
-  recognition.onstart=()=>{
-    listenDot.classList.add(
-      "listening"
-    );
-    statusText.textContent=
-      "LISTENING";
-  };
-  recognition.onend=()=>{
-    listenDot.classList.remove(
-      "listening"
-    );
-    statusText.textContent=
-      "JARVIS READY";
-    setTimeout(
-      ()=>{
-        try{
-          recognition.start();
-        }catch(e){}
-      },
-      400
-    );
-  };
-  recognition.onerror=error=>{
-    console.log(
-      "Voice error:",
-      error.error
-    );
-  };
-  recognition.onresult=event=>{
-    const result=
-      event.results[
-        event.results.length-1
-      ];
-    const text=
-      result[0].transcript
-        .trim()
-        .toLowerCase();
-    console.log(
-      "JARVIS heard:",
-      text
-    );
-    handleCommand(text);
-  };
-  try{
-    recognition.start();
-  }catch(e){}
-}
-/* =====================================================
-   COMMANDS
-===================================================== */
-function handleCommand(text){
-  /*
-     WAKE WORD
-  */
-  if(text.includes("jarvis")){
-    jarvisActive=true;
-    speak(
-      "Yes. How can I help?"
-    );
-    /*
-       Also allow:
-       "Jarvis create a car"
-    */
-    const command=
-      text
-        .replace("jarvis","")
-        .trim();
-    if(command)
-      handleCommand(command);
-    return;
-  }
-  if(!jarvisActive)
-    return;
-  /*
-     CREATE REAL MODEL
-  */
-  const createWords=[
-    "create",
-    "make",
-    "build",
-    "generate",
-    "show me"
-  ];
-  const wantsModel=
-    createWords.some(
-      word=>text.includes(word)
-    );
-  if(wantsModel){
-    const cleaned=
-      text
-        .replace(
-          /create|make|build|generate|show me/gi,
-          ""
+
+    if(!grabbing){
+
+      const type=
+        shapeNames[
+          nextShape
+        ];
+
+
+      nextShape=
+        (
+          nextShape+1
+        )%
+        shapeNames.length;
+
+
+      activeObject=
+        createShape(type);
+
+
+      activeObject.position.copy(
+        handToWorld(
+          fingertip.x,
+          fingertip.y
         )
-        .trim();
-    if(cleaned.length>2){
-      speak(
-        "I'll generate that model."
       );
-      generateModel(
-        cleaned+
-        ", realistic detailed 3D model, accurate proportions, high detail, physically believable materials"
+
+
+      grabbing=true;
+
+      grabHand=index;
+
+      previousFinger=
+        fingertip;
+
+      grabOffset.set(
+        0,0,0
       );
-      return;
+
+
+      activeObjectText.textContent=
+        type;
+
     }
+
   }
-  /*
-     BASIC CUBE
-  */
-  if(text.includes("cube")){
-    createShape("CUBE");
-    speak(
-      "Creating a cube."
+
+
+  /* =====================================================
+     RELEASE
+  ===================================================== */
+
+  else{
+
+    reticle.style.display="none";
+
+
+    if(grabbing){
+
+      grabbing=false;
+
+      grabHand=-1;
+
+      /*
+        NO GRAVITY.
+        We only keep a tiny amount of
+        momentum for natural movement.
+      */
+
+      if(activeObject){
+
+        activeObject.userData.velocity.x=
+          grabVelocity.x*.002;
+
+        activeObject.userData.velocity.y=
+          grabVelocity.y*.002;
+
+      }
+
+      previousFinger=null;
+
+      grabVelocity.set(
+        0,0,0
+      );
+
+    }
+
+  }
+
+});
+
+
+/* =========================================================
+   NO-GRAVITY PHYSICS
+========================================================= */
+
+const clock=
+  new THREE.Clock();
+
+
+function physics(){
+
+  const dt=
+    Math.min(
+      clock.getDelta(),
+      .033
     );
-    return;
-  }
-  /*
-     DELETE
-  */
-  if(
-    text.includes("delete")||
-    text.includes("remove it")
+
+
+  for(
+    const obj of objects
   ){
-    if(activeObject){
-      scene.remove(
-        activeObject
-      );
-      const index=
-        objects.indexOf(
-          activeObject
-        );
-      if(index>-1)
-        objects.splice(
-          index,
-          1
-        );
-      activeObject=null;
-      speak(
-        "Removed."
-      );
-    }
-    return;
-  }
-  /*
-     CLEAR
-  */
-  if(
-    text.includes("clear everything")||
-    text.includes("remove everything")
-  ){
-    for(
-      const object
-      of objects
+
+    if(
+      obj===activeObject &&
+      grabbing
     ){
-      scene.remove(
-        object
-      );
+
+      continue;
+
     }
-    objects.length=0;
-    activeObject=null;
-    speak(
-      "Everything has been cleared."
+
+
+    /*
+      IMPORTANT:
+
+      There is intentionally
+      NO gravity here.
+    */
+
+    const velocity=
+      obj.userData.velocity;
+
+
+    obj.position.add(
+      velocity
+        .clone()
+        .multiplyScalar(dt)
     );
-    return;
-  }
-  /*
-     HELP
-  */
-  if(
-    text.includes("help")||
-    text.includes("what can you do")
-  ){
-    speak(
-      "I can generate 3D models from your instructions and manipulate them with your hands."
+
+
+    velocity.multiplyScalar(
+      .97
     );
-    return;
+
+
+    obj.rotation.x+=
+      obj.userData
+        .angularVelocity.x;
+
+    obj.rotation.y+=
+      obj.userData
+        .angularVelocity.y;
+
+    obj.rotation.z+=
+      obj.userData
+        .angularVelocity.z;
+
+
+    obj.userData
+      .angularVelocity
+      .multiplyScalar(.98);
+
   }
-  speak(
-    "Tell me what you want me to build."
-  );
+
 }
-/* =====================================================
-   PARTICLES
-===================================================== */
+
+
+/* =========================================================
+   VISUAL EFFECTS
+========================================================= */
+
 const particleGeometry=
   new THREE.BufferGeometry();
+
 const particleCount=500;
+
 const positions=
   new Float32Array(
     particleCount*3
   );
+
+
 for(
   let i=0;
   i<particleCount;
   i++
 ){
+
   positions[i*3]=
     (Math.random()-.5)*16;
+
   positions[i*3+1]=
     (Math.random()-.5)*10;
+
   positions[i*3+2]=
     (Math.random()-.5)*8;
+
 }
+
+
 particleGeometry.setAttribute(
+
   "position",
+
   new THREE.BufferAttribute(
     positions,
     3
   )
+
 );
+
+
 const particleMaterial=
   new THREE.PointsMaterial({
+
     color:0x00eaff,
-    size:.025,
+
+    size:.035,
+
     transparent:true,
-    opacity:.45
+
+    opacity:.5
+
   });
+
+
 const particles=
   new THREE.Points(
     particleGeometry,
     particleMaterial
   );
+
+
 scene.add(particles);
-/* =====================================================
+
+
+/* =========================================================
    ANIMATION
-===================================================== */
+========================================================= */
+
 function animate(){
+
   requestAnimationFrame(
     animate
   );
+
+
+  physics();
+
+
   particles.rotation.y+=
-    .0005;
+    .0006;
+
+
   for(
-    const object
-    of objects
+    const obj of objects
   ){
-    /*
-       Preserve generated-model materials.
-       Only pulse the original neon meshes.
-    */
+
     if(
-      object.material &&
-      object.material.emissive
+      obj.material &&
+      obj.material.emissive
     ){
-      object.material.emissiveIntensity=
-        object===activeObject
+
+      obj.material.emissiveIntensity=
+        obj===activeObject
         ?
-        2.8+
+        2.5+
         Math.sin(
           performance.now()*.004
-        )*.8
+        )
         :
-        2.2;
+        1.8;
+
     }
+
   }
+
+
   renderer.render(
     scene,
     camera
   );
+
 }
+
+
 animate();
-/* =====================================================
-   TRACKING LOOP
-===================================================== */
+
+
+/* =========================================================
+   VOICE ASSISTANT
+========================================================= */
+
+const SpeechRecognition=
+  window.SpeechRecognition ||
+  window.webkitSpeechRecognition;
+
+
+let recognition=null;
+
+let listening=false;
+
+
+if(SpeechRecognition){
+
+  recognition=
+    new SpeechRecognition();
+
+  recognition.continuous=false;
+
+  recognition.interimResults=false;
+
+  recognition.lang="en-US";
+
+
+  recognition.onstart=()=>{
+
+    listening=true;
+
+    voiceButton.classList.add(
+      "listening"
+    );
+
+    listeningIndicator.classList.add(
+      "active"
+    );
+
+    listeningIndicator.textContent=
+      "LISTENING";
+
+  };
+
+
+  recognition.onend=()=>{
+
+    listening=false;
+
+    voiceButton.classList.remove(
+      "listening"
+    );
+
+    listeningIndicator.classList.remove(
+      "active"
+    );
+
+  };
+
+
+  recognition.onerror=
+  error=>{
+
+    console.log(error);
+
+    listening=false;
+
+    voiceButton.classList.remove(
+      "listening"
+    );
+
+    listeningIndicator.classList.remove(
+      "active"
+    );
+
+  };
+
+
+  recognition.onresult=
+  async event=>{
+
+    const transcript=
+      event
+        .results[0][0]
+        .transcript;
+
+
+    jarvisResponse.textContent=
+      "You: "+transcript;
+
+
+    await askJarvis(
+      transcript
+    );
+
+  };
+
+}
+
+
+/* =========================================================
+   VOICE BUTTON
+========================================================= */
+
+voiceButton.onclick=()=>{
+
+  /*
+    JARVIS DOES NOT LISTEN
+    UNTIL THIS BUTTON IS PRESSED.
+  */
+
+  if(!recognition){
+
+    jarvisResponse.textContent=
+      "Voice recognition is not supported by this browser.";
+
+    return;
+
+  }
+
+
+  if(listening){
+
+    recognition.stop();
+
+  }
+
+  else{
+
+    recognition.start();
+
+  }
+
+};
+
+
+/* =========================================================
+   ASK JARVIS
+========================================================= */
+
+async function askJarvis(message){
+
+  try{
+
+    jarvisResponse.textContent=
+      "JARVIS is thinking...";
+
+
+    const response=
+      await fetch(
+        "/jarvis",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              message:message
+            })
+
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Server error"
+      );
+
+    }
+
+
+    const data=
+      await response.json();
+
+
+    const reply=
+      data.reply ||
+      "I don't have a response.";
+
+
+    jarvisResponse.textContent=
+      reply;
+
+
+    speakJarvis(reply);
+
+
+    /*
+      Basic model commands.
+      These let JARVIS create
+      objects directly.
+    */
+
+    processJarvisCommand(
+      message
+    );
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    jarvisResponse.textContent=
+      "JARVIS connection unavailable.";
+
+  }
+
+}
+
+
+/* =========================================================
+   JARVIS VOICE
+========================================================= */
+
+function speakJarvis(text){
+
+  if(
+    !("speechSynthesis" in window)
+  ){
+
+    return;
+
+  }
+
+
+  window.speechSynthesis.cancel();
+
+
+  const speech=
+    new SpeechSynthesisUtterance(
+      text
+    );
+
+
+  speech.rate=.95;
+
+  speech.pitch=.8;
+
+  speech.volume=1;
+
+
+  window.speechSynthesis.speak(
+    speech
+  );
+
+}
+
+
+/* =========================================================
+   JARVIS MODEL COMMANDS
+========================================================= */
+
+function processJarvisCommand(
+  message
+){
+
+  const text=
+    message.toLowerCase();
+
+
+  let type=null;
+
+
+  if(
+    text.includes("cube")
+  ){
+
+    type="CUBE";
+
+  }
+
+  else if(
+    text.includes("sphere") ||
+    text.includes("ball")
+  ){
+
+    type="SPHERE";
+
+  }
+
+  else if(
+    text.includes("pyramid")
+  ){
+
+    type="PYRAMID";
+
+  }
+
+  else if(
+    text.includes("torus") ||
+    text.includes("ring")
+  ){
+
+    type="TORUS";
+
+  }
+
+  else if(
+    text.includes("cylinder")
+  ){
+
+    type="CYLINDER";
+
+  }
+
+
+  if(type){
+
+    const object=
+      createShape(type);
+
+
+    object.position.set(
+      0,
+      0,
+      0
+    );
+
+
+    activeObject=
+      object;
+
+
+    activeObjectText.textContent=
+      type;
+
+  }
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+async function boot(){
+
+  await startCamera();
+
+  trackingLoop();
+
+}
+
+
 async function trackingLoop(){
+
   if(
     cameraReady &&
     video.readyState>=2 &&
     !processing
   ){
+
     processing=true;
+
     try{
+
       await hands.send({
         image:video
       });
+
     }
+
     catch(error){
+
       console.log(error);
+
     }
+
     processing=false;
+
   }
+
+
   requestAnimationFrame(
     trackingLoop
   );
+
 }
-/* =====================================================
-   THREE RESIZE
-===================================================== */
+
+
 window.addEventListener(
   "resize",
   ()=>{
+
     camera.aspect=
       window.innerWidth/
       window.innerHeight;
+
     camera.updateProjectionMatrix();
+
+
     renderer.setSize(
       window.innerWidth,
       window.innerHeight
     );
+
   }
 );
-/* =====================================================
-   BOOT
-===================================================== */
-async function boot(){
-  await startCamera();
-  setupVoice();
-  trackingLoop();
-}
+
+
 boot();
+
 </script>
+
 </body>
 </html>
